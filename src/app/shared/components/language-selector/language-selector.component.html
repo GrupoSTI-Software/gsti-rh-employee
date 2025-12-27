@@ -1,0 +1,38 @@
+<div class="language-selector">
+  <button
+    type="button"
+    class="language-button"
+    [class.active]="true"
+    (click)="showDropdown = !showDropdown"
+    [attr.aria-label]="'Cambiar idioma'"
+    [attr.aria-expanded]="showDropdown"
+  >
+    <span class="flag">
+      {{ currentLanguageFlag }}
+    </span>
+    <span class="label">
+      {{ currentLanguageLabel }}
+    </span>
+    <span class="chevron" [class.open]="showDropdown">▼</span>
+  </button>
+
+  @if (showDropdown) {
+    <div class="dropdown">
+      @for (lang of languages; track lang.code) {
+        <button
+          type="button"
+          class="dropdown-item"
+          [class.active]="lang.code === currentLanguage"
+          (click)="setLanguage(lang.code)"
+        >
+          <span class="flag">{{ lang.flag }}</span>
+          <span class="label">{{ lang.label }}</span>
+          @if (lang.code === currentLanguage) {
+            <span class="check">✓</span>
+          }
+        </button>
+      }
+    </div>
+  }
+</div>
+

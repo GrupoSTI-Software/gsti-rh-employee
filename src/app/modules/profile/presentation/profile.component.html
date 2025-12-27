@@ -1,0 +1,52 @@
+<div class="profile-container">
+  @if (loading()) {
+    <div class="loading-container" [@fadeInUp]>
+      <i class="pi pi-spin pi-spinner"></i>
+      <p>{{ 'profile.loading' | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-container" [@fadeInUp]>
+      <i class="pi pi-exclamation-triangle"></i>
+      <p>{{ error() }}</p>
+    </div>
+  } @else {
+    <div class="profile-card" [@fadeInUp]>
+      <div class="profile-header">
+        <div class="avatar">
+          {{ userInitials() }}
+        </div>
+        <h1>{{ user()?.name || user()?.email }}</h1>
+        <p class="email">{{ user()?.email }}</p>
+      </div>
+
+      <div class="profile-info">
+        <div class="info-item">
+          <i class="pi pi-envelope"></i>
+          <div class="info-content">
+            <span class="info-label">{{ 'profile.email' | translate }}</span>
+            <span class="info-value">{{ user()?.email || '---' }}</span>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <i class="pi pi-id-card"></i>
+          <div class="info-content">
+            <span class="info-label">{{ 'profile.userId' | translate }}</span>
+            <span class="info-value">{{ user()?.id || '---' }}</span>
+          </div>
+        </div>
+
+        @if (user()?.employeeId) {
+          <div class="info-item">
+            <i class="pi pi-briefcase"></i>
+            <div class="info-content">
+              <span class="info-label">{{ 'profile.employeeId' | translate }}</span>
+              <span class="info-value">{{ user()?.employeeId }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+

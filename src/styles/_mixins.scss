@@ -1,0 +1,119 @@
+// ============================================
+// Mixins SCSS - Utilidades reutilizables
+// ============================================
+
+@use './variables' as *;
+
+// Flexbox utilities
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Input styles
+@mixin input-base {
+  padding: $spacing-md;
+  border: 1px solid var(--border-color);
+  border-radius: $radius;
+  font-size: $font-size-base;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color $transition-base;
+
+  &:focus {
+    outline: none;
+    border-color: var(--border-hover);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
+@mixin input-error {
+  border-color: var(--danger);
+}
+
+// Button styles
+@mixin button-base {
+  padding: $spacing-md;
+  border: none;
+  border-radius: $radius;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: background-color $transition-base;
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: var(--primary);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-dark);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+}
+
+// Card styles
+@mixin card {
+  background: var(--bg-primary);
+  border-radius: $radius;
+  padding: $spacing-3xl;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+// Form group
+@mixin form-group {
+  @include flex-column;
+  gap: $spacing-sm;
+}
+
+// Error message
+@mixin error-message {
+  font-size: $font-size-xs;
+  color: var(--danger);
+}
+
+// Error alert
+@mixin error-alert {
+  padding: $spacing-md;
+  background: rgba(205, 54, 12, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: $radius;
+  color: var(--danger);
+  font-size: $font-size-sm;
+  text-align: center;
+}
+

@@ -1,12 +1,61 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-
-import { routes } from './app.routes';
+import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { providePrimeNG } from 'primeng/config';
+import Aura from '@primeng/themes/aura';
+import { provideTranslateService, provideTranslateLoader } from "@ngx-translate/core";
+import { provideTranslateHttpLoader } from "@ngx-translate/http-loader";
+import { routes } from './app.routes';
+import { HttpAuthAdapter } from '@modules/auth/infrastructure/http-auth.adapter';
+import { AUTH_PORT } from '@modules/auth/domain/auth.token';
+import { HttpSystemSettingsAdapter } from '@modules/system-settings/infrastructure/http-system-settings.adapter';
+import { SYSTEM_SETTINGS_PORT } from '@modules/system-settings/domain/system-settings.token';
+import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-attendance.adapter';
+import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
+import { tokenInterceptor } from '@core/interceptors/token.interceptor';
+import { errorInterceptor } from '@core/interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideClientHydration(withEventReplay())
+    provideRouter(routes),
+    provideClientHydration(withEventReplay()),
+    provideHttpClient(
+      withInterceptors([tokenInterceptor, errorInterceptor]),
+      withFetch()
+    ),
+    provideAnimationsAsync(),
+    // PrimeNG Configuration
+    providePrimeNG({
+      theme: {
+        preset: Aura,
+        options: {
+          darkModeSelector: '[data-theme="dark"]',
+          cssClass: 'p-component'
+        }
+      }
+    }),
+    // Provider para arquitectura hexagonal - inyección del adaptador como puerto
+    {
+      provide: AUTH_PORT,
+      useClass: HttpAuthAdapter
+    },
+    {
+      provide: SYSTEM_SETTINGS_PORT,
+      useClass: HttpSystemSettingsAdapter
+    },
+    {
+      provide: ATTENDANCE_PORT,
+      useClass: HttpAttendanceAdapter
+    },
+    provideTranslateService({
+      loader: provideTranslateHttpLoader({
+        prefix: '/assets/i18n/',
+        suffix: '.json'
+      }),
+      fallbackLang: 'es'
+    })
   ]
 };

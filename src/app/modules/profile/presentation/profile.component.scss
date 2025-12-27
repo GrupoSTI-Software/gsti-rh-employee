@@ -1,0 +1,113 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.profile-container {
+  min-height: 100%;
+  padding: $spacing-lg;
+}
+
+.loading-container,
+.error-container {
+  @include flex-center;
+  flex-direction: column;
+  gap: $spacing-md;
+  min-height: 400px;
+
+  i {
+    font-size: 3rem;
+    color: var(--text-secondary);
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: $font-size-lg;
+  }
+}
+
+.error-container {
+  i {
+    color: var(--danger);
+  }
+}
+
+.profile-card {
+  width: 100%;
+  max-width: $container-max-width-md;
+  margin: 0 auto;
+  @include card;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-2xl;
+  border-bottom: 1px solid var(--border-color);
+
+  .avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    margin: 0 auto $spacing-lg;
+  }
+
+  h1 {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin-bottom: $spacing-sm;
+  }
+
+  .email {
+    color: var(--text-secondary);
+    font-size: $font-size-base;
+  }
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: var(--bg-secondary);
+  border-radius: $radius;
+
+  i {
+    font-size: $font-size-xl;
+    color: var(--primary);
+    width: 24px;
+    text-align: center;
+  }
+
+  .info-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  .info-label {
+    font-size: $font-size-xs;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .info-value {
+    font-size: $font-size-base;
+    color: var(--text-primary);
+    font-weight: $font-weight-medium;
+  }
+}
+

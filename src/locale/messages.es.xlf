@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="840692109692540367" datatype="html">
+        <source>Sign In</source>
+        <target>Iniciar sesión</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">12,13</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="1123094174543137701" datatype="html">
+        <source>Enter your credentials to access</source>
+        <target>Ingresa tus credenciales para acceder</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">13,16</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="4768749765465246664" datatype="html">
+        <source>Email</source>
+        <target>Correo electrónico</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">18,20</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="8200211286275215120" datatype="html">
+        <source> Correo electrónico es requerido </source>
+        <target>Correo electrónico es requerido</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">28</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1431416938026210429" datatype="html">
+        <source>Password</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">34,36</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="6946814008415685385" datatype="html">
+        <source> Password is required (minimum 6 characters) </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">44</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3894950702316166331" datatype="html">
+        <source>Loading...</source>
+        <target>Cargando...</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">69,71</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="2454050363478003966" datatype="html">
+        <source>Login</source>
+        <target>Iniciar sesión</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">71,73</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="3279636347259347513" datatype="html">
+        <source>Dark Mode</source>
+        <target>Modo Oscuro</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">79,81</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+      <trans-unit id="869044638670864650" datatype="html">
+        <source>Light Mode</source>
+        <target>Modo Claro</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">src/app/modules/auth/presentation/login.component.html</context>
+          <context context-type="linenumber">81,83</context>
+        </context-group>
+        <note priority="1" from="description">{i18n_metadata}</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

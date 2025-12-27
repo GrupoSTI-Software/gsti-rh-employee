@@ -1,0 +1,71 @@
+<div class="settings-container">
+  <div class="settings-card" [@fadeInUp]>
+    <div class="settings-header">
+      <h1>{{ 'settings.title' | translate }}</h1>
+      <p>{{ 'settings.subtitle' | translate }}</p>
+    </div>
+
+    <div class="settings-options">
+      <!-- Opción de Biometría -->
+      <button type="button" class="option-card" (click)="navigateToBiometrics()">
+        <div class="option-left">
+          <div class="icon-container">
+            <i class="pi pi-shield"></i>
+          </div>
+          <div class="option-content">
+            <h3>{{ 'settings.biometricsOption.title' | translate }}</h3>
+            <p>{{ 'settings.biometricsOption.description' | translate }}</p>
+          </div>
+        </div>
+        <i class="pi pi-chevron-right"></i>
+      </button>
+
+      <!-- Opción de Tema -->
+      <button type="button" class="option-card" (click)="toggleTheme()">
+        <div class="option-left">
+          <div class="icon-container">
+            @if (theme.theme() === 'light') {
+              <i class="pi pi-moon"></i>
+            } @else {
+              <i class="pi pi-sun"></i>
+            }
+          </div>
+          <div class="option-content">
+            <h3>{{ 'settings.themeOption.title' | translate }}</h3>
+            <p>{{ theme.theme() === 'light' ? ('settings.themeOption.light' | translate) : ('settings.themeOption.dark' | translate) }}</p>
+          </div>
+        </div>
+        <i class="pi pi-chevron-right"></i>
+      </button>
+
+      <!-- Opción de Idioma -->
+      <button type="button" class="option-card" (click)="toggleLanguage()">
+        <div class="option-left">
+          <div class="icon-container">
+            <i class="pi pi-globe"></i>
+          </div>
+          <div class="option-content">
+            <h3>{{ 'settings.languageOption.title' | translate }}</h3>
+            <p>{{ currentLanguageLabel() }}</p>
+          </div>
+        </div>
+        <i class="pi pi-chevron-right"></i>
+      </button>
+
+      <!-- Opción de Perfil -->
+      <button type="button" class="option-card" (click)="navigateToProfile()">
+        <div class="option-left">
+          <div class="icon-container">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="option-content">
+            <h3>{{ 'settings.profileOption.title' | translate }}</h3>
+            <p>{{ 'settings.profileOption.description' | translate }}</p>
+          </div>
+        </div>
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+</div>
+

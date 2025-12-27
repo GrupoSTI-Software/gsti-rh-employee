@@ -1,0 +1,101 @@
+<div class="login-container" [@fadeIn]>
+  <div class="login-card" [@fadeInUp]>
+    <div class="login-header" [@fadeInUp]>
+      @if (showLogo()) {
+        <img
+          [src]="logoUrl()"
+          [alt]="'common.login' | translate"
+          class="login-logo"
+          id="app-logo"
+          [@scaleIn]
+        />
+      } @else {
+        <div class="login-logo-placeholder">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+      }
+      <h1 [@fadeInUpDelayed]>{{ 'auth.loginTitle' | translate }}</h1>
+      <p [@fadeInUpDelayed]>{{ 'auth.loginSubtitle' | translate }}</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" [@staggerFadeInUp]>
+      <div class="form-group">
+        <label for="email">{{ 'common.email' | translate }}</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+          [placeholder]="'common.email' | translate"
+        />
+        @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+          <span class="error-message">
+            @if (loginForm.get('email')?.hasError('required')) {
+              {{ 'auth.emailRequired' | translate }}
+            } @else if (loginForm.get('email')?.hasError('email')) {
+              {{ 'auth.emailInvalid' | translate }}
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">{{ 'common.password' | translate }}</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+          [placeholder]="'common.password' | translate"
+        />
+        @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+          <span class="error-message">
+            @if (loginForm.get('password')?.hasError('required')) {
+              {{ 'auth.passwordRequired' | translate }}
+            } @else if (loginForm.get('password')?.hasError('minlength')) {
+              {{ 'auth.passwordMinLength' | translate }}
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" formControlName="rememberMe" />
+          <span>{{ 'common.rememberMe' | translate }}</span>
+        </label>
+        <a href="#" class="forgot-password">{{ 'common.forgotPassword' | translate }}</a>
+      </div>
+
+      @if (error()) {
+        <div class="error-alert" [@shake]>
+          {{ error() }}
+        </div>
+      }
+
+      <button
+        type="submit"
+        class="submit-button"
+        [disabled]="loading() || loginForm.invalid"
+      >
+        @if (loading()) {
+          {{ 'common.loading' | translate }}
+        } @else {
+          {{ 'common.login' | translate }}
+        }
+      </button>
+    </form>
+
+    <div class="footer-actions" [@fadeInUp]>
+      <app-language-selector></app-language-selector>
+      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('common.darkMode' | translate) : ('common.lightMode' | translate)">
+        @if (theme.theme() === 'light') {
+          <i class="pi pi-moon"></i>
+        } @else {
+          <i class="pi pi-sun"></i>
+        }
+      </button>
+    </div>
+  </div>
+</div>
+

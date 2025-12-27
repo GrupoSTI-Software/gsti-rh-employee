@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm"
+    "packageManager": "npm",
+    "analytics": "fd750f94-5b36-4acd-bb7e-385f8ea0fe74"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -16,6 +17,14 @@
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
+      "i18n": {
+        "sourceLocale": "en",
+        "locales": {
+          "es": {
+            "translation": "src/locale/messages.es.xlf"
+          }
+        }
+      },
       "architect": {
         "build": {
           "builder": "@angular/build:application",
@@ -27,6 +36,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
@@ -67,6 +81,9 @@
           "configurations": {
             "production": {
               "buildTarget": "gsti-pwa-empleado:build:production"
+            },
+            "es": {
+              "buildTarget": "gsti-pwa-empleado:build:es"
             },
             "development": {
               "buildTarget": "gsti-pwa-empleado:build:development"

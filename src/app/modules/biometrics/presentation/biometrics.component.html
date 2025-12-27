@@ -1,0 +1,46 @@
+<div class="biometrics-container">
+  <div class="biometrics-card" [@fadeInUp]>
+    <div class="biometrics-header">
+      <h1>{{ 'biometrics.title' | translate }}</h1>
+      <p>{{ 'biometrics.subtitle' | translate }}</p>
+    </div>
+
+    <div class="biometrics-content">
+      @if (!deviceSupportsBiometric()) {
+        <!-- Dispositivo no soporta biometría -->
+        <div class="biometric-status">
+          <div class="icon-container warning">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <h3>{{ 'biometrics.notSupported' | translate }}</h3>
+          <p>{{ 'biometrics.notSupportedDescription' | translate }}</p>
+        </div>
+      } @else if (biometricsEnabled()) {
+        <!-- Biometría habilitada -->
+        <div class="biometric-status">
+          <div class="icon-container success">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          <h3>{{ 'biometrics.biometricsEnabled' | translate }}</h3>
+          <p>{{ 'biometrics.enabledDescription' | translate }}</p>
+          <button type="button" class="disable-button" (click)="disableBiometrics()">
+            {{ 'biometrics.disable' | translate }}
+          </button>
+        </div>
+      } @else {
+        <!-- Biometría disponible pero no habilitada -->
+        <div class="biometric-status">
+          <div class="icon-container">
+            <i class="pi pi-shield"></i>
+          </div>
+          <h3>{{ 'biometrics.available' | translate }}</h3>
+          <p>{{ 'biometrics.availableDescription' | translate }}</p>
+          <button type="button" class="enable-button" (click)="enableBiometrics()">
+            {{ 'biometrics.enable' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+

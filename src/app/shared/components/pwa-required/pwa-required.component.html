@@ -1,0 +1,64 @@
+<div class="pwa-required-container">
+  <div class="pwa-required-card">
+    <div class="header-actions">
+      <app-language-selector></app-language-selector>
+      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('common.darkMode' | translate) : ('common.lightMode' | translate)">
+        @if (theme.theme() === 'light') {
+          <i class="pi pi-moon"></i>
+        } @else {
+          <i class="pi pi-sun"></i>
+        }
+      </button>
+    </div>
+
+    <div class="logo-container">
+      @if (showLogo()) {
+        <img
+          [src]="logoUrl()"
+          [alt]="'pwa.required.title' | translate"
+          class="pwa-logo"
+          id="app-logo"
+        />
+      } @else {
+        <div class="logo-placeholder">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+      }
+    </div>
+
+    <h1>{{ 'pwa.required.title' | translate }}</h1>
+    <p class="description">{{ 'pwa.required.description' | translate }}</p>
+
+    <div class="instructions">
+      <h2>{{ 'pwa.required.instructions.title' | translate }}</h2>
+
+      <div class="instruction-item">
+        <h3>{{ 'pwa.required.instructions.chrome.title' | translate }}</h3>
+        <ol>
+          <li>{{ 'pwa.required.instructions.chrome.step1' | translate }}</li>
+          <li>{{ 'pwa.required.instructions.chrome.step2' | translate }}</li>
+          <li>{{ 'pwa.required.instructions.chrome.step3' | translate }}</li>
+        </ol>
+      </div>
+
+      <div class="instruction-item">
+        <h3>{{ 'pwa.required.instructions.safari.title' | translate }}</h3>
+        <ol>
+          <li>{{ 'pwa.required.instructions.safari.step1' | translate }}</li>
+          <li>{{ 'pwa.required.instructions.safari.step2' | translate }}</li>
+        </ol>
+      </div>
+    </div>
+
+    <button type="button" class="check-button" (click)="checkAgain()">
+      {{ 'pwa.required.checkAgain' | translate }}
+    </button>
+
+    @if (getPwaInfo().displayMode !== 'standalone') {
+      <div class="debug-info">
+        <p><strong>{{ 'pwa.required.debug.mode' | translate }}:</strong> {{ getPwaInfo().displayMode }}</p>
+      </div>
+    }
+  </div>
+</div>
+

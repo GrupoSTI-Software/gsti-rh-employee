@@ -1,0 +1,161 @@
+{
+  "common": {
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password?",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "menu": "Menu",
+    "appName": "GSTI PWA"
+  },
+  "menu": {
+    "title": "Menu",
+    "attendance": "Attendance",
+    "profile": "Profile",
+    "settings": "Settings",
+    "biometrics": "Biometrics",
+    "apiConfig": "API Configuration"
+  },
+  "auth": {
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Enter your credentials to access",
+    "invalidCredentials": "Invalid credentials",
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logout successful",
+    "sessionExpired": "Your session has expired",
+    "unauthorized": "Unauthorized",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Email format is not valid",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Must be a valid email",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be at most {{max}} characters",
+    "pattern": "Format is not valid"
+  },
+  "errors": {
+    "generic": "An error occurred. Please try again",
+    "network": "Connection error. Check your internet",
+    "server": "Server error. Please try again later",
+    "notFound": "The requested resource was not found",
+    "unauthorized": "You don't have permission to perform this action"
+  },
+  "pwa": {
+    "required": {
+      "title": "PWA Application Required",
+      "description": "This application is only available as an installed PWA. Please install the application to continue.",
+      "checkAgain": "Check Again",
+      "instructions": {
+        "title": "How to Install",
+        "chrome": {
+          "title": "In Chrome (Android/Desktop)",
+          "step1": "Open the browser menu (three dots)",
+          "step2": "Select 'Install app' or 'Add to home screen'",
+          "step3": "Confirm the installation"
+        },
+        "safari": {
+          "title": "In Safari (iOS)",
+          "step1": "Tap the share button (square with arrow)",
+          "step2": "Select 'Add to Home Screen'"
+        }
+      },
+      "debug": {
+        "mode": "Display mode"
+      }
+    }
+  },
+  "attendance": {
+    "title": "Attendance Check",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "checkEatIn": "Lunch In",
+    "checkEatOut": "Lunch Out",
+    "loading": "Loading attendance...",
+    "error": "Error loading attendance",
+    "checkInSuccess": "Check-in registered successfully",
+    "checkOutSuccess": "Check-out registered successfully",
+    "locationError": "Error getting location",
+    "registerError": "Error registering attendance",
+    "exceptions": "Exceptions",
+    "records": "Attendance Records",
+    "reload": "Reload"
+  },
+  "profile": {
+    "loading": "Loading profile...",
+    "error": "Error loading profile",
+    "email": "Email",
+    "userId": "User ID",
+    "employeeId": "Employee ID"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage application preferences",
+    "biometricsOption": {
+      "title": "Biometrics",
+      "description": "Configure biometric authentication"
+    },
+    "themeOption": {
+      "title": "Theme",
+      "light": "Light Mode",
+      "dark": "Dark Mode"
+    },
+    "languageOption": {
+      "title": "Language",
+      "description": "Change the application language"
+    },
+    "profileOption": {
+      "title": "Profile",
+      "description": "View your account information"
+    },
+    "apiConfigOption": {
+      "title": "API Configuration",
+      "description": "Configure server URL"
+    },
+    "apiConfig": {
+      "title": "API Configuration",
+      "url": "Server URL",
+      "urlPlaceholder": "https://api.example.com",
+      "urlRequired": "URL is required",
+      "invalidUrl": "URL is not valid",
+      "save": "Save",
+      "urlSavedSuccessfully": "URL saved successfully"
+    }
+  },
+  "biometrics": {
+    "title": "Biometric Configuration",
+    "subtitle": "Manage biometric authentication",
+    "notSupported": "Biometrics not supported",
+    "notSupportedDescription": "Your device does not support biometric authentication",
+    "biometricsEnabled": "Biometrics enabled",
+    "enabledDescription": "Biometric authentication is active",
+    "available": "Biometrics available",
+    "availableDescription": "You can enable biometric authentication for faster access",
+    "enable": "Enable Biometrics",
+    "disable": "Disable Biometrics"
+  }
+}
+

@@ -1,0 +1,140 @@
+<div class="checkin-container" [@fadeIn]>
+  <div class="checkin-card" [@fadeInUp]>
+    <!-- Header -->
+    <div class="checkin-header">
+      <h1>{{ 'attendance.title' | translate }}</h1>
+      <div class="header-actions">
+        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.exceptions' | translate">
+          <i class="pi pi-exclamation-triangle"></i>
+        </button>
+        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.records' | translate">
+          <i class="pi pi-list"></i>
+        </button>
+        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.reload' | translate">
+          <i class="pi pi-refresh"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Icono de reloj circular -->
+    <div class="clock-icon-container" [@fadeInUp]>
+      <div class="clock-icon-circle">
+        <i class="pi pi-clock"></i>
+      </div>
+    </div>
+
+    <!-- Reloj -->
+    <div class="clock-container" [@fadeInUp]>
+      <div class="clock-time">{{ currentTime() }}</div>
+      <div class="clock-date">{{ formattedDate() }}</div>
+    </div>
+
+    <!-- Información del turno -->
+    @if (attendance()?.shiftInfo) {
+      <div class="shift-info" [@fadeInUp]>
+        <i class="pi pi-clock"></i>
+        <span>{{ attendance()?.shiftInfo }}</span>
+      </div>
+    }
+
+    <!-- Navegación de fechas -->
+    <div class="date-navigation" [@fadeInUp]>
+      <button type="button" class="date-nav-button" (click)="previousDay()">
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <span class="date-display">{{ formattedDate() }}</span>
+      <button type="button" class="date-nav-button" (click)="nextDay()">
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Estados de asistencia -->
+    <div class="attendance-status" [@fadeInUp]>
+      <div class="status-item">
+        <div class="status-left">
+          <i class="pi pi-sign-in status-icon"></i>
+          <span class="status-label">{{ 'attendance.checkIn' | translate }}</span>
+        </div>
+        <div class="status-right">
+          <span class="status-value" [class.has-value]="attendance()?.checkInTime">
+            {{ attendance()?.checkInTime || '--:--' }}
+          </span>
+          @if (attendance()?.checkInStatus) {
+            <span class="status-badge" [class]="'status-' + attendance()?.checkInStatus">
+              {{ attendance()?.checkInStatus }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-left">
+          <i class="pi pi-sign-in status-icon"></i>
+          <span class="status-label">{{ 'attendance.checkEatIn' | translate }}</span>
+        </div>
+        <div class="status-right">
+          <span class="status-value" [class.has-value]="attendance()?.checkEatInTime">
+            {{ attendance()?.checkEatInTime || '--:--' }}
+          </span>
+          @if (attendance()?.checkEatInStatus) {
+            <span class="status-badge" [class]="'status-' + attendance()?.checkEatInStatus">
+              {{ attendance()?.checkEatInStatus }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-left">
+          <i class="pi pi-sign-out status-icon"></i>
+          <span class="status-label">{{ 'attendance.checkEatOut' | translate }}</span>
+        </div>
+        <div class="status-right">
+          <span class="status-value" [class.has-value]="attendance()?.checkEatOutTime">
+            {{ attendance()?.checkEatOutTime || '--:--' }}
+          </span>
+          @if (attendance()?.checkEatOutStatus) {
+            <span class="status-badge" [class]="'status-' + attendance()?.checkEatOutStatus">
+              {{ attendance()?.checkEatOutStatus }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="status-item">
+        <div class="status-left">
+          <i class="pi pi-sign-out status-icon"></i>
+          <span class="status-label">{{ 'attendance.checkOut' | translate }}</span>
+        </div>
+        <div class="status-right">
+          <span class="status-value" [class.has-value]="attendance()?.checkOutTime">
+            {{ attendance()?.checkOutTime || '--:--' }}
+          </span>
+          @if (attendance()?.checkOutStatus) {
+            <span class="status-badge" [class]="'status-' + attendance()?.checkOutStatus">
+              {{ attendance()?.checkOutStatus }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+
+    <!-- Mensaje de error -->
+    @if (error()) {
+      <div class="error-message" [@fadeInUp]>
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'common.loading' | translate }}</span>
+      </div>
+    }
+  </div>
+</div>
+

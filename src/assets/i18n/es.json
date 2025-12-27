@@ -1,0 +1,161 @@
+{
+  "common": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "darkMode": "Modo Oscuro",
+    "lightMode": "Modo Claro",
+    "menu": "Menú",
+    "appName": "GSTI PWA"
+  },
+  "menu": {
+    "title": "Menú",
+    "attendance": "Asistencia",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "biometrics": "Biometría",
+    "apiConfig": "Configuración de API"
+  },
+  "auth": {
+    "loginTitle": "Iniciar Sesión",
+    "loginSubtitle": "Ingresa tus credenciales para acceder",
+    "invalidCredentials": "Credenciales inválidas",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "logoutSuccess": "Sesión cerrada correctamente",
+    "sessionExpired": "Tu sesión ha expirado",
+    "unauthorized": "No autorizado",
+    "emailRequired": "El correo electrónico es requerido",
+    "emailInvalid": "El formato del correo no es válido",
+    "passwordRequired": "La contraseña es requerida",
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres"
+  },
+  "validation": {
+    "required": "Este campo es requerido",
+    "email": "Debe ser un correo electrónico válido",
+    "minLength": "Debe tener al menos {{min}} caracteres",
+    "maxLength": "Debe tener máximo {{max}} caracteres",
+    "pattern": "El formato no es válido"
+  },
+  "errors": {
+    "generic": "Ha ocurrido un error. Por favor intenta nuevamente",
+    "network": "Error de conexión. Verifica tu internet",
+    "server": "Error del servidor. Por favor intenta más tarde",
+    "notFound": "No se encontró el recurso solicitado",
+    "unauthorized": "No tienes permisos para realizar esta acción"
+  },
+  "pwa": {
+    "required": {
+      "title": "Aplicación PWA Requerida",
+      "description": "Esta aplicación solo está disponible como PWA instalada. Por favor, instala la aplicación para continuar.",
+      "checkAgain": "Verificar Nuevamente",
+      "instructions": {
+        "title": "Cómo Instalar",
+        "chrome": {
+          "title": "En Chrome (Android/Desktop)",
+          "step1": "Abre el menú del navegador (tres puntos)",
+          "step2": "Selecciona 'Instalar aplicación' o 'Agregar a pantalla de inicio'",
+          "step3": "Confirma la instalación"
+        },
+        "safari": {
+          "title": "En Safari (iOS)",
+          "step1": "Toca el botón de compartir (cuadrado con flecha)",
+          "step2": "Selecciona 'Agregar a pantalla de inicio'"
+        }
+      },
+      "debug": {
+        "mode": "Modo de visualización"
+      }
+    }
+  },
+  "attendance": {
+    "title": "Registro de Asistencia",
+    "checkIn": "Entrada",
+    "checkOut": "Salida",
+    "checkEatIn": "Entrada a Comer",
+    "checkEatOut": "Salida a Comer",
+    "loading": "Cargando asistencia...",
+    "error": "Error al cargar la asistencia",
+    "checkInSuccess": "Check-in registrado exitosamente",
+    "checkOutSuccess": "Check-out registrado exitosamente",
+    "locationError": "Error al obtener la ubicación",
+    "registerError": "Error al registrar la asistencia",
+    "exceptions": "Excepciones",
+    "records": "Registro de Asistencia",
+    "reload": "Recargar"
+  },
+  "profile": {
+    "loading": "Cargando perfil...",
+    "error": "Error al cargar el perfil",
+    "email": "Correo Electrónico",
+    "userId": "ID de Usuario",
+    "employeeId": "ID de Empleado"
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Gestiona las preferencias de la aplicación",
+    "biometricsOption": {
+      "title": "Biometría",
+      "description": "Configura autenticación biométrica"
+    },
+    "themeOption": {
+      "title": "Tema",
+      "light": "Modo Claro",
+      "dark": "Modo Oscuro"
+    },
+    "languageOption": {
+      "title": "Idioma",
+      "description": "Cambiar el idioma de la aplicación"
+    },
+    "profileOption": {
+      "title": "Perfil",
+      "description": "Ver información de tu cuenta"
+    },
+    "apiConfigOption": {
+      "title": "Configuración de API",
+      "description": "Configura la URL del servidor"
+    },
+    "apiConfig": {
+      "title": "Configuración de API",
+      "url": "URL del Servidor",
+      "urlPlaceholder": "https://api.ejemplo.com",
+      "urlRequired": "La URL es requerida",
+      "invalidUrl": "La URL no es válida",
+      "save": "Guardar",
+      "urlSavedSuccessfully": "URL guardada exitosamente"
+    }
+  },
+  "biometrics": {
+    "title": "Configuración Biométrica",
+    "subtitle": "Gestiona la autenticación biométrica",
+    "notSupported": "Biometría no soportada",
+    "notSupportedDescription": "Tu dispositivo no soporta autenticación biométrica",
+    "biometricsEnabled": "Biometría habilitada",
+    "enabledDescription": "La autenticación biométrica está activa",
+    "available": "Biometría disponible",
+    "availableDescription": "Puedes habilitar la autenticación biométrica para un acceso más rápido",
+    "enable": "Habilitar Biometría",
+    "disable": "Deshabilitar Biometría"
+  }
+}
+
