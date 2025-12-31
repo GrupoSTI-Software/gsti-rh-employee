@@ -68,7 +68,8 @@
   }
 
   input[type='email'],
-  input[type='password'] {
+  input[type='password'],
+  input[type='text'] {
     @include input-base;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
@@ -79,6 +80,52 @@
 
     &.error {
       @include input-error;
+    }
+  }
+
+  .password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    input {
+      padding-right: 48px; // Espacio para el botón
+      width: 100%;
+    }
+
+    .password-toggle-button {
+      position: absolute;
+      right: $spacing-sm;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: $spacing-xs;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: color 0.2s ease, transform 0.2s ease;
+      border-radius: $radius;
+      min-width: 32px;
+      min-height: 32px;
+
+      &:hover {
+        color: var(--primary);
+        background: var(--bg-hover);
+        transform: scale(1.1);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      &:focus {
+        outline-offset: 2px;
+      }
+
+      i {
+        font-size: $font-size-lg;
+      }
     }
   }
 

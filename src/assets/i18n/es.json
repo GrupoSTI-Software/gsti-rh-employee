@@ -1,46 +1,19 @@
 {
-  "common": {
-    "login": "Iniciar Sesión",
-    "logout": "Cerrar Sesión",
-    "email": "Correo Electrónico",
-    "password": "Contraseña",
-    "rememberMe": "Recordarme",
-    "forgotPassword": "¿Olvidaste tu contraseña?",
-    "submit": "Enviar",
-    "cancel": "Cancelar",
-    "loading": "Cargando...",
-    "error": "Error",
-    "success": "Éxito",
-    "save": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "create": "Crear",
-    "search": "Buscar",
-    "filter": "Filtrar",
-    "close": "Cerrar",
-    "confirm": "Confirmar",
-    "yes": "Sí",
-    "no": "No",
-    "back": "Volver",
-    "next": "Siguiente",
-    "previous": "Anterior",
-    "darkMode": "Modo Oscuro",
-    "lightMode": "Modo Claro",
-    "menu": "Menú",
-    "appName": "GSTI PWA"
-  },
   "menu": {
     "title": "Menú",
     "attendance": "Asistencia",
     "profile": "Perfil",
     "settings": "Configuración",
     "biometrics": "Biometría",
-    "apiConfig": "Configuración de API"
+    "apiConfig": "Configuración de API",
+    "menu": "Menú",
+    "close": "Cerrar",
+    "logout": "Cerrar Sesión"
   },
   "auth": {
     "loginTitle": "Iniciar Sesión",
     "loginSubtitle": "Ingresa tus credenciales para acceder",
-    "invalidCredentials": "Credenciales inválidas",
+    "invalidCredentials": "Tu usuario y/o contraseña son incorrectas",
     "loginSuccess": "Inicio de sesión exitoso",
     "logoutSuccess": "Sesión cerrada correctamente",
     "sessionExpired": "Tu sesión ha expirado",
@@ -48,7 +21,21 @@
     "emailRequired": "El correo electrónico es requerido",
     "emailInvalid": "El formato del correo no es válido",
     "passwordRequired": "La contraseña es requerida",
-    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres"
+    "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "submit": "Enviar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "darkMode": "Modo Oscuro",
+    "lightMode": "Modo Claro",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "validation": {
     "required": "Este campo es requerido",
@@ -69,6 +56,17 @@
       "title": "Aplicación PWA Requerida",
       "description": "Esta aplicación solo está disponible como PWA instalada. Por favor, instala la aplicación para continuar.",
       "checkAgain": "Verificar Nuevamente",
+      "loading": "Cargando...",
+      "error": "Error",
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar",
+      "yes": "Sí",
+      "no": "No",
+      "back": "Volver",
+      "next": "Siguiente",
+      "darkMode": "Modo Oscuro",
+      "lightMode": "Modo Claro",
       "instructions": {
         "title": "Cómo Instalar",
         "chrome": {
@@ -102,14 +100,28 @@
     "registerError": "Error al registrar la asistencia",
     "exceptions": "Excepciones",
     "records": "Registro de Asistencia",
-    "reload": "Recargar"
+    "reload": "Recargar",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior"
   },
   "profile": {
     "loading": "Cargando perfil...",
     "error": "Error al cargar el perfil",
     "email": "Correo Electrónico",
     "userId": "ID de Usuario",
-    "employeeId": "ID de Empleado"
+    "employeeId": "ID de Empleado",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar"
   },
   "settings": {
     "title": "Configuración",
@@ -143,7 +155,21 @@
       "invalidUrl": "La URL no es válida",
       "save": "Guardar",
       "urlSavedSuccessfully": "URL guardada exitosamente"
-    }
+    },
+    "loading": "Cargando...",
+    "error": "Error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "back": "Volver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "edit": "Editar",
+    "create": "Crear",
+    "delete": "Eliminar"
   },
   "biometrics": {
     "title": "Configuración Biométrica",
@@ -155,7 +181,20 @@
     "available": "Biometría disponible",
     "availableDescription": "Puedes habilitar la autenticación biométrica para un acceso más rápido",
     "enable": "Habilitar Biometría",
-    "disable": "Deshabilitar Biometría"
+    "disable": "Deshabilitar Biometría",
+    "loading": "Cargando...",
+    "error": "Error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "header": {
+    "menu": "Menú",
+    "appName": "GSTI PWA",
+    "logout": "Cerrar Sesión",
+    "close": "Cerrar"
   }
 }
-

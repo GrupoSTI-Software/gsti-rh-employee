@@ -126,7 +126,7 @@ export class BrandingService {
 
     // Crear nuevo manifest con los iconos actualizados
     const manifest = {
-      name: `${tradeName} - PWA Empleado`,
+      name: `${tradeName}`,
       short_name: tradeName,
       description: `Aplicación PWA para empleados de ${tradeName}`,
       theme_color: `#${sidebarColor}`,
@@ -251,7 +251,7 @@ export class BrandingService {
   private updateTitle(tradeName: string): void {
     if (!tradeName) return;
 
-    document.title = `${tradeName} - PWA Empleado`;
+    document.title = `${tradeName}`;
   }
 
   /**

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { PwaDetectionService } from '@core/services/pwa-detection.service';
-
+import { environment } from '@env/environment';
 /**
  * Guard que protege rutas para que solo sean accesibles desde una PWA instalada
  * Si el usuario intenta acceder desde un navegador normal, será redirigido
@@ -10,12 +10,17 @@ export const pwaGuard: CanActivateFn = (route, state) => {
   const pwaService = inject(PwaDetectionService);
   const router = inject(Router);
 
+  // En desarrollo, permitir acceso directo desde el navegador web
+  if (!environment.production) {
+    return true;
+  }
+
+  // En producción, solo permitir si está instalada como PWA
   if (pwaService.isRunningAsPwa()) {
     return true;
   }
 
-  // Si no está en modo PWA, redirigir a una página de error o información
-  // Puedes cambiar esto según tus necesidades
+  // Si no está en modo PWA en producción, redirigir a página de información
   router.navigate(['/pwa-required'], {
     queryParams: { returnUrl: state.url }
   });
@@ -29,7 +34,6 @@ export const pwaGuard: CanActivateFn = (route, state) => {
 export const nonPwaGuard: CanActivateFn = (route, state) => {
   const pwaService = inject(PwaDetectionService);
   const router = inject(Router);
-
   if (!pwaService.isRunningAsPwa()) {
     return true;
   }
