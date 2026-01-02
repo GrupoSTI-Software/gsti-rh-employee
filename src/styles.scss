@@ -1,4 +1,7 @@
-@import './styles/_primeng.scss';/* Reset CSS básico */
+/* Estilos globales para componentes PrimeNG */
+@use './styles/_primeng.scss' as *;
+
+/* Reset CSS básico */
 * {
   margin: 0;
   padding: 0;
@@ -98,6 +101,4 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
 }
-
-/* Estilos globales para componentes PrimeNG */
 
