@@ -1,0 +1,94 @@
+// ============================================
+// Estilos globales para componentes PrimeNG
+// ============================================
+
+@use './variables' as *;
+
+/* ============================================
+   PrimeNG Select - Estilos globales
+   ============================================ */
+
+/* Borde del select cuando tiene focus - Sobrescribir color verde por azul primario */
+.p-select.p-focus .p-select-trigger,
+.p-select:focus .p-select-trigger,
+.p-select.p-inputwrapper-focus .p-select-trigger,
+.p-select[data-p-focus="true"] .p-select-trigger,
+.p-select .p-select-trigger.p-focus,
+.p-select .p-select-trigger:focus,
+.p-select.p-focus .p-select-trigger[class],
+.p-select:focus .p-select-trigger[class],
+div.p-select.p-focus .p-select-trigger,
+div.p-select:focus .p-select-trigger {
+  border-color: var(--bg-active) !important;
+  border: 1px solid var(--bg-active) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.2) !important;
+  outline: none !important;
+}
+
+/* Opciones del dropdown - Hover y estados activos */
+.p-select:not(.p-disabled).p-focus {
+  border: 1px solid var(--bg-active) !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--bg-active-rgb), 0.2) !important;
+}
+.p-select-overlay .p-select-option {
+  transition: background-color $transition-base, color $transition-base;
+
+  /* Estados hover - Usar bg-active para un color más suave y claro */
+  &:hover {
+    background: var(--bg-active) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Estado seleccionado y focus - Usar primary en light, secondary en dark */
+  &.p-select-option-selected,
+  &.p-focus,
+  &[data-p-highlight="true"],
+  &[data-p-selected="true"],
+  &[aria-selected="true"] {
+    /* En tema claro usa primary, en tema oscuro usa secondary */
+    background: var(--bg-active) !important;
+    background-color: var(--bg-active) !important;
+    color: var(--text-primary) !important;
+  }
+
+  /* Combinación de clases que usa PrimeNG cuando está seleccionado */
+  &.p-select-option-selected.p-focus,
+  &[data-p-highlight="true"][data-p-selected="true"] {
+    background: var(--primary) !important;
+    background-color: var(--primary) !important;
+    color: white !important;
+  }
+}
+
+/* Opciones seleccionadas - Selectores adicionales para mayor especificidad */
+/* En tema claro usa primary (#093057), en tema oscuro usa secondary */
+[data-theme='light'] .p-select-overlay .p-select-option.p-select-option-selected,
+[data-theme='light'] .p-select-overlay .p-select-option.p-select-option-selected.p-focus,
+[data-theme='light'] .p-select-overlay .p-select-option[data-p-highlight="true"][data-p-selected="true"],
+[data-theme='light'] .p-select-overlay .p-select-option[aria-selected="true"][data-p-selected="true"],
+[data-theme='light'] .p-select-overlay li.p-select-option.p-select-option-selected.p-focus,
+[data-theme='light'] .p-select-overlay li.p-select-option[data-p-highlight="true"][data-p-selected="true"] {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: white !important;
+}
+
+/* En tema oscuro mantiene el comportamiento actual con secondary */
+[data-theme='dark'] .p-select-overlay .p-select-option.p-select-option-selected,
+[data-theme='dark'] .p-select-overlay .p-select-option.p-select-option-selected.p-focus,
+[data-theme='dark'] .p-select-overlay .p-select-option[data-p-highlight="true"][data-p-selected="true"],
+[data-theme='dark'] .p-select-overlay .p-select-option[aria-selected="true"][data-p-selected="true"],
+[data-theme='dark'] .p-select-overlay li.p-select-option.p-select-option-selected.p-focus,
+[data-theme='dark'] .p-select-overlay li.p-select-option[data-p-highlight="true"][data-p-selected="true"] {
+  background: var(--secondary) !important;
+  background-color: var(--secondary) !important;
+  color: white !important;
+}
+
+/* Sobrescribir cualquier estilo inline que PrimeNG pueda estar aplicando */
+.p-select.p-focus .p-select-trigger[style*="border"],
+.p-select:focus .p-select-trigger[style*="border"] {
+  border-color: var(--primary) !important;
+}

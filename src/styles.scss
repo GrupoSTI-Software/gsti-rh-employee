@@ -1,4 +1,4 @@
-/* Reset CSS básico */
+@import './styles/_primeng.scss';/* Reset CSS básico */
 * {
   margin: 0;
   padding: 0;
@@ -46,6 +46,13 @@
   --info: #3cb4e5;
   --warning: #ff993a;
   --danger: #cd360c;
+
+  /* RGB del primary para usar en rgba */
+  --primary-rgb: 9, 48, 87;
+  /* RGB del secondary para usar en rgba */
+  --secondary-rgb: 36, 111, 215;
+
+  /* Variables CSS de PrimeNG Select - Sobrescribir color verde por azul primario */
 }
 
 /* Variables CSS para tema oscuro */
@@ -68,14 +75,17 @@
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
 
   /* Colores del sistema */
-  --primary: #246fd7;
-  --primary-dark: #093057;
-  --secondary: #3cb4e5;
-  --accent: #4a6fa5;
-  --success: #33d4ad;
-  --info: #3cb4e5;
-  --warning: #ff993a;
-  --danger: #cd360c;
+
+
+  /* RGB del primary para usar en rgba */
+  --primary-rgb: 36, 111, 215;
+  /* RGB del secondary para usar en rgba */
+  --secondary-rgb: 60, 180, 229;
+
+  /* Variables CSS de PrimeNG Select - Sobrescribir color verde por azul primario */
+  --p-select-focus-border-color: var( --bg-active);
+  --p-select-focus-ring-color: var( --bg-active);
+  --p-select-focus-ring-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.2);
 }
 
 /* Transiciones suaves para cambio de tema */
@@ -88,3 +98,6 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
 }
+
+/* Estilos globales para componentes PrimeNG */
+

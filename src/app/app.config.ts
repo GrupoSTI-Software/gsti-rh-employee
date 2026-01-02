@@ -33,7 +33,15 @@ export const appConfig: ApplicationConfig = {
         preset: Aura,
         options: {
           darkModeSelector: '[data-theme="dark"]',
-          cssClass: 'p-component'
+          cssClass: 'p-component',
+          // Sobrescribir colores de focus para usar el color primario azul
+          focusRing: {
+            width: '0.2rem',
+            style: 'solid',
+            color: 'var(--primary)',
+            offset: '0',
+            shadow: '0 0 0 0.2rem rgba(var(--primary-rgb), 0.2)'
+          }
         }
       }
     }),

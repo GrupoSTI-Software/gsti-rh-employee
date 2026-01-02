@@ -1,7 +1,7 @@
 import { Injectable, signal, effect, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
-export type Theme = 'light' | 'dark';
+export type Theme = 'light' | 'dark' | 'system';
 
 @Injectable({
   providedIn: 'root'
@@ -10,30 +10,70 @@ export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly THEME_STORAGE_KEY = 'app-theme';
   private readonly themeSignal = signal<Theme>(this.getInitialTheme());
+  private systemThemeMediaQuery?: MediaQueryList;
+  private systemThemeListener?: (e: MediaQueryListEvent) => void;
 
   readonly theme = this.themeSignal.asReadonly();
+
+  // Computed para obtener el tema efectivo (si es 'system', devuelve el tema del sistema)
+  readonly effectiveTheme = signal<'light' | 'dark'>(this.getEffectiveTheme());
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       // Aplicar tema inicial solo en el navegador
-      this.applyTheme(this.themeSignal());
+      this.applyTheme(this.getEffectiveTheme());
 
       // Efecto para aplicar cambios de tema
       effect(() => {
         const theme = this.themeSignal();
-        this.applyTheme(theme);
+        const effectiveTheme = this.getEffectiveTheme();
+        this.effectiveTheme.set(effectiveTheme);
+        this.applyTheme(effectiveTheme);
         this.saveTheme(theme);
+        this.setupSystemThemeListener();
       });
 
-      // Escuchar cambios del sistema
-      if (typeof window !== 'undefined' && window.matchMedia) {
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        mediaQuery.addEventListener('change', () => {
-          if (!localStorage.getItem(this.THEME_STORAGE_KEY)) {
-            this.setTheme(mediaQuery.matches ? 'dark' : 'light');
-          }
-        });
+      // Configurar listener inicial para cambios del sistema
+      this.setupSystemThemeListener();
+    }
+  }
+
+  /**
+   * Obtiene el tema efectivo (si es 'system', devuelve el tema del sistema)
+   */
+  private getEffectiveTheme(): 'light' | 'dark' {
+    const theme = this.themeSignal();
+    if (theme === 'system') {
+      if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined' && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
+      return 'light';
+    }
+    return theme;
+  }
+
+  /**
+   * Configura el listener para cambios del sistema cuando el tema es 'system'
+   */
+  private setupSystemThemeListener(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Remover listener anterior si existe
+    if (this.systemThemeListener && this.systemThemeMediaQuery) {
+      this.systemThemeMediaQuery.removeEventListener('change', this.systemThemeListener);
+    }
+
+    // Solo escuchar cambios del sistema si el tema está en 'system'
+    if (this.themeSignal() === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+      this.systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemThemeListener = () => {
+        const effectiveTheme = this.getEffectiveTheme();
+        this.effectiveTheme.set(effectiveTheme);
+        this.applyTheme(effectiveTheme);
+      };
+      this.systemThemeMediaQuery.addEventListener('change', this.systemThemeListener);
     }
   }
 
@@ -47,29 +87,20 @@ export class ThemeService {
 
   private getInitialTheme(): Theme {
     if (!isPlatformBrowser(this.platformId)) {
-      return 'light'; // Por defecto light en SSR
+      return 'system'; // Por defecto system en SSR
     }
 
-    // Primero verificar localStorage
-    const savedTheme = localStorage.getItem(
-      this.THEME_STORAGE_KEY
-    ) as Theme | null;
-    if (savedTheme === 'light' || savedTheme === 'dark') {
+    // Verificar localStorage
+    const savedTheme = localStorage.getItem(this.THEME_STORAGE_KEY) as Theme | null;
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       return savedTheme;
     }
 
-    // Luego verificar preferencia del sistema
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light';
-    }
-
-    // Por defecto light
-    return 'light';
+    // Por defecto usar el tema del sistema
+    return 'system';
   }
 
-  private applyTheme(theme: Theme): void {
+  private applyTheme(theme: 'light' | 'dark'): void {
     if (isPlatformBrowser(this.platformId) && typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
     }

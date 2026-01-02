@@ -133,7 +133,8 @@
     "themeOption": {
       "title": "Theme",
       "light": "Light Mode",
-      "dark": "Dark Mode"
+      "dark": "Dark Mode",
+      "system": "System"
     },
     "languageOption": {
       "title": "Language",

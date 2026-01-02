@@ -21,36 +21,50 @@
       </button>
 
       <!-- Opción de Tema -->
-      <button type="button" class="option-card" (click)="toggleTheme()">
+      <div class="option-card select-card">
         <div class="option-left">
           <div class="icon-container">
-            @if (theme.theme() === 'light') {
-              <i class="pi pi-moon"></i>
-            } @else {
+            @if (theme.effectiveTheme() === 'light') {
               <i class="pi pi-sun"></i>
+            } @else {
+              <i class="pi pi-moon"></i>
             }
           </div>
           <div class="option-content">
             <h3>{{ 'settings.themeOption.title' | translate }}</h3>
-            <p>{{ theme.theme() === 'light' ? ('settings.themeOption.light' | translate) : ('settings.themeOption.dark' | translate) }}</p>
+            <p-select
+              [options]="themeOptions"
+              [(ngModel)]="selectedTheme"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'settings.themeOption.title' | translate"
+              class="w-full"
+              (ngModelChange)="onThemeChange()"
+            />
           </div>
         </div>
-        <i class="pi pi-chevron-right"></i>
-      </button>
+      </div>
 
       <!-- Opción de Idioma -->
-      <button type="button" class="option-card" (click)="toggleLanguage()">
+      <div class="option-card select-card">
         <div class="option-left">
           <div class="icon-container">
             <i class="pi pi-globe"></i>
           </div>
           <div class="option-content">
             <h3>{{ 'settings.languageOption.title' | translate }}</h3>
-            <p>{{ currentLanguageLabel() }}</p>
+            <p-select
+              [options]="languageOptions"
+              [(ngModel)]="selectedLanguage"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'settings.languageOption.title' | translate"
+              class="w-full"
+              (ngModelChange)="onLanguageChange()"
+            />
           </div>
         </div>
-        <i class="pi pi-chevron-right"></i>
-      </button>
+      </div>
 
       <!-- Opción de Perfil -->
       <button type="button" class="option-card" (click)="navigateToProfile()">
