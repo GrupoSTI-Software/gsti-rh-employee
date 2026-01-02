@@ -45,7 +45,7 @@
           <input
             id="password"
             [type]="showPassword() ? 'text' : 'password'"
-            formcontrolname="password"
+            formControlName="password"
             [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
             [placeholder]="'auth.password' | translate"
           >
@@ -72,7 +72,7 @@
       @if(false) {
       <div class="form-group checkbox-group">
         <label>
-          <input type="checkbox" formcontrolname="rememberMe" />
+          <input type="checkbox" formControlName="rememberMe" />
           <span>{{ 'auth.rememberMe' | translate }}</span>
         </label>
         <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
