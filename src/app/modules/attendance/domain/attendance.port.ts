@@ -35,6 +35,9 @@ export interface Attendance {
   checkEatInStatus: string | null;
   checkEatOutStatus: string | null;
   shiftInfo: string | null;
+  shiftTimeStart: string | null;
+  shiftTimeEnd: string | null;
+  shiftName: string | null;
   isRestDay: boolean;
   isWorkDisabilityDate: boolean;
   isVacationDate: boolean;
@@ -58,11 +61,38 @@ export interface Assistance {
  */
 export interface Exception {
   shiftExceptionId: number;
-  type: string;
+  employeeId: number;
+  exceptionTypeId: number;
+  shiftExceptionsDate: string;
   shiftExceptionsDescription: string;
-  shiftExceptionCheckInTime: string;
-  shiftExceptionCheckOutTime: string;
-  evidences: Evidence[];
+  shiftExceptionCheckInTime: string | null;
+  shiftExceptionCheckOutTime: string | null;
+  shiftExceptionEnjoymentOfSalary: number;
+  shiftExceptionTimeByTime: string | null;
+  workDisabilityPeriodId: number | null;
+  shiftExceptionsCreatedAt: string;
+  shiftExceptionsUpdatedAt: string;
+  deletedAt: string | null;
+  vacationSettingId: number | null;
+  exceptionType: {
+    exceptionTypeId: number;
+    exceptionTypeTypeName: string;
+    exceptionTypeIcon: string;
+    exceptionTypeSlug: string;
+    exceptionTypeIsGeneral: number;
+    exceptionTypeNeedCheckInTime: number;
+    exceptionTypeNeedCheckOutTime: number;
+    exceptionTypeNeedReason: number;
+    exceptionTypeNeedEnjoymentOfSalary: number;
+    exceptionTypeNeedPeriodInDays: number;
+    exceptionTypeNeedPeriodInHours: number;
+    exceptionTypeActive: number;
+    exceptionTypeCanMasive: number;
+    exceptionTypeCreatedAt: string;
+    exceptionTypeUpdatedAt: string;
+    deletedAt: string | null;
+  };
+  evidences?: Evidence[];
 }
 
 /**
@@ -78,6 +108,27 @@ export interface Evidence {
  * Respuesta de la API para obtener asistencia
  */
 export interface AttendanceApiResponse {
+  status: number;
+  type: string;
+  title: string;
+  message: string;
+  data: {
+    employeeCalendar: EmployeeCalendarDay[];
+  };
+}
+
+/**
+ * Día del calendario del empleado
+ */
+export interface EmployeeCalendarDay {
+  day: string;
+  assist: EmployeeAssist;
+}
+
+/**
+ * Datos de asistencia del empleado
+ */
+export interface EmployeeAssist {
   checkIn: {
     assistPunchTimeUtc: string | null;
   } | null;
@@ -90,16 +141,39 @@ export interface AttendanceApiResponse {
   checkEatOut: {
     assistPunchTimeUtc: string | null;
   } | null;
+  dateShift: {
+    shiftId: number;
+    shiftName: string;
+    shiftDayStart: number;
+    shiftTimeStart: string;
+    shiftActiveHours: string;
+    shiftRestDays: string;
+    shiftAccumulatedFault: number;
+    shiftCreatedAt: string;
+    shiftUpdatedAt: string;
+    shiftCalculateFlag: string | null;
+    shiftIsChange: boolean;
+  } | null;
+  dateShiftApplySince: string | null;
+  employeeShiftId: number | null;
+  shiftCalculateFlag: string | null;
+  checkInDateTime: string | null;
+  checkOutDateTime: string | null;
   checkInStatus: string | null;
   checkOutStatus: string | null;
-  checkEatInStatus: string | null;
-  checkEatOutStatus: string | null;
-  shiftInfo: string | null;
+  isFutureDay: boolean;
+  isSundayBonus: boolean;
   isRestDay: boolean;
-  isWorkDisabilityDate: boolean;
   isVacationDate: boolean;
+  isWorkDisabilityDate: boolean;
   isHoliday: boolean;
-  assitFlatList: Assistance[];
+  isBirthday: boolean;
+  holiday: any | null;
+  hasExceptions: boolean;
   exceptions: Exception[];
+  assitFlatList: Assistance[];
+  isCheckOutNextDay: boolean;
+  isCheckInEatNextDay: boolean;
+  isCheckOutEatNextDay: boolean;
 }
 
