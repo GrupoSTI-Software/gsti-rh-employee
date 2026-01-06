@@ -2,8 +2,10 @@
 @use '../../../../styles/mixins' as *;
 
 .profile-container {
-  min-height: 100%;
+  min-height: 100vh;
   padding: $spacing-lg;
+  padding-top: calc(64px + $spacing-lg); // Altura del header fijo + padding
+  background: var(--bg-secondary);
 }
 
 .loading-container,

@@ -88,6 +88,7 @@
   },
   "attendance": {
     "title": "Registro de Asistencia",
+    "register": "Registrar",
     "checkIn": "Entrada",
     "checkOut": "Salida",
     "checkEatIn": "Entrada a Comer",
@@ -101,6 +102,13 @@
     "exceptions": "Excepciones",
     "records": "Registro de Asistencia",
     "reload": "Recargar",
+    "selectDate": "Seleccionar Fecha",
+    "noExceptions": "No hay excepciones registradas",
+    "noRecords": "No hay registros de asistencia",
+    "recordId": "ID de Registro",
+    "terminal": "Terminal",
+    "area": "Área",
+    "location": "Ubicación",
     "success": "Éxito",
     "cancel": "Cancelar",
     "close": "Cerrar",
@@ -109,7 +117,11 @@
     "no": "No",
     "back": "Volver",
     "next": "Siguiente",
-    "previous": "Anterior"
+    "previous": "Anterior",
+    "previousDay": "Día anterior",
+    "nextDay": "Día siguiente",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente"
   },
   "profile": {
     "loading": "Cargando perfil...",
