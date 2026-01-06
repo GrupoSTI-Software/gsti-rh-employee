@@ -4,63 +4,83 @@
     <div class="checkin-header">
       <h1>{{ 'attendance.title' | translate }}</h1>
       <div class="header-actions">
-        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.exceptions' | translate">
-          <i class="pi pi-exclamation-triangle"></i>
+        <button type="button" class="action-icon-button" (click)="openExceptionsDialog()" [attr.aria-label]="'attendance.exceptions' | translate">
+          <i class="pi pi-file-check"></i>
         </button>
-        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.records' | translate">
+        <button type="button" class="action-icon-button" (click)="openRecordsDialog()" [attr.aria-label]="'attendance.records' | translate">
           <i class="pi pi-list"></i>
         </button>
-        <button type="button" class="action-icon-button" [attr.aria-label]="'attendance.reload' | translate">
-          <i class="pi pi-refresh"></i>
+        <button type="button" class="action-icon-button" (click)="openDatePicker()" [attr.aria-label]="'attendance.selectDate' | translate">
+          <i class="pi pi-calendar"></i>
         </button>
       </div>
     </div>
 
-    <!-- Icono de reloj circular -->
-    <div class="clock-icon-container" [@fadeInUp]>
+    <!-- Icono de reloj circular con botón de registro -->
+    <button
+      type="button"
+      class="clock-icon-container"
+      [@fadeInUp]
+      (click)="handleRegisterCheckIn()"
+      [disabled]="!canCheckIn() || loading()"
+      [attr.aria-label]="'attendance.register' | translate">
       <div class="clock-icon-circle">
-        <i class="pi pi-clock"></i>
+        <app-check-in-icon [size]="40" [color]="'white'"></app-check-in-icon>
+        <span class="register-label">{{ 'attendance.register' | translate }}</span>
       </div>
-    </div>
+    </button>
 
-    <!-- Reloj -->
-    <div class="clock-container" [@fadeInUp]>
-      <div class="clock-time">{{ currentTime() }}</div>
-      <div class="clock-date">{{ formattedDate() }}</div>
+    <!-- Información de fecha y hora -->
+    <div class="time-info-card" [@fadeInUp]>
+      <div class="time-display">{{ currentTime() }}</div>
+      <div class="date-display">{{ formattedDate() }}</div>
+      @if (attendance()?.shiftInfo) {
+        <div class="shift-display">
+          {{ attendance()?.shiftName }}
+        </div>
+      }
     </div>
-
-    <!-- Información del turno -->
-    @if (attendance()?.shiftInfo) {
-      <div class="shift-info" [@fadeInUp]>
-        <i class="pi pi-clock"></i>
-        <span>{{ attendance()?.shiftInfo }}</span>
-      </div>
-    }
 
     <!-- Navegación de fechas -->
     <div class="date-navigation" [@fadeInUp]>
-      <button type="button" class="date-nav-button" (click)="previousDay()">
-        <i class="pi pi-chevron-left"></i>
-      </button>
+      <div class="date-nav-group">
+        <button type="button" class="date-nav-button" (click)="previousMonth()" [attr.aria-label]="'attendance.previousMonth' | translate">
+          <i class="pi pi-angle-double-left"></i>
+        </button>
+        <button type="button" class="date-nav-button" (click)="previousDay()" [attr.aria-label]="'attendance.previousDay' | translate">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+      </div>
       <span class="date-display">{{ formattedDate() }}</span>
-      <button type="button" class="date-nav-button" (click)="nextDay()">
-        <i class="pi pi-chevron-right"></i>
-      </button>
+      <div class="date-nav-group">
+        <button type="button" class="date-nav-button" (click)="nextDay()" [disabled]="!canNavigateForward()" [attr.aria-label]="'attendance.nextDay' | translate">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+        <button type="button" class="date-nav-button" (click)="nextMonth()" [disabled]="!canNavigateForward()" [attr.aria-label]="'attendance.nextMonth' | translate">
+          <i class="pi pi-angle-double-right"></i>
+        </button>
+      </div>
     </div>
 
     <!-- Estados de asistencia -->
     <div class="attendance-status" [@fadeInUp]>
       <div class="status-item">
         <div class="status-left">
-          <i class="pi pi-sign-in status-icon"></i>
+          <app-check-in-icon
+            class="status-icon checkin-icon"
+            [size]="28"
+            [color]="getStatusColor(attendance()?.checkInStatus, 'var(--text-secondary)')">
+          </app-check-in-icon>
           <span class="status-label">{{ 'attendance.checkIn' | translate }}</span>
         </div>
         <div class="status-right">
-          <span class="status-value" [class.has-value]="attendance()?.checkInTime">
+          <span class="status-value"
+                [class.has-value]="attendance()?.checkInTime"
+                [class]="getStatusClass(attendance()?.checkInStatus)">
             {{ attendance()?.checkInTime || '--:--' }}
           </span>
           @if (attendance()?.checkInStatus) {
-            <span class="status-badge" [class]="'status-' + attendance()?.checkInStatus">
+            <span class="status-badge" [class]="getStatusClass(attendance()?.checkInStatus)">
               {{ attendance()?.checkInStatus }}
             </span>
           }
@@ -69,15 +89,21 @@
 
       <div class="status-item">
         <div class="status-left">
-          <i class="pi pi-sign-in status-icon"></i>
+          <app-eat-in-icon
+            class="status-icon eatin-icon"
+            [size]="28"
+            [color]="getStatusColor(attendance()?.checkEatInStatus, 'var(--text-secondary)')">
+          </app-eat-in-icon>
           <span class="status-label">{{ 'attendance.checkEatIn' | translate }}</span>
         </div>
         <div class="status-right">
-          <span class="status-value" [class.has-value]="attendance()?.checkEatInTime">
+          <span class="status-value"
+                [class.has-value]="attendance()?.checkEatInTime"
+                [class]="getStatusClass(attendance()?.checkEatInStatus)">
             {{ attendance()?.checkEatInTime || '--:--' }}
           </span>
           @if (attendance()?.checkEatInStatus) {
-            <span class="status-badge" [class]="'status-' + attendance()?.checkEatInStatus">
+            <span class="status-badge" [class]="getStatusClass(attendance()?.checkEatInStatus)">
               {{ attendance()?.checkEatInStatus }}
             </span>
           }
@@ -86,15 +112,21 @@
 
       <div class="status-item">
         <div class="status-left">
-          <i class="pi pi-sign-out status-icon"></i>
+          <app-eat-out-icon
+            class="status-icon eatout-icon"
+            [size]="28"
+            [color]="getStatusColor(attendance()?.checkEatOutStatus, 'var(--text-secondary)')">
+          </app-eat-out-icon>
           <span class="status-label">{{ 'attendance.checkEatOut' | translate }}</span>
         </div>
         <div class="status-right">
-          <span class="status-value" [class.has-value]="attendance()?.checkEatOutTime">
+          <span class="status-value"
+                [class.has-value]="attendance()?.checkEatOutTime"
+                [class]="getStatusClass(attendance()?.checkEatOutStatus)">
             {{ attendance()?.checkEatOutTime || '--:--' }}
           </span>
           @if (attendance()?.checkEatOutStatus) {
-            <span class="status-badge" [class]="'status-' + attendance()?.checkEatOutStatus">
+            <span class="status-badge" [class]="getStatusClass(attendance()?.checkEatOutStatus)">
               {{ attendance()?.checkEatOutStatus }}
             </span>
           }
@@ -103,15 +135,21 @@
 
       <div class="status-item">
         <div class="status-left">
-          <i class="pi pi-sign-out status-icon"></i>
+          <app-check-out-icon
+            class="status-icon checkout-icon"
+            [size]="28"
+            [color]="getStatusColor(attendance()?.checkOutStatus, 'var(--text-secondary)')">
+          </app-check-out-icon>
           <span class="status-label">{{ 'attendance.checkOut' | translate }}</span>
         </div>
         <div class="status-right">
-          <span class="status-value" [class.has-value]="attendance()?.checkOutTime">
+          <span class="status-value"
+                [class.has-value]="attendance()?.checkOutTime"
+                [class]="getStatusClass(attendance()?.checkOutStatus)">
             {{ attendance()?.checkOutTime || '--:--' }}
           </span>
           @if (attendance()?.checkOutStatus) {
-            <span class="status-badge" [class]="'status-' + attendance()?.checkOutStatus">
+            <span class="status-badge" [class]="getStatusClass(attendance()?.checkOutStatus)">
               {{ attendance()?.checkOutStatus }}
             </span>
           }
@@ -132,9 +170,122 @@
     @if (loading()) {
       <div class="loading-overlay">
         <i class="pi pi-spin pi-spinner"></i>
-        <span>{{ 'common.loading' | translate }}</span>
+        <span>{{ 'attendance.loading' | translate }}</span>
       </div>
     }
   </div>
 </div>
 
+<!-- Datepicker Dialog -->
+<p-dialog
+  [(visible)]="showDatePicker"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '400px' }"
+  [header]="'attendance.selectDate' | translate"
+  (onHide)="showDatePicker = false">
+  <div class="datepicker-container">
+    <input
+      type="date"
+      [(ngModel)]="datePickerValue"
+      [max]="maxDate.toISOString().split('T')[0]"
+      (change)="onDateSelect($event)"
+      class="date-input">
+  </div>
+</p-dialog>
+
+<!-- Exceptions Dialog -->
+<p-dialog
+  [(visible)]="showExceptionsDialog"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [header]="'attendance.exceptions' | translate"
+  (onHide)="closeExceptionsDialog()">
+  <div class="exceptions-list">
+    @if (getExceptions().length === 0) {
+      <div class="no-exceptions">
+        <i class="pi pi-info-circle"></i>
+        <p>{{ 'attendance.noExceptions' | translate }}</p>
+      </div>
+    } @else {
+      @for (exception of getExceptions(); track exception.shiftExceptionId) {
+        <div class="exception-item">
+          <div class="exception-header">
+            <div class="exception-type">
+              <i class="pi pi-info-circle"></i>
+              <span class="exception-type-name">{{ exception.exceptionType.exceptionTypeTypeName }}</span>
+            </div>
+            <span class="exception-date">{{ formatExceptionDate(exception.shiftExceptionsDate) }}</span>
+          </div>
+          @if (exception.shiftExceptionsDescription) {
+            <div class="exception-description">
+              {{ exception.shiftExceptionsDescription }}
+            </div>
+          }
+          <div class="exception-times">
+            @if (exception.shiftExceptionCheckInTime) {
+              <div class="exception-time">
+                <span class="time-label">{{ 'attendance.checkIn' | translate }}:</span>
+                <span class="time-value">{{ exception.shiftExceptionCheckInTime }}</span>
+              </div>
+            }
+            @if (exception.shiftExceptionCheckOutTime) {
+              <div class="exception-time">
+                <span class="time-label">{{ 'attendance.checkOut' | translate }}:</span>
+                <span class="time-value">{{ exception.shiftExceptionCheckOutTime }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</p-dialog>
+
+<!-- Records Dialog -->
+<p-dialog
+  [(visible)]="showRecordsDialog"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [header]="'attendance.records' | translate"
+  (onHide)="closeRecordsDialog()">
+  <div class="records-list">
+    @if (getRecords().length === 0) {
+      <div class="no-records">
+        <i class="pi pi-info-circle"></i>
+        <p>{{ 'attendance.noRecords' | translate }}</p>
+      </div>
+    } @else {
+      @for (record of getRecords(); track record.assistId) {
+        <div class="record-item">
+          <div class="record-header">
+            <div class="record-time">
+              <i class="pi pi-clock"></i>
+              <span class="time-value">{{ formatRecordTime(record.assistPunchTime) }}</span>
+            </div>
+            <span class="record-date">{{ formatRecordDateTime(record.assistPunchTime) }}</span>
+          </div>
+          <div class="record-details">
+            @if (record.assistTerminalAlias) {
+              <div class="record-detail-item">
+                <span class="detail-label">{{ 'attendance.terminal' | translate }}:</span>
+                <span class="detail-value">{{ record.assistTerminalAlias }}</span>
+              </div>
+            }
+            @if (record.assistAreaAlias) {
+              <div class="record-detail-item">
+                <span class="detail-label">{{ 'attendance.area' | translate }}:</span>
+                <span class="detail-value">{{ record.assistAreaAlias }}</span>
+              </div>
+            }
+            @if (record.assistLatitude && record.assistLongitude) {
+              <div class="record-detail-item">
+                <span class="detail-label">{{ 'attendance.location' | translate }}:</span>
+                <span class="detail-value">{{ record.assistLatitude }}, {{ record.assistLongitude }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </div>
+</p-dialog>

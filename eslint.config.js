@@ -79,6 +79,7 @@ export default tseslint.config(
   {
     files: ['**/*.html'],
     rules: {
+      // Reglas de accesibilidad de Angular
       '@angular-eslint/template/accessibility-alt-text': 'error',
       '@angular-eslint/template/accessibility-elements-content': 'error',
       '@angular-eslint/template/accessibility-label-has-associated-control':
@@ -87,7 +88,22 @@ export default tseslint.config(
       '@angular-eslint/template/accessibility-valid-aria': 'error',
       '@angular-eslint/template/button-has-type': 'error',
       '@angular-eslint/template/click-events-have-key-events': 'warn',
-      '@angular-eslint/template/no-positive-tabindex': 'error'
+      '@angular-eslint/template/no-positive-tabindex': 'error',
+
+      // Deshabilitar reglas que requieren atributos en lowercase
+      // Angular usa camelCase para directivas y propiedades (ej: [formGroup], formControlName, [@fadeIn])
+      '@angular-eslint/template/attributes-order': 'off',
+
+      // Deshabilitar validaciones HTML estándar que no son compatibles con Angular
+      // Estas reglas pueden venir de configuraciones recomendadas o plugins HTML
+      '@html-eslint/lowercase': 'off',
+      '@html-eslint/require-doctype': 'off',
+      '@html-eslint/require-img-alt': 'off',
+      '@html-eslint/no-self-closing-tag': 'off',
+      '@html-eslint/require-button-type': 'off',
+      'attribute-name': 'off',
+      'html-attribute-name': 'off',
+      'vue/html-attribute-name': 'off'
     }
   }
 );

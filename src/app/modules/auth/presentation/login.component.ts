@@ -96,9 +96,14 @@ export class LoginComponent {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly showPassword = signal(false);
 
   toggleTheme(): void {
     this.theme.toggleTheme();
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update(value => !value);
   }
 
   async onSubmit(): Promise<void> {
@@ -124,7 +129,7 @@ export class LoginComponent {
         );
       }
     } catch (err) {
-      this.error.set(this.translateService.instant('common.error'));
+      this.error.set(this.translateService.instant('auth.error'));
     } finally {
       this.loading.set(false);
     }

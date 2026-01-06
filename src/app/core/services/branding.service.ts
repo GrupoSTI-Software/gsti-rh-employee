@@ -16,6 +16,7 @@ export class BrandingService {
 
   readonly settings = signal<SystemSettings | null>(null);
   readonly loading = signal(false);
+  private manifestVersion = 0;
 
   /**
    * Carga las configuraciones del sistema y aplica el branding
@@ -31,8 +32,21 @@ export class BrandingService {
       const settings = await this.getSystemSettingsUseCase.execute();
 
       if (settings) {
+        console.log('Branding cargado:', {
+          tradeName: settings.systemSettingTradeName,
+          logo: settings.systemSettingLogo,
+          favicon: settings.systemSettingFavicon
+        });
+
         this.settings.set(settings);
-        this.applyBranding(settings);
+
+        // Remover cualquier manifest estático ANTES de aplicar el branding
+        this.removeStaticManifest();
+
+        await this.applyBranding(settings);
+        this.setupInstallPromptListener();
+      } else {
+        console.warn('No se obtuvieron configuraciones del sistema');
       }
     } catch (error) {
       console.error('Error al cargar branding:', error);
@@ -42,18 +56,83 @@ export class BrandingService {
   }
 
   /**
-   * Aplica las configuraciones de branding a la aplicación
+   * Remueve cualquier manifest estático que pueda estar presente
    */
-  private applyBranding(settings: SystemSettings): void {
+  private removeStaticManifest(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
+    // Remover todos los links de manifest que apunten al archivo estático
+    const allManifests = document.querySelectorAll("link[rel='manifest']");
+    allManifests.forEach(link => {
+      const href = (link as HTMLLinkElement).href;
+      // Si el href apunta al manifest estático, removerlo
+      if (href.includes('manifest.webmanifest') && !href.startsWith('blob:')) {
+        console.log('Removiendo manifest estático:', href);
+        link.remove();
+      }
+    });
+  }
+
+  /**
+   * Configura un listener para el evento beforeinstallprompt
+   * Esto asegura que el manifest esté actualizado antes de que el usuario instale la PWA
+   */
+  private setupInstallPromptListener(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Escuchar el evento beforeinstallprompt para asegurar que el manifest esté actualizado
+    // El tipo BeforeInstallPromptEvent no está disponible en todos los navegadores, así que usamos any
+    window.addEventListener('beforeinstallprompt', async (_e: any) => {
+      // Forzar actualización del manifest antes de mostrar el prompt de instalación
+      const currentSettings = this.settings();
+      if (currentSettings) {
+        console.log('Actualizando manifest antes de la instalación de la PWA...');
+        await this.updateManifest(currentSettings);
+        // Pequeño delay para asegurar que el manifest se haya actualizado
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }, { once: true });
+
+    // También escuchar cuando el usuario hace clic en "Instalar" o similar
+    window.addEventListener('appinstalled', () => {
+      console.log('PWA instalada exitosamente con branding actualizado');
+    });
+  }
+
+  /**
+   * Fuerza la actualización del manifest (útil para debugging o actualizaciones manuales)
+   */
+  async forceManifestUpdate(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const currentSettings = this.settings();
+    if (currentSettings) {
+      await this.updateManifest(currentSettings);
+    }
+  }
+
+  /**
+   * Aplica las configuraciones de branding a la aplicación
+   */
+  private async applyBranding(settings: SystemSettings): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Actualizar título de la aplicación PRIMERO (antes del manifest)
+    this.updateTitle(settings.systemSettingTradeName);
+
+    // Actualizar meta tags PRIMERO (antes del manifest)
+    this.updateMetaTags(settings);
+
     // Actualizar favicon (primero para que se cargue rápido)
     this.updateFavicon(settings.systemSettingFavicon);
-
-    // Actualizar manifest de PWA (importante para la instalación)
-    this.updateManifest(settings);
 
     // Actualizar logo en el documento
     this.updateLogo(settings.systemSettingLogo);
@@ -61,11 +140,41 @@ export class BrandingService {
     // Actualizar colores del tema
     this.updateThemeColors(settings.systemSettingSidebarColor);
 
-    // Actualizar título de la aplicación
-    this.updateTitle(settings.systemSettingTradeName);
+    // Actualizar manifest de PWA (importante para la instalación)
+    // Esto debe hacerse después de pre-cargar los iconos
+    // Pero creamos un manifest inicial inmediatamente sin esperar los iconos
+    await this.updateManifest(settings);
+  }
 
-    // Actualizar meta tags
-    this.updateMetaTags(settings);
+  /**
+   * Agrega cache busting a una URL para evitar que el navegador use versiones cacheadas
+   */
+  private addCacheBusting(url: string): string {
+    if (!url) return url;
+    // Agregar timestamp y versión para evitar caché
+    const separator = url.includes('?') ? '&' : '?';
+    const timestamp = Date.now();
+    return `${url}${separator}v=${this.manifestVersion}&t=${timestamp}`;
+  }
+
+  /**
+   * Pre-carga un icono para asegurar que esté disponible antes de actualizar el manifest
+   */
+  private preloadIcon(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!url) {
+        resolve();
+        return;
+      }
+
+      const img = new Image();
+      img.onload = () => resolve();
+      img.onerror = () => {
+        console.warn(`No se pudo cargar el icono: ${url}`);
+        resolve(); // Resolver de todas formas para no bloquear
+      };
+      img.src = this.addCacheBusting(url);
+    });
   }
 
   /**
@@ -74,6 +183,8 @@ export class BrandingService {
   private updateFavicon(faviconUrl: string): void {
     if (!faviconUrl) return;
 
+    const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
+
     // Actualizar favicon principal
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (!link) {
@@ -81,29 +192,37 @@ export class BrandingService {
       link.rel = 'icon';
       document.getElementsByTagName('head')[0].appendChild(link);
     }
-    link.href = faviconUrl;
+    // Forzar actualización removiendo y recreando
+    const oldHref = link.href;
+    link.remove();
+    link = document.createElement('link');
+    link.rel = 'icon';
+    link.href = faviconUrlWithCache;
     link.type = 'image/png';
+    document.getElementsByTagName('head')[0].appendChild(link);
 
     // Actualizar apple-touch-icon
     let appleIcon = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement;
-    if (!appleIcon) {
-      appleIcon = document.createElement('link');
-      appleIcon.rel = 'apple-touch-icon';
-      document.getElementsByTagName('head')[0].appendChild(appleIcon);
+    if (appleIcon) {
+      appleIcon.remove();
     }
-    appleIcon.href = faviconUrl;
+    appleIcon = document.createElement('link');
+    appleIcon.rel = 'apple-touch-icon';
+    appleIcon.href = faviconUrlWithCache;
+    document.getElementsByTagName('head')[0].appendChild(appleIcon);
 
     // Actualizar apple-touch-icon con tamaños específicos
     const sizes = ['192x192', '512x512'];
     sizes.forEach(size => {
-      let sizedIcon = document.querySelector(`link[rel='apple-touch-icon'][sizes='${size}']`) as HTMLLinkElement;
-      if (!sizedIcon) {
-        sizedIcon = document.createElement('link');
-        sizedIcon.rel = 'apple-touch-icon';
-        sizedIcon.setAttribute('sizes', size);
-        document.getElementsByTagName('head')[0].appendChild(sizedIcon);
+      const existingIcon = document.querySelector(`link[rel='apple-touch-icon'][sizes='${size}']`) as HTMLLinkElement;
+      if (existingIcon) {
+        existingIcon.remove();
       }
-      sizedIcon.href = faviconUrl;
+      const sizedIcon = document.createElement('link');
+      sizedIcon.rel = 'apple-touch-icon';
+      sizedIcon.setAttribute('sizes', size);
+      sizedIcon.href = faviconUrlWithCache;
+      document.getElementsByTagName('head')[0].appendChild(sizedIcon);
     });
   }
 
@@ -114,21 +233,45 @@ export class BrandingService {
    * Nota: Algunos navegadores pueden cachear el manifest, por lo que es importante
    * actualizarlo antes de que el usuario intente instalar la PWA
    */
-  private updateManifest(settings: SystemSettings): void {
+  private async updateManifest(settings: SystemSettings): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
     const faviconUrl = settings.systemSettingFavicon || '/assets/gsti/icon.png';
     const logoUrl = settings.systemSettingLogo || '/assets/gsti/adaptive-icon.png';
-    const tradeName = settings.systemSettingTradeName || 'GSTI PWA';
+    // Asegurar que el tradeName viene del servicio, sin fallback por defecto
+    const tradeName = settings.systemSettingTradeName?.trim() || 'GSTI PWA';
     const sidebarColor = settings.systemSettingSidebarColor || '093057';
 
-    // Crear nuevo manifest con los iconos actualizados
+    // Log para debugging
+    console.log('Actualizando manifest con tradeName:', tradeName);
+    console.log('Settings recibidos:', {
+      tradeName: settings.systemSettingTradeName,
+      favicon: settings.systemSettingFavicon,
+      logo: settings.systemSettingLogo
+    });
+
+    // Incrementar versión del manifest para forzar actualización
+    this.manifestVersion++;
+
+    // Pre-cargar iconos antes de crear el manifest para asegurar que estén disponibles
+    await Promise.all([
+      this.preloadIcon(faviconUrl),
+      this.preloadIcon(logoUrl)
+    ]);
+
+    // Agregar cache busting a las URLs de los iconos
+    const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
+    const logoUrlWithCache = this.addCacheBusting(logoUrl);
+
+    // Crear nuevo manifest con los iconos actualizados y cache busting
+    // Asegurar que el nombre no tenga espacios extra ni caracteres especiales
+    const cleanTradeName = tradeName.trim();
     const manifest = {
-      name: `${tradeName} - PWA Empleado`,
-      short_name: tradeName,
-      description: `Aplicación PWA para empleados de ${tradeName}`,
+      name: cleanTradeName,
+      short_name: cleanTradeName.length > 12 ? cleanTradeName.substring(0, 12) : cleanTradeName,
+      description: `Aplicación PWA para empleados de ${cleanTradeName}`,
       theme_color: `#${sidebarColor}`,
       background_color: '#ffffff',
       display: 'standalone',
@@ -137,25 +280,25 @@ export class BrandingService {
       start_url: '/',
       icons: [
         {
-          src: faviconUrl,
+          src: faviconUrlWithCache,
           sizes: '512x512',
           type: 'image/png',
           purpose: 'any'
         },
         {
-          src: faviconUrl,
+          src: faviconUrlWithCache,
           sizes: '192x192',
           type: 'image/png',
           purpose: 'any'
         },
         {
-          src: logoUrl,
+          src: logoUrlWithCache,
           sizes: '512x512',
           type: 'image/png',
           purpose: 'maskable'
         },
         {
-          src: logoUrl,
+          src: logoUrlWithCache,
           sizes: '192x192',
           type: 'image/png',
           purpose: 'maskable'
@@ -171,20 +314,23 @@ export class BrandingService {
       type: 'application/manifest+json'
     });
 
-    // Crear URL del blob
+    // Crear URL del blob con timestamp único para evitar caché
+    const timestamp = Date.now();
     const manifestUrl = URL.createObjectURL(blob);
 
-    // Actualizar o crear el link del manifest
-    let manifestLink = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
-    if (!manifestLink) {
-      manifestLink = document.createElement('link');
-      manifestLink.rel = 'manifest';
-      document.getElementsByTagName('head')[0].appendChild(manifestLink);
-    }
+    // Remover TODOS los links de manifest existentes (incluido el estático)
+    const existingManifests = document.querySelectorAll("link[rel='manifest']");
+    existingManifests.forEach(link => {
+      const oldHref = (link as HTMLLinkElement).href;
+      link.remove();
+      // Limpiar URLs blob anteriores
+      if (oldHref && oldHref.startsWith('blob:')) {
+        URL.revokeObjectURL(oldHref);
+      }
+    });
 
-    // Remover el link anterior para forzar la actualización
-    const oldHref = manifestLink.href;
-    manifestLink.remove();
+    // Pequeño delay para asegurar que los links anteriores se hayan removido completamente
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     // Crear nuevo link con la nueva URL
     const newManifestLink = document.createElement('link');
@@ -193,10 +339,13 @@ export class BrandingService {
     newManifestLink.setAttribute('crossorigin', 'use-credentials');
     document.getElementsByTagName('head')[0].appendChild(newManifestLink);
 
-    // Limpiar URL anterior si existe
-    if (oldHref && oldHref.startsWith('blob:')) {
-      URL.revokeObjectURL(oldHref);
-    }
+    // Log para verificar que el manifest se creó correctamente
+    console.log('Manifest actualizado:', {
+      name: manifest.name,
+      short_name: manifest.short_name,
+      manifestUrl: manifestUrl,
+      version: this.manifestVersion
+    });
 
     // Forzar actualización del manifest en el navegador
     // Esto es importante para que el navegador recargue el manifest
@@ -204,9 +353,16 @@ export class BrandingService {
       // Si hay un service worker, puede que necesite actualizar el manifest
       navigator.serviceWorker.controller.postMessage({
         type: 'MANIFEST_UPDATED',
-        manifestUrl: manifestUrl
+        manifestUrl: manifestUrl,
+        version: this.manifestVersion,
+        timestamp: timestamp
       });
     }
+
+    // Disparar evento personalizado para notificar que el manifest fue actualizado
+    window.dispatchEvent(new CustomEvent('manifest-updated', {
+      detail: { manifestUrl, version: this.manifestVersion, timestamp }
+    }));
   }
 
   /**
@@ -217,7 +373,9 @@ export class BrandingService {
 
     const logoElement = document.getElementById('app-logo') as HTMLImageElement;
     if (logoElement) {
-      logoElement.src = logoUrl;
+      // Agregar cache busting para forzar la actualización del logo
+      const logoUrlWithCache = this.addCacheBusting(logoUrl);
+      logoElement.src = logoUrlWithCache;
       logoElement.alt = this.settings()?.systemSettingTradeName || 'Logo';
     }
   }
@@ -251,7 +409,7 @@ export class BrandingService {
   private updateTitle(tradeName: string): void {
     if (!tradeName) return;
 
-    document.title = `${tradeName} - PWA Empleado`;
+    document.title = `${tradeName}`;
   }
 
   /**

@@ -2,7 +2,7 @@
   <div class="sidebar-overlay" (click)="close()" [@fadeIn]></div>
   <aside class="sidebar" [@slideInOut]>
     <div class="sidebar-header">
-      <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'common.close' | translate">
+      <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'menu.close' | translate">
         <i class="pi pi-times"></i>
       </button>
 
@@ -37,7 +37,7 @@
     <div class="sidebar-footer">
       <button type="button" class="logout-button" (click)="logout()">
         <i class="pi pi-sign-out"></i>
-        <span>{{ 'common.logout' | translate }}</span>
+        <span>{{ 'menu.logout' | translate }}</span>
       </button>
     </div>
   </aside>

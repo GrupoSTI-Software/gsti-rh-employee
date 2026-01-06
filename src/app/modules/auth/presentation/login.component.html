@@ -4,7 +4,7 @@
       @if (showLogo()) {
         <img
           [src]="logoUrl()"
-          [alt]="'common.login' | translate"
+          [alt]="'auth.login' | translate"
           class="login-logo"
           id="app-logo"
           [@scaleIn]
@@ -20,14 +20,14 @@
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" [@staggerFadeInUp]>
       <div class="form-group">
-        <label for="email">{{ 'common.email' | translate }}</label>
+        <label for="email">{{ 'auth.email' | translate }}</label>
         <input
           id="email"
           type="email"
           formControlName="email"
           [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-          [placeholder]="'common.email' | translate"
-        />
+          [placeholder]="'auth.email' | translate"
+        >
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <span class="error-message">
             @if (loginForm.get('email')?.hasError('required')) {
@@ -40,14 +40,25 @@
       </div>
 
       <div class="form-group">
-        <label for="password">{{ 'common.password' | translate }}</label>
-        <input
-          id="password"
-          type="password"
-          formControlName="password"
-          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          [placeholder]="'common.password' | translate"
-        />
+        <label for="password">{{ 'auth.password' | translate }}</label>
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            [placeholder]="'auth.password' | translate"
+          >
+          <button
+            type="button"
+            class="password-toggle-button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? ('auth.hidePassword' | translate) : ('auth.showPassword' | translate)"
+            tabindex="-1"
+          >
+            <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+          </button>
+        </div>
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
           <span class="error-message">
             @if (loginForm.get('password')?.hasError('required')) {
@@ -58,14 +69,15 @@
           </span>
         }
       </div>
-
+      @if(false) {
       <div class="form-group checkbox-group">
         <label>
           <input type="checkbox" formControlName="rememberMe" />
-          <span>{{ 'common.rememberMe' | translate }}</span>
+          <span>{{ 'auth.rememberMe' | translate }}</span>
         </label>
-        <a href="#" class="forgot-password">{{ 'common.forgotPassword' | translate }}</a>
+        <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
       </div>
+      }
 
       @if (error()) {
         <div class="error-alert" [@shake]>
@@ -79,16 +91,16 @@
         [disabled]="loading() || loginForm.invalid"
       >
         @if (loading()) {
-          {{ 'common.loading' | translate }}
+          {{ 'auth.loading' | translate }}
         } @else {
-          {{ 'common.login' | translate }}
+          {{ 'auth.login' | translate }}
         }
       </button>
     </form>
 
     <div class="footer-actions" [@fadeInUp]>
       <app-language-selector></app-language-selector>
-      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('common.darkMode' | translate) : ('common.lightMode' | translate)">
+      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('auth.darkMode' | translate) : ('auth.lightMode' | translate)">
         @if (theme.theme() === 'light') {
           <i class="pi pi-moon"></i>
         } @else {

@@ -35,7 +35,18 @@ export class HttpAttendanceAdapter implements AttendancePort {
         )
       );
 
-      // Formatear tiempos
+      // Obtener el día específico que estamos buscando
+      const calendarDay = response.data?.employeeCalendar?.find(
+        (day) => day.day === dateStart
+      );
+
+      if (!calendarDay?.assist) {
+        return null;
+      }
+
+      const assist = calendarDay.assist;
+
+      // Formatear tiempos desde checkInDateTime, checkOutDateTime, etc.
       const formatTime = (dateString: string | null): string | null => {
         if (!dateString) return null;
         try {
@@ -49,38 +60,93 @@ export class HttpAttendanceAdapter implements AttendancePort {
         }
       };
 
+      // Formatear tiempos desde los objetos checkIn, checkOut, etc. si existen
+      const formatTimeFromObject = (
+        obj: { assistPunchTimeUtc: string | null } | null
+      ): string | null => {
+        if (!obj?.assistPunchTimeUtc) return null;
+        return formatTime(obj.assistPunchTimeUtc);
+      };
+
+      // Obtener información del turno
+      const shiftInfo = assist.dateShift
+        ? `${assist.dateShift.shiftTimeStart} - ${assist.dateShift.shiftName}`
+        : null;
+
+      // Calcular hora de fin del turno basado en las horas activas
+      const calculateShiftEnd = (timeStart: string, activeHours: string): string | null => {
+        if (!timeStart || !activeHours) return null;
+        try {
+          const [hours, minutes] = timeStart.split(':').map(Number);
+          const activeHoursNum = parseFloat(activeHours);
+          const startDate = new Date();
+          startDate.setHours(hours, minutes || 0, 0, 0);
+          startDate.setHours(startDate.getHours() + Math.floor(activeHoursNum));
+          startDate.setMinutes(startDate.getMinutes() + Math.round((activeHoursNum % 1) * 60));
+          return startDate.toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        } catch {
+          return null;
+        }
+      };
+
+      const shiftTimeStart = assist.dateShift?.shiftTimeStart || null;
+      const shiftTimeEnd = assist.dateShift
+        ? calculateShiftEnd(assist.dateShift.shiftTimeStart, assist.dateShift.shiftActiveHours)
+        : null;
+      const shiftName = assist.dateShift?.shiftName || null;
+
       const hasException =
-        response.isRestDay ||
-        response.isWorkDisabilityDate ||
-        response.isVacationDate ||
-        response.isHoliday;
+        assist.isRestDay ||
+        assist.isWorkDisabilityDate ||
+        assist.isVacationDate ||
+        assist.isHoliday;
 
       return {
-        checkInTime: formatTime(response.checkIn?.assistPunchTimeUtc || null),
-        checkOutTime: formatTime(response.checkOut?.assistPunchTimeUtc || null),
-        checkEatInTime: formatTime(
-          response.checkEatIn?.assistPunchTimeUtc || null
-        ),
-        checkEatOutTime: formatTime(
-          response.checkEatOut?.assistPunchTimeUtc || null
-        ),
+        // Solo usar los valores de checkIn, checkOut, checkEatIn, checkEatOut si no son null
+        // No usar checkInDateTime o checkOutDateTime como respaldo
+        checkInTime: formatTimeFromObject(assist.checkIn),
+        checkOutTime: formatTimeFromObject(assist.checkOut),
+        checkEatInTime: formatTimeFromObject(assist.checkEatIn),
+        checkEatOutTime: formatTimeFromObject(assist.checkEatOut),
         checkInStatus:
-          response.checkInStatus === 'fault' && hasException
+          assist.checkInStatus === 'fault' && hasException
             ? ''
-            : response.checkInStatus || null,
+            : assist.checkInStatus || null,
         checkOutStatus:
-          response.checkOutStatus === 'fault' && hasException
+          assist.checkOutStatus === 'fault' && hasException
             ? ''
-            : response.checkOutStatus || null,
-        checkEatInStatus: response.checkEatInStatus || null,
-        checkEatOutStatus: response.checkEatOutStatus || null,
-        shiftInfo: response.shiftInfo || null,
-        isRestDay: response.isRestDay,
-        isWorkDisabilityDate: response.isWorkDisabilityDate,
-        isVacationDate: response.isVacationDate,
-        isHoliday: response.isHoliday,
-        assistFlatList: response.assitFlatList || [],
-        exceptions: response.exceptions || []
+            : assist.checkOutStatus || null,
+        checkEatInStatus: null, // No viene en la nueva estructura
+        checkEatOutStatus: null, // No viene en la nueva estructura
+        shiftInfo: shiftInfo,
+        shiftTimeStart: shiftTimeStart,
+        shiftTimeEnd: shiftTimeEnd,
+        shiftName: shiftName,
+        isRestDay: assist.isRestDay,
+        isWorkDisabilityDate: assist.isWorkDisabilityDate,
+        isVacationDate: assist.isVacationDate,
+        isHoliday: assist.isHoliday,
+        assistFlatList: assist.assitFlatList || [],
+        exceptions: (assist.exceptions || []).map((exc: any) => ({
+          shiftExceptionId: exc.shiftExceptionId,
+          employeeId: exc.employeeId,
+          exceptionTypeId: exc.exceptionTypeId,
+          shiftExceptionsDate: exc.shiftExceptionsDate,
+          shiftExceptionsDescription: exc.shiftExceptionsDescription,
+          shiftExceptionCheckInTime: exc.shiftExceptionCheckInTime,
+          shiftExceptionCheckOutTime: exc.shiftExceptionCheckOutTime,
+          shiftExceptionEnjoymentOfSalary: exc.shiftExceptionEnjoymentOfSalary,
+          shiftExceptionTimeByTime: exc.shiftExceptionTimeByTime,
+          workDisabilityPeriodId: exc.workDisabilityPeriodId,
+          shiftExceptionsCreatedAt: exc.shiftExceptionsCreatedAt,
+          shiftExceptionsUpdatedAt: exc.shiftExceptionsUpdatedAt,
+          deletedAt: exc.deletedAt,
+          vacationSettingId: exc.vacationSettingId,
+          exceptionType: exc.exceptionType
+        }))
       };
     } catch (error: unknown) {
       console.error('Error al obtener asistencia:', error);

@@ -23,8 +23,8 @@ if (fs.existsSync(envFile)) {
 
 // Generar contenido de environment.ts
 const generateEnvironmentContent = (isProd) => {
-  const apiUrl = envVars.API_URL || (isProd ? 'https://api.example.com/api' : 'http://localhost:3000/api');
-  
+  const apiUrl = envVars.API_URL || (isProd ? 'https://api.example.com/api' : envVars.apiUrl);
+
   return `export const environment = {
   production: ${isProd},
   apiUrl: '${apiUrl}'

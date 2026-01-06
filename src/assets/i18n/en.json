@@ -1,46 +1,19 @@
 {
-  "common": {
-    "login": "Sign In",
-    "logout": "Sign Out",
-    "email": "Email",
-    "password": "Password",
-    "rememberMe": "Remember Me",
-    "forgotPassword": "Forgot Password?",
-    "submit": "Submit",
-    "cancel": "Cancel",
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "create": "Create",
-    "search": "Search",
-    "filter": "Filter",
-    "close": "Close",
-    "confirm": "Confirm",
-    "yes": "Yes",
-    "no": "No",
-    "back": "Back",
-    "next": "Next",
-    "previous": "Previous",
-    "darkMode": "Dark Mode",
-    "lightMode": "Light Mode",
-    "menu": "Menu",
-    "appName": "GSTI PWA"
-  },
   "menu": {
     "title": "Menu",
     "attendance": "Attendance",
     "profile": "Profile",
     "settings": "Settings",
     "biometrics": "Biometrics",
-    "apiConfig": "API Configuration"
+    "apiConfig": "API Configuration",
+    "menu": "Menu",
+    "close": "Close",
+    "logout": "Sign Out"
   },
   "auth": {
     "loginTitle": "Sign In",
     "loginSubtitle": "Enter your credentials to access",
-    "invalidCredentials": "Invalid credentials",
+    "invalidCredentials": "Your username and/or password are incorrect",
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
     "sessionExpired": "Your session has expired",
@@ -48,7 +21,21 @@
     "emailRequired": "Email is required",
     "emailInvalid": "Email format is not valid",
     "passwordRequired": "Password is required",
-    "passwordMinLength": "Password must be at least 6 characters"
+    "passwordMinLength": "Password must be at least 6 characters",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password?",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "validation": {
     "required": "This field is required",
@@ -69,6 +56,17 @@
       "title": "PWA Application Required",
       "description": "This application is only available as an installed PWA. Please install the application to continue.",
       "checkAgain": "Check Again",
+      "loading": "Loading...",
+      "error": "Error",
+      "close": "Close",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "yes": "Yes",
+      "no": "No",
+      "back": "Back",
+      "next": "Next",
+      "darkMode": "Dark Mode",
+      "lightMode": "Light Mode",
       "instructions": {
         "title": "How to Install",
         "chrome": {
@@ -90,6 +88,7 @@
   },
   "attendance": {
     "title": "Attendance Check",
+    "register": "Register",
     "checkIn": "Check In",
     "checkOut": "Check Out",
     "checkEatIn": "Lunch In",
@@ -102,14 +101,39 @@
     "registerError": "Error registering attendance",
     "exceptions": "Exceptions",
     "records": "Attendance Records",
-    "reload": "Reload"
+    "reload": "Reload",
+    "selectDate": "Select Date",
+    "noExceptions": "No exceptions registered",
+    "noRecords": "No attendance records",
+    "recordId": "Record ID",
+    "terminal": "Terminal",
+    "area": "Area",
+    "location": "Location",
+    "success": "Success",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "profile": {
     "loading": "Loading profile...",
     "error": "Error loading profile",
     "email": "Email",
     "userId": "User ID",
-    "employeeId": "Employee ID"
+    "employeeId": "Employee ID",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "settings": {
     "title": "Settings",
@@ -121,7 +145,8 @@
     "themeOption": {
       "title": "Theme",
       "light": "Light Mode",
-      "dark": "Dark Mode"
+      "dark": "Dark Mode",
+      "system": "System"
     },
     "languageOption": {
       "title": "Language",
@@ -143,7 +168,21 @@
       "invalidUrl": "URL is not valid",
       "save": "Save",
       "urlSavedSuccessfully": "URL saved successfully"
-    }
+    },
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "search": "Search",
+    "filter": "Filter",
+    "edit": "Edit",
+    "create": "Create",
+    "delete": "Delete"
   },
   "biometrics": {
     "title": "Biometric Configuration",
@@ -155,7 +194,20 @@
     "available": "Biometrics available",
     "availableDescription": "You can enable biometric authentication for faster access",
     "enable": "Enable Biometrics",
-    "disable": "Disable Biometrics"
+    "disable": "Disable Biometrics",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "header": {
+    "menu": "Menu",
+    "appName": "GSTI PWA",
+    "logout": "Sign Out",
+    "close": "Close"
   }
 }
-
