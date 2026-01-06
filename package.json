@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
+    "ssl": "ng serve --host 0.0.0.0 --ssl --ssl-key ssl/localhost-key.pem --ssl-cert ssl/localhost.pem",
     "prestart": "node scripts/load-env.js",
     "start": "ng serve",
     "prebuild": "node scripts/load-env.js",

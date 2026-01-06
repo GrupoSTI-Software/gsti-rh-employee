@@ -88,6 +88,7 @@
   },
   "attendance": {
     "title": "Attendance Check",
+    "register": "Register",
     "checkIn": "Check In",
     "checkOut": "Check Out",
     "checkEatIn": "Lunch In",
@@ -101,6 +102,13 @@
     "exceptions": "Exceptions",
     "records": "Attendance Records",
     "reload": "Reload",
+    "selectDate": "Select Date",
+    "noExceptions": "No exceptions registered",
+    "noRecords": "No attendance records",
+    "recordId": "Record ID",
+    "terminal": "Terminal",
+    "area": "Area",
+    "location": "Location",
     "success": "Success",
     "cancel": "Cancel",
     "close": "Close",
@@ -109,7 +117,11 @@
     "no": "No",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "profile": {
     "loading": "Loading profile...",

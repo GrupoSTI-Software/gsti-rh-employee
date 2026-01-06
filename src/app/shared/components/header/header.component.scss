@@ -8,10 +8,15 @@
   padding: $spacing-md $spacing-lg;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: $z-index-sticky;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: $z-index-fixed;
   box-shadow: var(--shadow-sm);
+  height: 64px; // Altura fija para calcular padding-top en otros componentes
+  box-sizing: border-box;
 }
 
 .menu-button {
