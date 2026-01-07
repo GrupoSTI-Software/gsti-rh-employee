@@ -2,8 +2,37 @@
 @use '../../../../styles/mixins' as *;
 
 .settings-container {
-  min-height: 100%;
-  padding: $spacing-lg;
+  // Los estilos de padding y background se heredan del .main-content del dashboard
+  width: 100%;
+}
+
+.settings-wrapper {
+  width: 100%;
+  max-width: $container-max-width-md;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.settings-title-section {
+  margin-bottom: $spacing-lg;
+  margin-top: 0;
+
+  .page-title {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0 0 $spacing-xs 0;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: $font-size-base;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.3;
+  }
 }
 
 .settings-card {
@@ -13,24 +42,6 @@
   @include card;
 }
 
-.settings-header {
-  text-align: center;
-  margin-bottom: $spacing-2xl;
-  padding-bottom: $spacing-2xl;
-  border-bottom: 1px solid var(--border-color);
-
-  h1 {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin-bottom: $spacing-sm;
-  }
-
-  p {
-    color: var(--text-secondary);
-    font-size: $font-size-base;
-  }
-}
 
 .settings-options {
   display: flex;

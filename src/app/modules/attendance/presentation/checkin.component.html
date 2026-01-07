@@ -1,20 +1,26 @@
 <div class="checkin-container" [@fadeIn]>
-  <div class="checkin-card" [@fadeInUp]>
-    <!-- Header -->
-    <div class="checkin-header">
-      <h1>{{ 'attendance.title' | translate }}</h1>
-      <div class="header-actions">
+  <div class="checkin-wrapper">
+    <!-- Título y subtítulo -->
+    <div class="checkin-title-section">
+      <h1 class="page-title">{{ 'attendance.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'attendance.subtitle' | translate }}</p>
+    </div>
+
+    <div class="checkin-card" [@fadeInUp]>
+      <!-- Header -->
+      <div class="checkin-header">
+        <div class="header-actions">
         <button type="button" class="action-icon-button" (click)="openExceptionsDialog()" [attr.aria-label]="'attendance.exceptions' | translate">
           <i class="pi pi-file-check"></i>
         </button>
         <button type="button" class="action-icon-button" (click)="openRecordsDialog()" [attr.aria-label]="'attendance.records' | translate">
           <i class="pi pi-list"></i>
         </button>
-        <button type="button" class="action-icon-button" (click)="openDatePicker()" [attr.aria-label]="'attendance.selectDate' | translate">
-          <i class="pi pi-calendar"></i>
-        </button>
+          <button type="button" class="action-icon-button" (click)="openDatePicker()" [attr.aria-label]="'attendance.selectDate' | translate">
+            <i class="pi pi-calendar"></i>
+          </button>
+        </div>
       </div>
-    </div>
 
     <!-- Icono de reloj circular con botón de registro -->
     <button
@@ -173,6 +179,7 @@
         <span>{{ 'attendance.loading' | translate }}</span>
       </div>
     }
+    </div>
   </div>
 </div>
 

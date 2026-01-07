@@ -2,7 +2,7 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
-import { AuthPort, AuthResult, User } from '../domain/auth.port';
+import { AuthPort, AuthResult, User, Person, Employee } from '../domain/auth.port';
 import { environment } from '@env/environment';
 import { DeviceInfo } from '../domain/device-info.interface';
 
@@ -81,34 +81,8 @@ export class HttpAuthAdapter implements AuthPort {
 
         // Obtener información completa del usuario desde /auth/session
         try {
-          const sessionResponse = await firstValueFrom<{
-            userId: number;
-            userEmail: string;
-            person?: {
-              employee?: {
-                employeeId: number;
-              };
-            };
-          }>(
-            this.http.get<{
-              userId: number;
-              userEmail: string;
-              person?: {
-                employee?: {
-                  employeeId: number;
-                };
-              };
-            }>(`${this.apiUrl}/auth/session`)
-          );
-
-          const user: User = {
-            id: loginResponse.data.user.userId?.toString() || '',
-            email: loginResponse.data.user.userEmail || '',
-            name: loginResponse.data.user.userEmail || '',
-            ...(sessionResponse.person?.employee?.employeeId && {
-              employeeId: sessionResponse.person.employee.employeeId
-            })
-          };
+          const sessionResponse = await this.getSessionData();
+          const user = this.mapSessionToUser(sessionResponse);
 
           this.currentUser = user;
           return {
@@ -204,40 +178,8 @@ export class HttpAuthAdapter implements AuthPort {
     }
 
     try {
-      const sessionResponse = await firstValueFrom<{
-        userId: number;
-        userEmail: string;
-        person?: {
-          employee?: {
-            employeeId: number;
-          };
-        };
-      }>(
-        this.http.get<{
-          userId: number;
-          userEmail: string;
-          person?: {
-            employee?: {
-              employeeId: number;
-            };
-          };
-        }>(`${this.apiUrl}/auth/session`)
-      );
-
-      // Validar que la respuesta tenga la estructura esperada
-      if (!sessionResponse?.userId || !sessionResponse?.userEmail) {
-        console.error('Estructura de respuesta inesperada:', sessionResponse);
-        throw new Error('Respuesta del servidor inválida: falta userId o userEmail');
-      }
-
-      const user: User = {
-        id: sessionResponse.userId?.toString() || '',
-        email: sessionResponse.userEmail || '',
-        name: sessionResponse.userEmail || '',
-        ...(sessionResponse.person?.employee?.employeeId && {
-          employeeId: sessionResponse.person.employee.employeeId
-        })
-      };
+      const sessionResponse = await this.getSessionData();
+      const user = this.mapSessionToUser(sessionResponse);
 
       this.currentUser = user;
       this.userInitialized = true;
@@ -263,6 +205,96 @@ export class HttpAuthAdapter implements AuthPort {
 
       this.userInitialized = true;
     }
+  }
+
+  /**
+   * Obtiene los datos completos de la sesión desde el servidor
+   */
+  private async getSessionData(): Promise<any> {
+    return await firstValueFrom(
+      this.http.get<any>(`${this.apiUrl}/auth/session`)
+    );
+  }
+
+  /**
+   * Mapea la respuesta de la sesión a la interfaz User
+   */
+  private mapSessionToUser(sessionResponse: any): User {
+    // Validar que la respuesta tenga la estructura esperada
+    if (!sessionResponse?.userId || !sessionResponse?.userEmail) {
+      console.error('Estructura de respuesta inesperada:', sessionResponse);
+      throw new Error('Respuesta del servidor inválida: falta userId o userEmail');
+    }
+
+    // Construir nombre completo desde person
+    let fullName = sessionResponse.userEmail;
+    if (sessionResponse.person) {
+      const parts: string[] = [];
+      if (sessionResponse.person.personFirstname) parts.push(sessionResponse.person.personFirstname);
+      if (sessionResponse.person.personLastname) parts.push(sessionResponse.person.personLastname);
+      if (sessionResponse.person.personSecondLastname) parts.push(sessionResponse.person.personSecondLastname);
+      if (parts.length > 0) {
+        fullName = parts.join(' ');
+      }
+    }
+
+    // Mapear Employee si existe
+    let employee: Employee | undefined;
+    if (sessionResponse.person?.employee) {
+      const emp = sessionResponse.person.employee;
+      employee = {
+        employeeId: emp.employeeId,
+        employeeCode: emp.employeeCode || '',
+        employeeFirstName: emp.employeeFirstName || '',
+        employeeLastName: emp.employeeLastName || '',
+        employeeSecondLastName: emp.employeeSecondLastName,
+        employeePayrollCode: emp.employeePayrollCode,
+        employeeHireDate: emp.employeeHireDate,
+        employeePhoto: emp.employeePhoto,
+        employeeWorkSchedule: emp.employeeWorkSchedule,
+        employeeTypeOfContract: emp.employeeTypeOfContract,
+        employeeBusinessEmail: emp.employeeBusinessEmail,
+        departmentId: emp.departmentId,
+        positionId: emp.positionId,
+        companyId: emp.companyId,
+        businessUnitId: emp.businessUnitId
+      };
+    }
+
+    // Mapear Person
+    let person: Person | undefined;
+    if (sessionResponse.person) {
+      const p = sessionResponse.person;
+      person = {
+        personId: p.personId,
+        personFirstname: p.personFirstname || '',
+        personLastname: p.personLastname || '',
+        personSecondLastname: p.personSecondLastname,
+        personPhone: p.personPhone,
+        personEmail: p.personEmail,
+        personPhoneSecondary: p.personPhoneSecondary,
+        personGender: p.personGender,
+        personBirthday: p.personBirthday,
+        personCurp: p.personCurp,
+        personRfc: p.personRfc,
+        personImssNss: p.personImssNss,
+        personMaritalStatus: p.personMaritalStatus,
+        personPlaceOfBirthCountry: p.personPlaceOfBirthCountry,
+        personPlaceOfBirthState: p.personPlaceOfBirthState,
+        personPlaceOfBirthCity: p.personPlaceOfBirthCity,
+        employee: employee
+      };
+    }
+
+    const user: User = {
+      id: sessionResponse.userId?.toString() || '',
+      email: sessionResponse.userEmail || '',
+      name: fullName,
+      ...(employee && { employeeId: employee.employeeId }),
+      person: person
+    };
+
+    return user;
   }
 }
 

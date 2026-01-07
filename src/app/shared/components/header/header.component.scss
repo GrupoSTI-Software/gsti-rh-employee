@@ -19,6 +19,12 @@
   box-sizing: border-box;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
 .menu-button {
   @include button-base;
   background: transparent;
@@ -36,6 +42,58 @@
 
   &:hover {
     background: var(--bg-hover);
+  }
+}
+
+.navigation-buttons {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-left: $spacing-xs;
+
+  @media (max-width: $breakpoint-sm) {
+    // Ocultar botones de navegación en pantallas muy pequeñas si es necesario
+    // display: none;
+  }
+}
+
+.nav-button {
+  @include button-base;
+  width: 2rem;
+  height: 2rem;
+  min-width: 3rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: $radius;
+  transition: background-color $transition-fast, transform $transition-fast;
+
+  i {
+    font-size: $font-size-lg;
+  }
+
+  &:hover:not(.disabled):not(:disabled) {
+    background: var(--bg-hover);
+    transform: scale(1.05);
+  }
+
+  &:active:not(.disabled):not(:disabled) {
+    transform: scale(0.95);
+  }
+
+  &.disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: var(--bg-secondary);
+    
+    &:hover {
+      transform: none;
+      background: var(--bg-secondary);
+    }
   }
 }
 

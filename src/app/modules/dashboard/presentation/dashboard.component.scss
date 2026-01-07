@@ -12,6 +12,9 @@
 .main-content {
   flex: 1;
   padding: $spacing-lg;
+  padding-top: calc(6px + $spacing-sm); // Padding mínimo después del header (muy pegado)
   overflow-y: auto;
+  background: var(--bg-secondary);
+  min-height: calc(100vh - 64px); // Altura total menos el header
 }
 
