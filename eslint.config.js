@@ -18,10 +18,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...tseslint.configs.stylistic,
   ...angular.configs.tsRecommended,
-  ...angular.configs.templateRecommended,
-  ...angular.configs.templateAccessibility,
   {
     files: ['**/*.ts'],
+    ignores: ['**/app.config.ts', '**/app.config.server.ts'],
     plugins: {
       prettier
     },
@@ -39,7 +38,8 @@ export default tseslint.config(
         'error',
         {
           argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_'
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_'
         }
       ],
       '@typescript-eslint/explicit-function-return-type': 'warn',
@@ -52,6 +52,8 @@ export default tseslint.config(
       '@typescript-eslint/prefer-optional-chain': 'warn',
 
       // Arquitectura hexagonal - reglas de importación
+      // Solo restringimos infrastructure ya que debe usarse a través de puertos/interfaces
+      // La capa de presentación SÍ puede importar casos de uso desde application
       'no-restricted-imports': [
         'error',
         {
@@ -60,11 +62,6 @@ export default tseslint.config(
               group: ['**/infrastructure/**'],
               message:
                 'No se puede importar desde infrastructure. Usa puertos/interfaces del dominio.'
-            },
-            {
-              group: ['**/application/**'],
-              message:
-                'No se puede importar desde application directamente. Usa los casos de uso.'
             }
           ]
         }
@@ -76,6 +73,58 @@ export default tseslint.config(
       'no-var': 'error'
     }
   },
+  // Configuración específica para archivos de configuración (Composition Root)
+  // Aquí SÍ se permite importar desde infrastructure para conectar implementaciones con puertos
+  {
+    files: ['**/app.config.ts', '**/app.config.server.ts'],
+    plugins: {
+      prettier
+    },
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.json', './tsconfig.app.json']
+      }
+    },
+    rules: {
+      // Prettier
+      'prettier/prettier': 'error',
+
+      // TypeScript strict rules
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_'
+        }
+      ],
+      '@typescript-eslint/explicit-function-return-type': 'warn',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/strict-boolean-expressions': 'warn',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      '@typescript-eslint/prefer-optional-chain': 'warn',
+
+      // En archivos de configuración NO se restringe infrastructure
+      // Es el Composition Root donde se conectan las implementaciones
+
+      // Reglas generales
+      'no-console': ['warn', { allow: ['error', 'warn'] }],
+      'prefer-const': 'error',
+      'no-var': 'error'
+    }
+  },
+  // Configuración de templates Angular - solo para archivos HTML
+  ...angular.configs.templateRecommended.map((config) => ({
+    ...config,
+    files: ['**/*.html']
+  })),
+  ...angular.configs.templateAccessibility.map((config) => ({
+    ...config,
+    files: ['**/*.html']
+  })),
   {
     files: ['**/*.html'],
     rules: {

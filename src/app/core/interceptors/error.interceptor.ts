@@ -29,7 +29,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const isLoginEndpoint = req.url.includes('/auth/login');
 
       if ((error.status === 401 || error.status === 403) && !isSessionEndpoint && !isLoginEndpoint) {
-        console.log('Error Interceptor - Token inválido en petición:', req.url);
         // Cerrar sesión y limpiar datos
         authPort.logout();
 
@@ -38,8 +37,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         if (!currentUrl.includes('/login') && !currentUrl.includes('/pwa-required')) {
           router.navigate(['/login']);
         }
-      } else if (isSessionEndpoint) {
-        console.log('Error Interceptor - Ignorando error de /auth/session (manejado por guard)');
       }
 
       // Re-lanzar el error para que los componentes puedan manejarlo si es necesario

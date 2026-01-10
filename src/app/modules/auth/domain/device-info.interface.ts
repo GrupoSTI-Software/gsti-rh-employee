@@ -8,4 +8,3 @@ export interface DeviceInfo {
   deviceType: string | null;
   deviceToken: string;
 }
-

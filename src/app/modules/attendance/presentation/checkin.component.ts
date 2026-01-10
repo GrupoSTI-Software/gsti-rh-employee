@@ -9,7 +9,7 @@ import { GetAttendanceUseCase } from '../application/get-attendance.use-case';
 import { StoreAssistUseCase } from '../application/store-assist.use-case';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { AuthPort } from '@modules/auth/domain/auth.port';
-import { Attendance, Exception } from '../domain/attendance.port';
+import { Attendance, Exception, Assistance } from '../domain/attendance.port';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CheckInIconComponent } from '@shared/components/icons/check-in-icon/check-in-icon.component';
 import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/check-out-icon.component';
@@ -27,7 +27,7 @@ import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-o
     CheckInIconComponent,
     CheckOutIconComponent,
     EatInIconComponent,
-    EatOutIconComponent
+    EatOutIconComponent,
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
@@ -35,16 +35,16 @@ import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-o
     trigger('fadeInUp', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(30px)' }),
-        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
+        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
     ]),
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0 }),
-        animate('400ms ease-out', style({ opacity: 1 }))
-      ])
-    ])
-  ]
+        animate('400ms ease-out', style({ opacity: 1 })),
+      ]),
+    ]),
+  ],
 })
 export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
@@ -53,7 +53,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translateService = inject(TranslateService);
-  private timeInterval?: any;
+  private timeInterval?: ReturnType<typeof setInterval>;
 
   readonly attendance = signal<Attendance | null>(null);
   readonly loading = signal(false);
@@ -65,7 +65,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   // Datepicker
   showDatePicker = false;
-  datePickerValue: string = '';
+  datePickerValue = '';
   maxDate = new Date(); // No permitir fechas futuras
 
   // Excepciones popup
@@ -82,7 +82,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   });
 
@@ -93,19 +93,19 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const timeString = now.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
     this.currentTime.set(timeString);
   }
 
   readonly canCheckIn = computed(() => {
     const att = this.attendance();
-    return !att?.checkInTime && !this.loading();
+    return att?.checkInTime === null && !this.loading();
   });
 
   readonly canCheckOut = computed(() => {
     const att = this.attendance();
-    return att?.checkInTime && !att?.checkOutTime && !this.loading();
+    return att?.checkInTime !== null && att?.checkOutTime === null && !this.loading();
   });
 
   /**
@@ -130,9 +130,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
     }, 1000);
 
     // Solicitar permisos necesarios
-    this.requestPermissions();
+    void this.requestPermissions();
 
-    this.loadAttendance();
+    void this.loadAttendance();
   }
 
   /**
@@ -140,41 +140,44 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Nota: En localhost HTTP, algunos navegadores pueden requerir interacción del usuario
    */
   private async requestPermissions(): Promise<void> {
-
     // Solicitar permiso de ubicación (solo en HTTPS o producción)
     try {
-      if (navigator.geolocation) {
+      if (typeof navigator.geolocation !== 'undefined') {
         // Verificar si el permiso ya está concedido o denegado
-        if (navigator.permissions && navigator.permissions.query) {
+        if (typeof navigator.permissions?.query !== 'undefined') {
           try {
-            const geoPermission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+            const geoPermission = await navigator.permissions.query({
+              name: 'geolocation' as PermissionName,
+            });
 
             if (geoPermission.state === 'prompt' || geoPermission.state === 'granted') {
               // Intentar obtener ubicación para activar el prompt o verificar que funciona
               await new Promise<void>((resolve) => {
                 navigator.geolocation.getCurrentPosition(
                   () => {
-                    console.log('Permiso de ubicación concedido');
                     resolve();
                   },
                   (error) => {
                     if (error.code === error.PERMISSION_DENIED) {
-                      console.warn('Permiso de ubicación denegado. Se solicitará cuando hagas clic.');
+                      console.warn(
+                        'Permiso de ubicación denegado. Se solicitará cuando hagas clic.',
+                      );
                     } else {
                       console.warn('Error al obtener ubicación:', error);
                     }
                     // No rechazamos aquí, solo registramos el error
                     resolve();
                   },
-                  { timeout: 5000, enableHighAccuracy: false }
+                  { timeout: 5000, enableHighAccuracy: false },
                 );
               });
             } else if (geoPermission.state === 'denied') {
-              console.warn('Permiso de ubicación previamente denegado. Ve a la configuración del navegador para permitirlo.');
+              console.warn(
+                'Permiso de ubicación previamente denegado. Ve a la configuración del navegador para permitirlo.',
+              );
             }
-          } catch (permError) {
+          } catch (_permError) {
             // Si la API de permisos no está disponible, intentar directamente
-            console.log('API de permisos no disponible, intentando solicitar directamente');
             await this.requestGeolocationPermission().catch(() => {
               // Ignorar errores aquí, se solicitará cuando el usuario interactúe
             });
@@ -192,20 +195,22 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     // Solicitar permiso de cámara (solo en HTTPS o producción)
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: 'user'
-          }
+            facingMode: 'user',
+          },
         });
         // Cerrar el stream inmediatamente, solo necesitamos el permiso
-        stream.getTracks().forEach(track => track.stop());
-        console.log('Permiso de cámara concedido');
+        stream.getTracks().forEach((track) => track.stop());
       }
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
-        console.warn('Permiso de cámara denegado o requiere interacción del usuario. Se solicitará cuando hagas clic.');
-      } else if (error.name === 'NotFoundError') {
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err.name === 'NotAllowedError') {
+        console.warn(
+          'Permiso de cámara denegado o requiere interacción del usuario. Se solicitará cuando hagas clic.',
+        );
+      } else if (err.name === 'NotFoundError') {
         console.warn('Cámara no encontrada');
       } else {
         console.warn('Error al solicitar permiso de cámara:', error);
@@ -221,7 +226,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
     return new Promise<void>((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
         () => {
-          console.log('Permiso de ubicación concedido');
           resolve();
         },
         (error) => {
@@ -233,7 +237,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
             reject(error);
           }
         },
-        { timeout: 5000, enableHighAccuracy: false }
+        { timeout: 5000, enableHighAccuracy: false },
       );
     });
   }
@@ -247,7 +251,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   async loadAttendance(): Promise<void> {
     const user = this.authPort.getCurrentUser();
-    if (!user?.employeeId) {
+    if (typeof user?.employeeId !== 'number') {
       this.error.set('No se encontró el ID del empleado');
       return;
     }
@@ -263,7 +267,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       const attendance = await this.getAttendanceUseCase.execute(
         dateStart,
         dateEnd,
-        user.employeeId
+        user.employeeId,
       );
 
       this.attendance.set(attendance);
@@ -282,7 +286,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!this.canCheckIn()) return;
 
     const user = this.authPort.getCurrentUser();
-    if (!user?.employeeId) {
+    if (typeof user?.employeeId !== 'number') {
       this.error.set('No se encontró el ID del empleado');
       return;
     }
@@ -309,7 +313,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         user.employeeId,
         location.coords.latitude,
         location.coords.longitude,
-        location.coords.accuracy || 0
+        location.coords.accuracy ?? 0,
       );
 
       if (success) {
@@ -318,10 +322,12 @@ export class CheckinComponent implements OnInit, OnDestroy {
       } else {
         this.error.set('Error al registrar el check-in');
       }
-    } catch (err: any) {
-      if (err.message?.includes('ubicación')) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      const errorMessage = error.message ?? '';
+      if (errorMessage.includes('ubicación')) {
         this.error.set('Se necesita permiso de ubicación para registrar asistencia');
-      } else if (err.message?.includes('cámara')) {
+      } else if (errorMessage.includes('cámara')) {
         this.error.set('Se necesita permiso de cámara para registrar asistencia');
       } else {
         this.error.set('Error al obtener la ubicación o registrar check-in');
@@ -342,43 +348,44 @@ export class CheckinComponent implements OnInit, OnDestroy {
     }
 
     // Verificar si estamos en localhost HTTP
-    const isLocalhost = window.location.hostname === 'localhost' ||
-                       window.location.hostname === '127.0.0.1' ||
-                       window.location.protocol === 'http:';
-
-    if (isLocalhost) {
-      console.log('Localhost detectado: solicitando permisos con interacción del usuario');
-    }
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.protocol === 'http:';
 
     // Verificar estado del permiso de geolocalización antes de intentar
     let geoPermissionDenied = false;
-    if (navigator.permissions && navigator.permissions.query) {
+    if (typeof navigator.permissions?.query !== 'undefined') {
       try {
-        const geoPermission = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        const geoPermission = await navigator.permissions.query({
+          name: 'geolocation' as PermissionName,
+        });
         if (geoPermission.state === 'denied') {
           geoPermissionDenied = true;
-          console.warn('Permiso de ubicación está denegado. El usuario debe habilitarlo en la configuración del navegador.');
+          console.warn(
+            'Permiso de ubicación está denegado. El usuario debe habilitarlo en la configuración del navegador.',
+          );
         }
-      } catch (e) {
+      } catch (_e) {
         // Si no está disponible la API de permisos, continuamos
       }
     }
 
     // Verificar permiso de cámara
     try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: 'user'
-          }
+            facingMode: 'user',
+          },
         });
-        stream.getTracks().forEach(track => track.stop());
-        console.log('Permiso de cámara verificado');
+        stream.getTracks().forEach((track) => track.stop());
       } else {
         throw new Error('Cámara no disponible');
       }
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err.name === 'NotAllowedError') {
         let message = 'Se necesita permiso de cámara para registrar asistencia.';
         if (isLocalhost) {
           message += ' Por favor, permite el acceso a la cámara cuando se solicite.';
@@ -386,10 +393,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
           message += ' Ve a la configuración del navegador para permitirlo.';
         }
         throw new Error(message);
-      } else if (error.name === 'NotFoundError') {
+      } else if (err.name === 'NotFoundError') {
         throw new Error('No se encontró ninguna cámara disponible');
       }
-      throw error;
+      throw new Error('Error al acceder a la cámara');
     }
 
     // Verificar permiso de geolocalización
@@ -397,14 +404,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
       await new Promise<void>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
           () => {
-            console.log('Permiso de ubicación verificado');
             resolve();
           },
           (error) => {
             if (error.code === error.PERMISSION_DENIED) {
               let message = 'Se necesita permiso de ubicación para registrar asistencia.';
               if (geoPermissionDenied) {
-                message += ' El permiso está denegado. Ve a la configuración del navegador (ícono de candado en la barra de direcciones) para permitirlo.';
+                message +=
+                  ' El permiso está denegado. Ve a la configuración del navegador (ícono de candado en la barra de direcciones) para permitirlo.';
               } else if (isLocalhost) {
                 message += ' Por favor, permite el acceso a la ubicación cuando se solicite.';
               } else {
@@ -422,12 +429,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
           {
             timeout: 10000,
             enableHighAccuracy: false,
-            maximumAge: 0
-          }
+            maximumAge: 0,
+          },
         );
       });
-    } catch (error: any) {
-      if (error.message?.includes('ubicación')) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      const errorMessage = err.message ?? '';
+      if (errorMessage.includes('ubicación')) {
         throw error;
       }
       throw new Error('Se necesita permiso de ubicación para registrar asistencia');
@@ -438,7 +447,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!this.canCheckIn()) return;
 
     const user = this.authPort.getCurrentUser();
-    if (!user?.employeeId) {
+    if (typeof user?.employeeId !== 'number') {
       this.error.set('No se encontró el ID del empleado');
       return;
     }
@@ -454,7 +463,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         user.employeeId,
         location.coords.latitude,
         location.coords.longitude,
-        location.coords.accuracy || 0
+        location.coords.accuracy ?? 0,
       );
 
       if (success) {
@@ -480,7 +489,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     }
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
         console.warn('La cámara no está disponible');
         return;
       }
@@ -488,8 +497,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Obtener acceso a la cámara
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user' // Cámara frontal
-        }
+          facingMode: 'user', // Cámara frontal
+        },
       });
 
       // Crear un elemento de video temporal para mostrar la cámara
@@ -543,14 +552,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Esperar a que el usuario capture o cancele
       return new Promise<void>((resolve, reject) => {
-        const cleanup = () => {
-          stream.getTracks().forEach(track => track.stop());
+        const cleanup = (): void => {
+          stream.getTracks().forEach((track) => track.stop());
           document.body.removeChild(video);
           document.body.removeChild(captureButton);
           document.body.removeChild(cancelButton);
         };
 
-        captureButton.onclick = () => {
+        captureButton.onclick = (): void => {
           // Crear canvas para capturar la foto
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
@@ -560,27 +569,29 @@ export class CheckinComponent implements OnInit, OnDestroy {
             ctx.drawImage(video, 0, 0);
             // Aquí podrías enviar la foto al servidor si es necesario
             // Por ahora solo la capturamos
-            canvas.toBlob((blob) => {
-              if (blob) {
-                console.log('Foto capturada:', blob);
+            canvas.toBlob(
+              (_blob) => {
                 // Aquí podrías guardar o enviar la foto
-              }
-            }, 'image/jpeg', 0.9);
+              },
+              'image/jpeg',
+              0.9,
+            );
           }
           cleanup();
           resolve();
         };
 
-        cancelButton.onclick = () => {
+        cancelButton.onclick = (): void => {
           cleanup();
           reject(new Error('Captura cancelada'));
         };
       });
-    } catch (error: any) {
-      if (error.name === 'NotAllowedError') {
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err.name === 'NotAllowedError') {
         console.warn('Permiso de cámara denegado');
         throw new Error('Se necesita permiso de cámara para registrar asistencia');
-      } else if (error.name === 'NotFoundError') {
+      } else if (err.name === 'NotFoundError') {
         console.warn('Cámara no encontrada');
         throw new Error('No se encontró ninguna cámara');
       } else {
@@ -594,7 +605,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!this.canCheckOut()) return;
 
     const user = this.authPort.getCurrentUser();
-    if (!user?.employeeId) {
+    if (typeof user?.employeeId !== 'number') {
       this.error.set('No se encontró el ID del empleado');
       return;
     }
@@ -610,7 +621,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         user.employeeId,
         location.coords.latitude,
         location.coords.longitude,
-        location.coords.accuracy || 0
+        location.coords.accuracy ?? 0,
       );
 
       if (success) {
@@ -634,7 +645,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (!navigator.geolocation) {
+      if (typeof navigator.geolocation === 'undefined') {
         reject(new Error('Geolocalización no disponible en este navegador'));
         return;
       }
@@ -648,7 +659,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = 'Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.';
+              errorMessage =
+                'Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.';
               break;
             case error.POSITION_UNAVAILABLE:
               errorMessage = 'Información de ubicación no disponible';
@@ -666,8 +678,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
         {
           enableHighAccuracy: true,
           timeout: 15000,
-          maximumAge: 0
-        }
+          maximumAge: 0,
+        },
       );
     });
   }
@@ -676,7 +688,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const date = new Date(this.selectedDate());
     date.setDate(date.getDate() - 1);
     this.selectedDate.set(date);
-    this.loadAttendance();
+    void this.loadAttendance();
   }
 
   nextDay(): void {
@@ -684,7 +696,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const date = new Date(this.selectedDate());
     date.setDate(date.getDate() + 1);
     this.selectedDate.set(date);
-    this.loadAttendance();
+    void this.loadAttendance();
   }
 
   /**
@@ -694,7 +706,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const date = new Date(this.selectedDate());
     date.setMonth(date.getMonth() - 1);
     this.selectedDate.set(date);
-    this.loadAttendance();
+    void this.loadAttendance();
   }
 
   /**
@@ -712,7 +724,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     } else {
       this.selectedDate.set(date);
     }
-    this.loadAttendance();
+    void this.loadAttendance();
   }
 
   /**
@@ -720,27 +732,30 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Maneja: ONTIME (verde), delay/late (amarillo), fault (rojo), null (sin color)
    */
   getStatusClass(status: string | null | undefined): string {
-    if (!status || status.trim() === '') return '';
+    if (status === null || status === undefined || status.trim() === '') return '';
     const normalizedStatus = status.toLowerCase().trim();
 
     // ONTIME o variaciones
-    if (normalizedStatus === 'ontime' ||
-        normalizedStatus === 'on-time' ||
-        normalizedStatus === 'on time' ||
-        normalizedStatus === 'on_time') {
+    if (
+      normalizedStatus === 'ontime' ||
+      normalizedStatus === 'on-time' ||
+      normalizedStatus === 'on time' ||
+      normalizedStatus === 'on_time'
+    ) {
       return 'status-ontime';
     }
 
     // DELAY o variaciones (amarillo)
-    if (normalizedStatus === 'delay' ||
-        normalizedStatus === 'late' ||
-        normalizedStatus === 'retraso') {
+    if (
+      normalizedStatus === 'delay' ||
+      normalizedStatus === 'late' ||
+      normalizedStatus === 'retraso'
+    ) {
       return 'status-delay';
     }
 
     // FAULT (rojo)
-    if (normalizedStatus === 'fault' ||
-        normalizedStatus === 'falta') {
+    if (normalizedStatus === 'fault' || normalizedStatus === 'falta') {
       return 'status-fault';
     }
 
@@ -751,28 +766,34 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Obtiene el color del icono según el status
    * ONTIME: verde, delay: amarillo, fault: rojo, null: color por defecto
    */
-  getStatusColor(status: string | null | undefined, defaultColor: string = 'var(--text-secondary)'): string {
-    if (!status || status.trim() === '') return defaultColor;
+  getStatusColor(
+    status: string | null | undefined,
+    defaultColor = 'var(--text-secondary)',
+  ): string {
+    if (status === null || status === undefined || status.trim() === '') return defaultColor;
     const normalizedStatus = status.toLowerCase().trim();
 
     // ONTIME o variaciones (verde)
-    if (normalizedStatus === 'ontime' ||
-        normalizedStatus === 'on-time' ||
-        normalizedStatus === 'on time' ||
-        normalizedStatus === 'on_time') {
+    if (
+      normalizedStatus === 'ontime' ||
+      normalizedStatus === 'on-time' ||
+      normalizedStatus === 'on time' ||
+      normalizedStatus === 'on_time'
+    ) {
       return 'var(--success)';
     }
 
     // DELAY o variaciones (amarillo)
-    if (normalizedStatus === 'delay' ||
-        normalizedStatus === 'late' ||
-        normalizedStatus === 'retraso') {
+    if (
+      normalizedStatus === 'delay' ||
+      normalizedStatus === 'late' ||
+      normalizedStatus === 'retraso'
+    ) {
       return 'var(--warning)';
     }
 
     // FAULT (rojo)
-    if (normalizedStatus === 'fault' ||
-        normalizedStatus === 'falta') {
+    if (normalizedStatus === 'fault' || normalizedStatus === 'falta') {
       return 'var(--danger)';
     }
 
@@ -793,7 +814,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   onDateSelect(event: Event): void {
     const target = event.target as HTMLInputElement;
-    if (target && target.value) {
+    if (target?.value) {
       const selectedDate = new Date(target.value);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -802,7 +823,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Solo permitir fechas menores a hoy
       if (selectedDate < today) {
         this.selectedDate.set(selectedDate);
-        this.loadAttendance();
+        void this.loadAttendance();
       }
     }
     this.showDatePicker = false;
@@ -826,7 +847,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Obtiene las excepciones del attendance actual
    */
   getExceptions(): Exception[] {
-    return this.attendance()?.exceptions || [];
+    return this.attendance()?.exceptions ?? [];
   }
 
   /**
@@ -839,7 +860,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
@@ -860,8 +881,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
   /**
    * Obtiene los registros de asistencia del attendance actual
    */
-  getRecords(): any[] {
-    return this.attendance()?.assistFlatList || [];
+  getRecords(): Assistance[] {
+    return this.attendance()?.assistFlatList ?? [];
   }
 
   /**
@@ -875,13 +896,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const dateStr = date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
 
     const timeStr = date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
 
     return `${dateStr} ${timeStr}`;
@@ -898,8 +919,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      second: '2-digit',
     });
   }
 }
-

@@ -8,7 +8,7 @@ import { DeviceService } from '@core/services/device.service';
  * Contiene la lógica de negocio para el inicio de sesión
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class LoginUseCase {
   private readonly authPort = inject(AUTH_PORT);
@@ -19,14 +19,14 @@ export class LoginUseCase {
     if (!email || !password) {
       return {
         success: false,
-        error: 'Email y contraseña son requeridos'
+        error: 'Email y contraseña son requeridos',
       };
     }
 
     if (!this.isValidEmail(email)) {
       return {
         success: false,
-        error: 'El formato del email no es válido'
+        error: 'El formato del email no es válido',
       };
     }
 
@@ -42,4 +42,3 @@ export class LoginUseCase {
     return emailRegex.test(email);
   }
 }
-

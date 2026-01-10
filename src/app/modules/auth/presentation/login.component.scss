@@ -2,236 +2,50 @@
 @use '../../../../styles/mixins' as *;
 
 .login-container {
-  min-height: 100vh;
-  @include flex-center;
-  padding: $spacing-lg;
-  background: var(--bg-secondary);
-}
-
-.login-card {
+  min-height: 100dvh;
   width: 100%;
-  max-width: $container-max-width-sm;
-  @include card;
-  position: relative;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: flex-end;
+  background-image: url('../../../../assets/images/startbg.jpeg');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
 .login-header {
-  text-align: center;
-  margin-bottom: $spacing-3xl;
+  position: fixed;
+  top: $padding-xl;
+  margin-left: $padding-lg;
 
   .login-logo {
-    max-width: 100%;
-    height: auto;
-    max-height: 120px;
-    margin-bottom: $spacing-2xl;
+    display: block;
+    height: 4rem;
+    width: 15rem;
     object-fit: contain;
+    object-position: left;
   }
+}
 
-  .login-logo-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 120px;
-    margin-bottom: $spacing-2xl;
-
-    i {
-      font-size: $font-size-2xl;
-      color: var(--text-secondary);
-    }
-  }
-
-  h1 {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-semibold;
-    color: var(--text-primary);
-    margin-bottom: $spacing-sm;
-  }
-
-  p {
-    color: var(--text-secondary);
-    font-size: $font-size-sm;
-  }
+.login-card {
+  position: relative;
+  width: 100%;
+  padding: $padding-lg;
+  padding-bottom: $padding;
+  padding-top: $padding-xl;
+  background: var(--bg-primary);
 }
 
 .login-form {
-  @include flex-column;
-  gap: $spacing-xl;
-}
-
-.form-group {
-  @include form-group;
-
-  label {
-    font-size: $font-size-sm;
-    font-weight: $font-weight-medium;
-    color: var(--text-primary);
-  }
-
-  input[type='email'],
-  input[type='password'],
-  input[type='text'] {
-    @include input-base;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-    &:focus {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    &.error {
-      @include input-error;
-    }
-  }
-
-  .password-input-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-
-    input {
-      padding-right: 48px; // Espacio para el botón
-      width: 100%;
-    }
-
-    .password-toggle-button {
-      position: absolute;
-      right: $spacing-sm;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: $spacing-xs;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      transition: color 0.2s ease, transform 0.2s ease;
-      border-radius: $radius;
-      min-width: 32px;
-      min-height: 32px;
-
-      &:hover {
-        color: var(--primary);
-        background: var(--bg-hover);
-        transform: scale(1.1);
-      }
-
-      &:active {
-        transform: scale(0.95);
-      }
-
-      &:focus {
-        outline-offset: 2px;
-      }
-
-      i {
-        font-size: $font-size-lg;
-      }
-    }
-  }
-
-  .error-message {
-    @include error-message;
-  }
-}
-
-.checkbox-group {
-  flex-direction: row;
-  @include flex-between;
-
-  label {
-    display: flex;
-    align-items: center;
-    gap: $spacing-sm;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-
-    &:hover {
-      transform: translateX(4px);
-    }
-
-    input[type='checkbox'] {
-      cursor: pointer;
-      transition: transform 0.2s ease;
-
-      &:checked {
-        transform: scale(1.1);
-      }
-    }
-  }
-
-  .forgot-password {
-    font-size: $font-size-sm;
-    color: var(--secondary);
-    text-decoration: none;
-    transition: color 0.2s ease, transform 0.2s ease;
-
-    &:hover {
-      text-decoration: underline;
-      color: var(--primary);
-      transform: translateX(-2px);
-    }
-  }
-}
-
-.error-alert {
-  @include error-alert;
-}
-
-.submit-button {
-  @include button-primary;
-  padding: $spacing-md;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.footer-actions {
-  margin-top: $spacing-2xl;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-md;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: $gap-md;
 }
 
-.theme-button {
-  @include button-secondary;
-  padding: $spacing-sm;
-  font-size: $font-size-sm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  aspect-ratio: 1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: scale(1.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-
-  i {
-    font-size: $font-size-lg;
-    transition: transform 0.3s ease;
-  }
-
-  &:hover i {
-    transform: rotate(15deg);
-  }
+.version-info {
+  text-align: center;
+  margin-top: $padding-md;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
-

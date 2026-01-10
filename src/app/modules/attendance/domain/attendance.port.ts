@@ -50,10 +50,13 @@ export interface Attendance {
  * Registro individual de asistencia
  */
 export interface Assistance {
+  assistId: number;
   employeeId: number;
-  assistLatitude: number;
-  assistLongitude: number;
+  assistLatitude: number | null;
+  assistLongitude: number | null;
   assistPunchTime: string;
+  assistTerminalAlias?: string | null;
+  assistAreaAlias?: string | null;
 }
 
 /**

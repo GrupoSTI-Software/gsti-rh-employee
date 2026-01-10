@@ -5,11 +5,7 @@ import { DeviceInfo } from './device-info.interface';
  * Define el contrato que debe cumplir cualquier implementación de autenticación
  */
 export interface AuthPort {
-  login(
-    email: string,
-    password: string,
-    deviceInfo?: DeviceInfo
-  ): Promise<AuthResult>;
+  login(email: string, password: string, deviceInfo?: DeviceInfo): Promise<AuthResult>;
   logout(): Promise<void>;
   isAuthenticated(): boolean;
   getCurrentUser(): User | null;
@@ -67,4 +63,3 @@ export interface User {
   employeeId?: number;
   person?: Person;
 }
-

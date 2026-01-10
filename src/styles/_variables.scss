@@ -3,7 +3,11 @@
 // ============================================
 
 // Border Radius estándar
-$radius: 0.75rem;
+$radius-sm: 0.5rem;
+$radius-md: 0.75rem;
+$radius-lg: 1rem;
+$radius: $radius-sm;
+$radius-full: 100%;
 
 // Espaciados (spacing)
 $spacing-xs: 0.25rem;   // 4px
@@ -16,14 +20,16 @@ $spacing-3xl: 2rem;     // 32px
 $spacing-4xl: 2.5rem;   // 40px
 
 // Tamaños de fuente
-$font-size-xs: 0.75rem;    // 12px
-$font-size-sm: 0.875rem;   // 14px
-$font-size-base: 1rem;     // 16px
-$font-size-lg: 1.125rem;   // 18px
-$font-size-xl: 1.25rem;    // 20px
-$font-size-2xl: 1.875rem;  // 30px
-$font-size-3xl: 2.25rem;   // 36px
-$font-size-4xl: 3rem;      // 48px
+
+$font-size-xs: 0.75rem;
+$font-size-sm: 0.875rem;
+$font-size-base: 1rem;
+$font-size: $font-size-base;
+$font-size-lg: 1.125rem;
+$font-size-xl: 1.25rem;
+$font-size-2xl: 1.875rem;
+$font-size-3xl: 2.25rem;
+$font-size-4xl: 3rem;
 
 // Pesos de fuente
 $font-weight-normal: 400;
@@ -57,3 +63,17 @@ $container-max-width-sm: 28rem;   // 448px
 $container-max-width-md: 42rem;  // 672px
 $container-max-width-lg: 56rem;  // 896px
 $container-max-width-xl: 72rem;  // 1152px
+
+// Paddings
+$padding: 1rem;
+$padding-sm: 1rem;
+$padding-md: 1.5rem;
+$padding-lg: 2rem;
+$padding-xl: 4rem;
+
+// Gaps
+$gap: 0.5rem;
+$gap-xs: 0.25rem;
+$gap-sm: 0.5rem;
+$gap-md: 1rem;
+$gap-lg: 1.5rem;
