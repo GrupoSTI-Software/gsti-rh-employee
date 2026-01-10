@@ -65,19 +65,6 @@
     padding-bottom: $spacing-lg;
   }
 
-  .user-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-semibold;
-    margin-bottom: $spacing-xs;
-  }
 
   .user-name {
     font-size: $font-size-lg;

@@ -1,0 +1,16 @@
+<div class="avatar-container" [class]="'avatar-' + size()" [class.with-border]="showBorder()">
+  @if (userPhoto() && !imageError()) {
+    <img 
+      [src]="userPhoto()" 
+      [alt]="altText()" 
+      class="avatar-image"
+      (error)="onImageError($event)"
+      (load)="onImageLoad()"
+      loading="lazy" />
+  }
+  @if (!userPhoto() || imageError()) {
+    <div class="avatar-initials">
+      {{ userInitials() }}
+    </div>
+  }
+</div>

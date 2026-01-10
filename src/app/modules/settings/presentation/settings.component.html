@@ -1,25 +1,13 @@
 <div class="settings-container">
-  <div class="settings-card" [@fadeInUp]>
-    <div class="settings-header">
-      <h1>{{ 'settings.title' | translate }}</h1>
-      <p>{{ 'settings.subtitle' | translate }}</p>
+  <div class="settings-wrapper">
+    <!-- Título y subtítulo -->
+    <div class="settings-title-section">
+      <h1 class="page-title">{{ 'settings.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'settings.subtitle' | translate }}</p>
     </div>
 
-    <div class="settings-options">
-      <!-- Opción de Biometría -->
-      <button type="button" class="option-card" (click)="navigateToBiometrics()">
-        <div class="option-left">
-          <div class="icon-container">
-            <i class="pi pi-shield"></i>
-          </div>
-          <div class="option-content">
-            <h3>{{ 'settings.biometricsOption.title' | translate }}</h3>
-            <p>{{ 'settings.biometricsOption.description' | translate }}</p>
-          </div>
-        </div>
-        <i class="pi pi-chevron-right"></i>
-      </button>
-
+    <div class="settings-card" [@fadeInUp]>
+      <div class="settings-options">
       <!-- Opción de Tema -->
       <div class="option-card select-card">
         <div class="option-left">
@@ -79,6 +67,7 @@
         </div>
         <i class="pi pi-chevron-right"></i>
       </button>
+      </div>
     </div>
   </div>
 </div>

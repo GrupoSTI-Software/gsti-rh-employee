@@ -1,0 +1,64 @@
+@use '../../../../styles/variables' as *;
+
+.avatar-container {
+  position: relative;
+  flex-shrink: 0;
+
+  &.avatar-small {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-xs;
+  }
+
+  &.avatar-medium {
+    width: 48px;
+    height: 48px;
+    font-size: $font-size-sm;
+  }
+
+  &.avatar-large {
+    width: 80px;
+    height: 80px;
+    font-size: $font-size-lg;
+  }
+
+  &.avatar-xlarge {
+    width: 120px;
+    height: 120px;
+    font-size: $font-size-3xl;
+  }
+
+  &.with-border {
+    .avatar-image,
+    .avatar-initials {
+      border: 1px solid var(--primary);
+    }
+  }
+
+  &.avatar-xlarge.with-border {
+    .avatar-image,
+    .avatar-initials {
+      border-width: 1px;
+    }
+  }
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-initials {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: $font-weight-bold;
+}

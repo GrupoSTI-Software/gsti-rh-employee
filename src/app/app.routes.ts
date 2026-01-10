@@ -53,17 +53,6 @@ export const routes: Routes = [
           )
       },
       {
-        path: 'biometrics',
-        data: {
-          breadcrumb: 'biometrics',
-          label: 'Biometría'
-        },
-        loadComponent: () =>
-          import('@modules/biometrics/presentation/biometrics.component').then(
-            (m) => m.BiometricsComponent
-          )
-      },
-      {
         path: '',
         redirectTo: 'checkin',
         pathMatch: 'full'

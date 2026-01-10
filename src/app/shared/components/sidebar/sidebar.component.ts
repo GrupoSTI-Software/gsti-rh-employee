@@ -6,6 +6,7 @@ import { SidebarService } from '@core/services/sidebar.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { AuthPort } from '@modules/auth/domain/auth.port';
+import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 export interface MenuItem {
@@ -18,7 +19,7 @@ export interface MenuItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, TranslatePipe],
+  imports: [CommonModule, RouterLink, RouterLinkActive, TranslatePipe, AvatarComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
   animations: [
@@ -50,27 +51,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
   readonly user = computed(() => this.authPort.getCurrentUser());
   readonly userName = computed(() => {
     const user = this.user();
+    if (user?.person) {
+      const parts: string[] = [];
+      if (user.person.personFirstname) parts.push(user.person.personFirstname);
+      if (user.person.personLastname) parts.push(user.person.personLastname);
+      if (parts.length > 0) {
+        return parts.join(' ');
+      }
+    }
     return user?.name || user?.email || '';
   });
   readonly userEmail = computed(() => {
     const user = this.user();
     return user?.email || '';
-  });
-  readonly userInitials = computed(() => {
-    const user = this.user();
-    if (!user?.name) {
-      // Si no hay nombre, usar las primeras letras del email
-      const email = user?.email || '';
-      if (email.length >= 2) {
-        return email.substring(0, 2).toUpperCase();
-      }
-      return 'U';
-    }
-    const names = user.name.split(' ');
-    if (names.length >= 2) {
-      return (names[0][0] + names[1][0]).toUpperCase();
-    }
-    return user.name[0].toUpperCase();
   });
 
   readonly menuItems: MenuItem[] = [
@@ -91,12 +84,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       route: '/dashboard/settings',
       icon: 'pi-cog',
       translationKey: 'menu.settings'
-    },
-    {
-      label: 'Biometría',
-      route: '/dashboard/biometrics',
-      icon: 'pi-shield',
-      translationKey: 'menu.biometrics'
     }
   ];
 

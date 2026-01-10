@@ -1,24 +1,20 @@
-<div class="login-container" [@fadeIn]>
-  <div class="login-card" [@fadeInUp]>
-    <div class="login-header" [@fadeInUp]>
-      @if (showLogo()) {
-        <img
-          [src]="logoUrl()"
-          [alt]="'auth.login' | translate"
-          class="login-logo"
-          id="app-logo"
-          [@scaleIn]
-        />
-      } @else {
-        <div class="login-logo-placeholder">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-      }
-      <h1 [@fadeInUpDelayed]>{{ 'auth.loginTitle' | translate }}</h1>
-      <p [@fadeInUpDelayed]>{{ 'auth.loginSubtitle' | translate }}</p>
-    </div>
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" [@staggerFadeInUp]>
+<div class="login-container">
+  <div class="login-header">
+    @if (showLogo()) {
+      <img
+        [src]="logoUrl()"
+        [alt]="'auth.login' | translate"
+        class="login-logo"
+        id="app-logo"
+      />
+    } @else {
+      <div class="login-logo-placeholder">
+        <i class="pi pi-spin pi-spinner"></i>
+      </div>
+    }
+  </div>
+  <div class="login-card">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
         <label for="email">{{ 'auth.email' | translate }}</label>
         <input
@@ -26,7 +22,6 @@
           type="email"
           formControlName="email"
           [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-          [placeholder]="'auth.email' | translate"
         >
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <span class="error-message">
@@ -47,7 +42,6 @@
             [type]="showPassword() ? 'text' : 'password'"
             formControlName="password"
             [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-            [placeholder]="'auth.password' | translate"
           >
           <button
             type="button"
@@ -80,14 +74,14 @@
       }
 
       @if (error()) {
-        <div class="error-alert" [@shake]>
+        <div class="error-alert">
           {{ error() }}
         </div>
       }
 
       <button
         type="submit"
-        class="submit-button"
+        class="btn primary"
         [disabled]="loading() || loginForm.invalid"
       >
         @if (loading()) {
@@ -96,18 +90,11 @@
           {{ 'auth.login' | translate }}
         }
       </button>
-    </form>
 
-    <div class="footer-actions" [@fadeInUp]>
-      <app-language-selector></app-language-selector>
-      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('auth.darkMode' | translate) : ('auth.lightMode' | translate)">
-        @if (theme.theme() === 'light') {
-          <i class="pi pi-moon"></i>
-        } @else {
-          <i class="pi pi-sun"></i>
-        }
-      </button>
-    </div>
+      <div class="version-info">
+        v{{ version }}
+      </div>
+    </form>
   </div>
 </div>
 

@@ -1,6 +1,12 @@
 /* Estilos globales para componentes PrimeNG */
 @use './styles/_primeng.scss' as *;
 
+/* Estilos globales para formularios */
+@use './styles/_forms.scss' as *;
+
+/* Estilos globales para botones */
+@use './styles/_buttons.scss' as *;
+
 /* Reset CSS básico */
 * {
   margin: 0;
@@ -9,14 +15,13 @@
 }
 
 /* Fuente Inter con fallback */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 
 /* PrimeNG Styles - Solo PrimeIcons (los temas ahora se configuran en app.config.ts) */
 @import 'primeicons/primeicons.css';
+
 :root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol';
+  font-family: "Nunito", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -26,10 +31,11 @@
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5fa;
   --bg-tertiary: #e9e9e9;
+  --bg-input: #ffffff;
   --bg-hover: #f1f5f9;
   --bg-active: #e3ebf6;
 
-  --text-primary: #093057;
+  --text-primary:#6f829a;
   --text-secondary: #636c87;
   --text-tertiary: #88a4bf;
 
@@ -48,7 +54,7 @@
   --success: #33d4ad;
   --info: #3cb4e5;
   --warning: #ff993a;
-  --danger: #cd360c;
+  --danger: #e46666;
 
   /* RGB del primary para usar en rgba */
   --primary-rgb: 9, 48, 87;
@@ -64,45 +70,55 @@
 
 /* Variables CSS para tema oscuro */
 [data-theme='dark'] {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-tertiary: #0f3460;
-  --bg-hover: #1e2746;
-  --bg-active: #2a3a5c;
+  /* Fondos - Basados en la paleta de la imagen */
+  --bg-primary: #2C2E36;        /* Fondo principal (área de chat central) */
+  --bg-secondary: #3B3D45;      /* Fondo secundario (sidebar, cards) */
+  --bg-tertiary: #38393F;       /* Fondo terciario (inputs, elementos elevados) */
+  --bg-input: #38393F;
+  --bg-hover: #4A4C55;          /* Estado hover */
+  --bg-active: #3E4049;         /* Estado activo/seleccionado */
+  --bg-input: #38393F;          /* Fondo específico para inputs */
 
-  --text-primary: #ffffff;
-  --text-secondary: #b8c5d6;
-  --text-tertiary: #88a4bf;
+  /* Textos - Jerarquía clara */
+  --text-primary: #FFFFFF;      /* Texto principal - máxima legibilidad */
+  --text-secondary: #B0B3B8;    /* Texto secundario - información complementaria */
+  --text-tertiary: #8E8E93;     /* Texto terciario - metadatos, placeholders */
+  --text-disabled: #5F6368;     /* Texto deshabilitado */
 
-  --border-color: #2a3a5c;
-  --border-hover: #246fd7;
-  --border-active: #3cb4e5;
+  /* Bordes - Sutiles pero visibles */
+  --border-color: #4A4C55;      /* Borde estándar */
+  --border-hover: #6C63FF;      /* Borde en hover con color primario */
+  --border-active: #8B85FF;     /* Borde activo/focus */
+  --border-subtle: #3B3D45;     /* Borde muy sutil para divisores */
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  /* Sombras - Adaptadas para dark mode */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
 
-  /* Colores del sistema */
-  --primary: #246fd7;
-  --primary-dark: #093057;
-  --secondary: #3cb4e5;
-  --accent: #4a6fa5;
-  --success: #33d4ad;
-  --info: #3cb4e5;
-  --warning: #ff993a;
-  --danger: #cd360c;
+  /* Colores del sistema - Modernos y vibrantes */
+  --primary: #6C63FF;           /* Púrpura/azul vibrante (botón Send) */
+  --primary-dark: #5750E6;      /* Variante oscura del primario */
+  --primary-light: #8B85FF;     /* Variante clara del primario */
+  --secondary: #3ABFF8;         /* Cyan brillante */
+  --accent: #A78BFA;            /* Púrpura claro para acentos */
+  --success: #10B981;           /* Verde menta */
+  --info: #3ABFF8;              /* Cyan (igual que secondary) */
+  --warning: #FBBF24;           /* Amarillo cálido */
+  --danger: #EF4444;            /* Rojo vibrante */
 
   /* RGB del primary para usar en rgba */
-  --primary-rgb: 36, 111, 215;
+  --primary-rgb: 108, 99, 255;
   /* RGB del secondary para usar en rgba */
-  --secondary-rgb: 60, 180, 229;
+  --secondary-rgb: 58, 191, 248;
   /* RGB de success, warning y danger para usar en rgba */
-  --success-rgb: 51, 212, 173;
-  --warning-rgb: 255, 153, 58;
-  --danger-rgb: 205, 54, 12;
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 251, 191, 36;
+  --danger-rgb: 239, 68, 68;
 
   /* Variables CSS de PrimeNG Select - Sobrescribir color verde por azul primario */
-  --p-select-focus-border-color: var( --bg-active);
-  --p-select-focus-ring-color: var( --bg-active);
+  --p-select-focus-border-color: var(--primary);
+  --p-select-focus-ring-color: var(--primary);
   --p-select-focus-ring-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.2);
 }
 
@@ -114,6 +130,19 @@
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
+.bg-glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+
+  @media (prefers-color-scheme: dark) {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
+}

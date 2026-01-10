@@ -121,10 +121,6 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
   }
 
-  navigateToBiometrics(): void {
-    this.router.navigate(['/dashboard/biometrics']);
-  }
-
   navigateToProfile(): void {
     this.router.navigate(['/dashboard/profile']);
   }

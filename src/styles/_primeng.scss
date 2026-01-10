@@ -8,7 +8,7 @@
    PrimeNG Select - Estilos globales
    ============================================ */
 
-/* Borde del select cuando tiene focus - Sobrescribir color verde por azul primario */
+/* Borde del select cuando tiene focus - Usar color primario */
 .p-select.p-focus .p-select-trigger,
 .p-select:focus .p-select-trigger,
 .p-select.p-inputwrapper-focus .p-select-trigger,
@@ -19,38 +19,45 @@
 .p-select:focus .p-select-trigger[class],
 div.p-select.p-focus .p-select-trigger,
 div.p-select:focus .p-select-trigger {
-  border-color: var(--bg-active) !important;
-  border: 1px solid var(--bg-active) !important;
+  border-color: var(--primary) !important;
+  border: 1px solid var(--primary) !important;
   border-width: 1px !important;
   border-style: solid !important;
-  box-shadow: 0 0 0 0.2rem rgba(var(--primary-rgb), 0.2) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15) !important;
   outline: none !important;
+  background: var(--bg-tertiary) !important;
 }
 
 /* Opciones del dropdown - Hover y estados activos */
 .p-select:not(.p-disabled).p-focus {
-  border: 1px solid var(--bg-active) !important;
-  box-shadow: 0 0 0 0.2rem rgba(var(--bg-active-rgb), 0.2) !important;
+  border: 1px solid var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15) !important;
+}
+
+/* Estilo del select en hover */
+.p-select:not(.p-disabled):hover {
+  border-color: var(--border-hover) !important;
 }
 .p-select-overlay .p-select-option {
   transition: background-color $transition-base, color $transition-base;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
 
-  /* Estados hover - Usar bg-active para un color más suave y claro */
+  /* Estados hover */
   &:hover {
-    background: var(--bg-active) !important;
+    background: var(--bg-hover) !important;
     color: var(--text-primary) !important;
   }
 
-  /* Estado seleccionado y focus - Usar primary en light, secondary en dark */
+  /* Estado seleccionado y focus */
   &.p-select-option-selected,
   &.p-focus,
   &[data-p-highlight="true"],
   &[data-p-selected="true"],
   &[aria-selected="true"] {
-    /* En tema claro usa primary, en tema oscuro usa secondary */
-    background: var(--bg-active) !important;
-    background-color: var(--bg-active) !important;
-    color: var(--text-primary) !important;
+    background: var(--primary) !important;
+    background-color: var(--primary) !important;
+    color: white !important;
   }
 
   /* Combinación de clases que usa PrimeNG cuando está seleccionado */
@@ -62,8 +69,16 @@ div.p-select:focus .p-select-trigger {
   }
 }
 
+/* Fondo del panel del dropdown */
+.p-select-overlay {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: $radius-md !important;
+}
+
 /* Opciones seleccionadas - Selectores adicionales para mayor especificidad */
-/* En tema claro usa primary (#093057), en tema oscuro usa secondary */
+/* Ambos temas usan el color primario para opciones seleccionadas */
 [data-theme='light'] .p-select-overlay .p-select-option.p-select-option-selected,
 [data-theme='light'] .p-select-overlay .p-select-option.p-select-option-selected.p-focus,
 [data-theme='light'] .p-select-overlay .p-select-option[data-p-highlight="true"][data-p-selected="true"],
@@ -75,15 +90,14 @@ div.p-select:focus .p-select-trigger {
   color: white !important;
 }
 
-/* En tema oscuro mantiene el comportamiento actual con secondary */
 [data-theme='dark'] .p-select-overlay .p-select-option.p-select-option-selected,
 [data-theme='dark'] .p-select-overlay .p-select-option.p-select-option-selected.p-focus,
 [data-theme='dark'] .p-select-overlay .p-select-option[data-p-highlight="true"][data-p-selected="true"],
 [data-theme='dark'] .p-select-overlay .p-select-option[aria-selected="true"][data-p-selected="true"],
 [data-theme='dark'] .p-select-overlay li.p-select-option.p-select-option-selected.p-focus,
 [data-theme='dark'] .p-select-overlay li.p-select-option[data-p-highlight="true"][data-p-selected="true"] {
-  background: var(--secondary) !important;
-  background-color: var(--secondary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
   color: white !important;
 }
 
@@ -91,4 +105,145 @@ div.p-select:focus .p-select-trigger {
 .p-select.p-focus .p-select-trigger[style*="border"],
 .p-select:focus .p-select-trigger[style*="border"] {
   border-color: var(--primary) !important;
+}
+
+/* Estilos del select básico */
+.p-select {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: $radius-md !important;
+  color: var(--text-primary) !important;
+  
+  &:hover:not(.p-disabled) {
+    border-color: var(--border-hover) !important;
+  }
+}
+
+/* ============================================
+   PrimeNG InputText - Estilos globales
+   ============================================ */
+.p-inputtext,
+.p-inputtextarea {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: $radius-md !important;
+  color: var(--text-primary) !important;
+  
+  &:enabled:hover {
+    border-color: var(--border-hover) !important;
+  }
+  
+  &:enabled:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15) !important;
+    background: var(--bg-tertiary) !important;
+  }
+  
+  &::placeholder {
+    color: var(--text-tertiary) !important;
+  }
+}
+
+/* ============================================
+   PrimeNG Cards - Estilos globales
+   ============================================ */
+.p-card {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border-radius: $radius-lg !important;
+  
+  .p-card-title {
+    color: var(--text-primary) !important;
+  }
+  
+  .p-card-subtitle,
+  .p-card-content {
+    color: var(--text-secondary) !important;
+  }
+}
+
+/* ============================================
+   PrimeNG Buttons - Estilos globales
+   ============================================ */
+.p-button {
+  transition: all 0.2s ease !important;
+  border-radius: $radius-md !important;
+  
+  &.p-button-primary {
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    
+    &:enabled:hover {
+      background: var(--primary-dark) !important;
+      border-color: var(--primary-dark) !important;
+    }
+  }
+  
+  &.p-button-secondary {
+    background: var(--secondary) !important;
+    border-color: var(--secondary) !important;
+  }
+  
+  &.p-button-success {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+  }
+  
+  &.p-button-danger {
+    background: var(--danger) !important;
+    border-color: var(--danger) !important;
+  }
+}
+
+/* ============================================
+   PrimeNG Dialog - Estilos globales
+   ============================================ */
+.p-dialog {
+  background: var(--bg-primary) !important;
+  border-radius: $radius-lg !important;
+  box-shadow: var(--shadow-lg) !important;
+  
+  .p-dialog-header {
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .p-dialog-content {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  }
+}
+
+/* ============================================
+   PrimeNG Toast - Estilos globales
+   ============================================ */
+.p-toast {
+  .p-toast-message {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: $radius-md !important;
+    box-shadow: var(--shadow-md) !important;
+    
+    .p-toast-message-content {
+      color: var(--text-primary) !important;
+    }
+    
+    &.p-toast-message-success {
+      border-left: 4px solid var(--success) !important;
+    }
+    
+    &.p-toast-message-info {
+      border-left: 4px solid var(--info) !important;
+    }
+    
+    &.p-toast-message-warn {
+      border-left: 4px solid var(--warning) !important;
+    }
+    
+    &.p-toast-message-error {
+      border-left: 4px solid var(--danger) !important;
+    }
+  }
 }

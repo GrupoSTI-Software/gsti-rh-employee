@@ -88,6 +88,7 @@
   },
   "attendance": {
     "title": "Attendance Check",
+    "subtitle": "Register your check-in and check-out",
     "register": "Register",
     "checkIn": "Check In",
     "checkOut": "Check Out",
@@ -124,16 +125,39 @@
     "nextMonth": "Next month"
   },
   "profile": {
+    "title": "My Profile",
+    "subtitle": "Personal and professional information",
+    "personalInfo": "Personal Information",
+    "professionalInfo": "Professional Information",
+    "legalInfo": "Legal Information",
     "loading": "Loading profile...",
     "error": "Error loading profile",
     "email": "Email",
+    "phone": "Phone",
+    "phoneSecondary": "Secondary Phone",
+    "gender": "Gender",
+    "birthday": "Date of Birth",
+    "curp": "CURP",
+    "rfc": "RFC",
+    "nss": "NSS (IMSS)",
+    "maritalStatus": "Marital Status",
+    "placeOfBirth": "Place of Birth",
+    "employeeCode": "Employee Code",
+    "payrollNumber": "Payroll Number",
+    "payrollCode": "Payroll Code",
+    "hireDate": "Hire Date",
+    "seniority": "Seniority",
+    "workSchedule": "Work Schedule",
+    "contractType": "Contract Type",
+    "businessEmail": "Business Email",
     "userId": "User ID",
     "employeeId": "Employee ID",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
     "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "copiedSuccess": "Copied successfully"
   },
   "settings": {
     "title": "Settings",
@@ -208,6 +232,8 @@
     "menu": "Menu",
     "appName": "GSTI PWA",
     "logout": "Sign Out",
-    "close": "Close"
+    "close": "Close",
+    "back": "Go back",
+    "forward": "Go forward"
   }
 }

@@ -10,41 +10,348 @@
       <p>{{ error() }}</p>
     </div>
   } @else {
-    <div class="profile-card" [@fadeInUp]>
-      <div class="profile-header">
-        <div class="avatar">
-          {{ userInitials() }}
-        </div>
-        <h1>{{ user()?.name || user()?.email }}</h1>
-        <p class="email">{{ user()?.email }}</p>
+    <div class="profile-wrapper" [@fadeInUp]>
+      <!-- Título y subtítulo -->
+      <div class="profile-title-section">
+        <h1 class="page-title">{{ 'profile.title' | translate }}</h1>
+        <p class="page-subtitle">{{ 'profile.subtitle' | translate }}</p>
       </div>
 
-      <div class="profile-info">
-        <div class="info-item">
-          <i class="pi pi-envelope"></i>
-          <div class="info-content">
-            <span class="info-label">{{ 'profile.email' | translate }}</span>
-            <span class="info-value">{{ user()?.email || '---' }}</span>
+      <!-- Card superior con foto, nombre y código -->
+      <div class="profile-header-card" [@fadeInUp]>
+        <div class="profile-header-content">
+          <app-avatar size="xlarge" [showBorder]="true" />
+          <div class="profile-header-info">
+            <h2 class="employee-name">{{ fullName() }}</h2>
+            @if (user()?.person?.employee?.employeeCode) {
+              <p class="employee-code">{{ user()?.person?.employee?.employeeCode }}</p>
+            }
           </div>
         </div>
+      </div>
 
-        <div class="info-item">
-          <i class="pi pi-id-card"></i>
-          <div class="info-content">
-            <span class="info-label">{{ 'profile.userId' | translate }}</span>
-            <span class="info-value">{{ user()?.id || '---' }}</span>
-          </div>
-        </div>
-
-        @if (user()?.employeeId) {
-          <div class="info-item">
-            <i class="pi pi-briefcase"></i>
-            <div class="info-content">
-              <span class="info-label">{{ 'profile.employeeId' | translate }}</span>
-              <span class="info-value">{{ user()?.employeeId }}</span>
+      <!-- Card de Información Personal -->
+      <div class="info-card" [@fadeInUp]>
+        <h3 class="card-title">{{ 'profile.personalInfo' | translate }}</h3>
+        <div class="info-list">
+          @if (user()?.person?.personEmail) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.email' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'email'"
+                (click)="onClickCopy($event, user()!.person!.personEmail!, 'email')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personEmail!, 'email')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.email' | translate">
+                {{ user()?.person?.personEmail || '---' }}
+                @if (copiedField() === 'email') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
             </div>
+          }
+
+          @if (user()?.person?.personPhone) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.phone' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'phone'"
+                (click)="onClickCopy($event, user()!.person!.personPhone!, 'phone', true)"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personPhone!, 'phone', true)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.phone' | translate">
+                {{ user()?.person?.personPhone || '---' }}
+                @if (copiedField() === 'phone') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personGender) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.gender' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'gender'"
+                (click)="onClickCopy($event, user()!.person!.personGender!, 'gender')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personGender!, 'gender')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.gender' | translate">
+                {{ user()?.person?.personGender || '---' }}
+                @if (copiedField() === 'gender') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personBirthday) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.birthday' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'birthday'"
+                (click)="onClickCopy($event, formatDate(user()!.person!.personBirthday), 'birthday')"
+                (keydown)="onKeyDownCopy($event, formatDate(user()!.person!.personBirthday), 'birthday')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.birthday' | translate">
+                {{ formatDate(user()?.person?.personBirthday) }}
+                @if (copiedField() === 'birthday') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personMaritalStatus) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.maritalStatus' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'maritalStatus'"
+                (click)="onClickCopy($event, user()!.person!.personMaritalStatus!, 'maritalStatus')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personMaritalStatus!, 'maritalStatus')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.maritalStatus' | translate">
+                {{ user()?.person?.personMaritalStatus || '---' }}
+                @if (copiedField() === 'maritalStatus') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personPlaceOfBirthCity || user()?.person?.personPlaceOfBirthState) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.placeOfBirth' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'placeOfBirth'"
+                (click)="onClickCopy($event, getPlaceOfBirth(), 'placeOfBirth')"
+                (keydown)="onKeyDownCopy($event, getPlaceOfBirth(), 'placeOfBirth')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.placeOfBirth' | translate">
+                @if (user()?.person?.personPlaceOfBirthCity) {
+                  {{ user()?.person?.personPlaceOfBirthCity }}
+                }
+                @if (user()?.person?.personPlaceOfBirthState) {
+                  @if (user()?.person?.personPlaceOfBirthCity) {
+                    ,
+                  }
+                  {{ user()?.person?.personPlaceOfBirthState }}
+                }
+                @if (copiedField() === 'placeOfBirth') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Card de Información Laboral -->
+      <div class="info-card" [@fadeInUp]>
+        <h3 class="card-title">{{ 'profile.professionalInfo' | translate }}</h3>
+        <div class="info-list">
+          @if (user()?.person?.employee?.employeeCode) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.employeeCode' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'employeeCode'"
+                (click)="onClickCopy($event, user()!.person!.employee!.employeeCode, 'employeeCode')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.employee!.employeeCode, 'employeeCode')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.employeeCode' | translate">
+                {{ user()?.person?.employee?.employeeCode || '---' }}
+                @if (copiedField() === 'employeeCode') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          <div class="info-row">
+            <span class="info-label">{{ 'profile.payrollNumber' | translate }}</span>
+            <span
+              class="info-value copyable"
+              [class.copied]="copiedField() === 'payrollCode'"
+              (click)="onClickCopy($event, user()!.person!.employee!.employeePayrollCode || '', 'payrollCode')"
+              (keydown)="onKeyDownCopy($event, user()!.person!.employee!.employeePayrollCode || '', 'payrollCode')"
+              tabindex="0"
+              role="button"
+              [attr.aria-label]="'profile.payrollNumber' | translate">
+              {{ user()?.person?.employee?.employeePayrollCode || '---' }}
+              @if (copiedField() === 'payrollCode' && user()?.person?.employee?.employeePayrollCode) {
+                <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                <i class="pi pi-check copied-icon"></i>
+              }
+            </span>
           </div>
-        }
+
+          @if (user()?.person?.employee?.employeeHireDate) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.hireDate' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'hireDate'"
+                (click)="onClickCopy($event, formatDate(user()!.person!.employee!.employeeHireDate), 'hireDate')"
+                (keydown)="onKeyDownCopy($event, formatDate(user()!.person!.employee!.employeeHireDate), 'hireDate')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.hireDate' | translate">
+                {{ formatDate(user()?.person?.employee?.employeeHireDate) }}
+                @if (copiedField() === 'hireDate') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.employee?.employeeTypeOfContract) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.contractType' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'contractType'"
+                (click)="onClickCopy($event, user()!.person!.employee!.employeeTypeOfContract!, 'contractType')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.employee!.employeeTypeOfContract!, 'contractType')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.contractType' | translate">
+                {{ user()?.person?.employee?.employeeTypeOfContract || '---' }}
+                @if (copiedField() === 'contractType') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.employee?.employeeWorkSchedule) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.workSchedule' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'workSchedule'"
+                (click)="onClickCopy($event, user()!.person!.employee!.employeeWorkSchedule!, 'workSchedule')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.employee!.employeeWorkSchedule!, 'workSchedule')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.workSchedule' | translate">
+                {{ user()?.person?.employee?.employeeWorkSchedule || '---' }}
+                @if (copiedField() === 'workSchedule') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.employee?.employeeBusinessEmail) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.businessEmail' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'businessEmail'"
+                (click)="onClickCopy($event, user()!.person!.employee!.employeeBusinessEmail!, 'businessEmail')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.employee!.employeeBusinessEmail!, 'businessEmail')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.businessEmail' | translate">
+                {{ user()?.person?.employee?.employeeBusinessEmail || '---' }}
+                @if (copiedField() === 'businessEmail') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Card de Información Legal -->
+      <div class="info-card" [@fadeInUp]>
+        <h3 class="card-title">{{ 'profile.legalInfo' | translate }}</h3>
+        <div class="info-list">
+          @if (user()?.person?.personCurp) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.curp' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'curp'"
+                (click)="onClickCopy($event, user()!.person!.personCurp!, 'curp')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personCurp!, 'curp')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.curp' | translate">
+                {{ user()?.person?.personCurp || '---' }}
+                @if (copiedField() === 'curp') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personRfc) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.rfc' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'rfc'"
+                (click)="onClickCopy($event, user()!.person!.personRfc!, 'rfc')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personRfc!, 'rfc')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.rfc' | translate">
+                {{ user()?.person?.personRfc || '---' }}
+                @if (copiedField() === 'rfc') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+
+          @if (user()?.person?.personImssNss) {
+            <div class="info-row">
+              <span class="info-label">{{ 'profile.nss' | translate }}</span>
+              <span
+                class="info-value copyable"
+                [class.copied]="copiedField() === 'nss'"
+                (click)="onClickCopy($event, user()!.person!.personImssNss!, 'nss')"
+                (keydown)="onKeyDownCopy($event, user()!.person!.personImssNss!, 'nss')"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'profile.nss' | translate">
+                {{ user()?.person?.personImssNss || '---' }}
+                @if (copiedField() === 'nss') {
+                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
+                  <i class="pi pi-check copied-icon"></i>
+                }
+              </span>
+            </div>
+          }
+        </div>
       </div>
     </div>
   }

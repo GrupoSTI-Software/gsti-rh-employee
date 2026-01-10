@@ -3,11 +3,12 @@ import { RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
 import { BrandingService } from '@core/services/branding.service';
+import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, PullToRefreshDirective],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

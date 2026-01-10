@@ -88,6 +88,7 @@
   },
   "attendance": {
     "title": "Registro de Asistencia",
+    "subtitle": "Registra tu entrada y salida",
     "register": "Registrar",
     "checkIn": "Entrada",
     "checkOut": "Salida",
@@ -124,16 +125,39 @@
     "nextMonth": "Mes siguiente"
   },
   "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Información personal y laboral",
+    "personalInfo": "Información Personal",
+    "professionalInfo": "Información Laboral",
+    "legalInfo": "Información Legal",
     "loading": "Cargando perfil...",
     "error": "Error al cargar el perfil",
     "email": "Correo Electrónico",
+    "phone": "Teléfono",
+    "phoneSecondary": "Teléfono Secundario",
+    "gender": "Género",
+    "birthday": "Fecha de Nacimiento",
+    "curp": "CURP",
+    "rfc": "RFC",
+    "nss": "NSS (IMSS)",
+    "maritalStatus": "Estado Civil",
+    "placeOfBirth": "Lugar de Nacimiento",
+    "employeeCode": "Código de Empleado",
+    "payrollNumber": "Número de Nómina",
+    "payrollCode": "Código de Nómina",
+    "hireDate": "Fecha de Contratación",
+    "seniority": "Tiempo de Antigüedad",
+    "workSchedule": "Horario de Trabajo",
+    "contractType": "Tipo de Contrato",
+    "businessEmail": "Correo Laboral",
     "userId": "ID de Usuario",
     "employeeId": "ID de Empleado",
     "edit": "Editar",
     "delete": "Eliminar",
     "save": "Guardar",
     "cancel": "Cancelar",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "copiedSuccess": "Copiado exitosamente"
   },
   "settings": {
     "title": "Configuración",
@@ -208,6 +232,8 @@
     "menu": "Menú",
     "appName": "GSTI PWA",
     "logout": "Cerrar Sesión",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "back": "Ir hacia atrás",
+    "forward": "Ir hacia adelante"
   }
 }

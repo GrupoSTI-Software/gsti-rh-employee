@@ -1,5 +1,65 @@
 :host {
   display: block;
   min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.app-container {
+  min-height: 100vh;
+  width: 100%;
+}
+
+// Pull-to-refresh indicator styles
+::ng-deep .pull-to-refresh-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  margin: 0 auto;
+
+  .ptr-spinner {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface-card, #ffffff);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+
+    i {
+      font-size: 20px;
+      color: var(--primary-color, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  &.refreshing {
+    .ptr-spinner {
+      animation: ptr-spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes ptr-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 

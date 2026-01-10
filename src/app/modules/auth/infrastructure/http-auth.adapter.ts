@@ -1,17 +1,79 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
-import { AuthPort, AuthResult, User } from '../domain/auth.port';
+import { AuthPort, AuthResult, User, Person, Employee } from '../domain/auth.port';
 import { environment } from '@env/environment';
 import { DeviceInfo } from '../domain/device-info.interface';
+
+/**
+ * Interfaces para las respuestas de la API
+ */
+interface LoginUserData {
+  userId?: number;
+  userEmail?: string;
+}
+
+interface LoginResponse {
+  type: string;
+  title: string;
+  message: string;
+  data: {
+    token: string;
+    user: LoginUserData;
+  };
+}
+
+interface SessionEmployeeData {
+  employeeId: number;
+  employeeCode?: string;
+  employeeFirstName?: string;
+  employeeLastName?: string;
+  employeeSecondLastName?: string;
+  employeePayrollCode?: string;
+  employeeHireDate?: string;
+  employeePhoto?: string;
+  employeeWorkSchedule?: string;
+  employeeTypeOfContract?: string;
+  employeeBusinessEmail?: string;
+  departmentId?: number;
+  positionId?: number;
+  companyId?: number;
+  businessUnitId?: number;
+}
+
+interface SessionPersonData {
+  personId: number;
+  personFirstname?: string;
+  personLastname?: string;
+  personSecondLastname?: string;
+  personPhone?: string;
+  personEmail?: string;
+  personPhoneSecondary?: string;
+  personGender?: string;
+  personBirthday?: string;
+  personCurp?: string;
+  personRfc?: string;
+  personImssNss?: string;
+  personMaritalStatus?: string;
+  personPlaceOfBirthCountry?: string;
+  personPlaceOfBirthState?: string;
+  personPlaceOfBirthCity?: string;
+  employee?: SessionEmployeeData;
+}
+
+interface SessionResponse {
+  userId: number;
+  userEmail: string;
+  person?: SessionPersonData;
+}
 
 /**
  * Adaptador HTTP para autenticación
  * Implementa el puerto AuthPort usando HTTP
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HttpAuthAdapter implements AuthPort {
   private readonly http = inject(HttpClient);
@@ -20,11 +82,7 @@ export class HttpAuthAdapter implements AuthPort {
   private currentUser: User | null = null;
   private userInitialized = false;
 
-  async login(
-    email: string,
-    password: string,
-    deviceInfo?: DeviceInfo
-  ): Promise<AuthResult> {
+  async login(email: string, password: string, deviceInfo?: DeviceInfo): Promise<AuthResult> {
     try {
       const payload: {
         userEmail: string;
@@ -36,7 +94,7 @@ export class HttpAuthAdapter implements AuthPort {
         deviceType?: string | null;
       } = {
         userEmail: email,
-        userPassword: password
+        userPassword: password,
       };
 
       // Agregar información del dispositivo si está disponible
@@ -48,31 +106,15 @@ export class HttpAuthAdapter implements AuthPort {
         payload.deviceType = deviceInfo.deviceType;
       }
 
-      const loginResponse = await firstValueFrom<{
-        type: string;
-        title: string;
-        message: string;
-        data: {
-          token: string;
-          user: any;
-        };
-      }>(
-        this.http.post<{
-          type: string;
-          title: string;
-          message: string;
-          data: {
-            token: string;
-            user: any;
-          };
-        }>(`${this.apiUrl}/auth/login`, payload)
+      const loginResponse = await firstValueFrom(
+        this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, payload),
       );
 
       // Verificar que la respuesta sea exitosa
       if (
         loginResponse?.type === 'success' &&
-        loginResponse?.data?.token &&
-        loginResponse?.data?.user
+        loginResponse?.data?.token !== undefined &&
+        loginResponse?.data?.user !== undefined
       ) {
         const token = loginResponse.data.token;
         if (isPlatformBrowser(this.platformId)) {
@@ -81,54 +123,29 @@ export class HttpAuthAdapter implements AuthPort {
 
         // Obtener información completa del usuario desde /auth/session
         try {
-          const sessionResponse = await firstValueFrom<{
-            userId: number;
-            userEmail: string;
-            person?: {
-              employee?: {
-                employeeId: number;
-              };
-            };
-          }>(
-            this.http.get<{
-              userId: number;
-              userEmail: string;
-              person?: {
-                employee?: {
-                  employeeId: number;
-                };
-              };
-            }>(`${this.apiUrl}/auth/session`)
-          );
-
-          const user: User = {
-            id: loginResponse.data.user.userId?.toString() || '',
-            email: loginResponse.data.user.userEmail || '',
-            name: loginResponse.data.user.userEmail || '',
-            ...(sessionResponse.person?.employee?.employeeId && {
-              employeeId: sessionResponse.person.employee.employeeId
-            })
-          };
+          const sessionResponse = await this.getSessionData();
+          const user = this.mapSessionToUser(sessionResponse);
 
           this.currentUser = user;
           return {
             success: true,
             token: token,
-            user: user
+            user: user,
           };
         } catch (sessionError) {
           console.warn('Error al obtener sesión completa, usando datos del login:', sessionError);
           // Si falla la sesión, usar solo los datos del login
+          const userData = loginResponse.data.user;
           const user: User = {
-            id: loginResponse.data.user.userId?.toString() || '',
-            email: loginResponse.data.user.userEmail || '',
-            name: loginResponse.data.user.userEmail || ''
+            id: userData.userId?.toString() ?? '',
+            email: userData.userEmail ?? '',
+            name: userData.userEmail ?? '',
           };
           this.currentUser = user;
           return {
             success: true,
             token: token,
-            user: user
+            user: user,
           };
         }
       }
@@ -136,29 +153,32 @@ export class HttpAuthAdapter implements AuthPort {
       // Si la respuesta no es exitosa, devolver error
       return {
         success: false,
-        error: loginResponse?.message || 'Credenciales inválidas'
+        error: loginResponse?.message || 'Credenciales inválidas',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error en login:', error);
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
-      if (error?.error?.message) {
-        return {
-          success: false,
-          error: error.error.message
-        };
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          return {
+            success: false,
+            error: errorBody.message,
+          };
+        }
       }
 
-      if (error?.message) {
+      if (error instanceof Error && error.message.length > 0) {
         return {
           success: false,
-          error: error.message
+          error: error.message,
         };
       }
 
       return {
         success: false,
-        error: 'Error al iniciar sesión. Intenta nuevamente.'
+        error: 'Error al iniciar sesión. Intenta nuevamente.',
       };
     }
   }
@@ -175,8 +195,7 @@ export class HttpAuthAdapter implements AuthPort {
       return false;
     }
     const token = localStorage.getItem('auth_token');
-    const isAuth = !!token;
-    return isAuth;
+    return token !== null && token.length > 0;
   }
 
   getCurrentUser(): User | null {
@@ -198,60 +217,35 @@ export class HttpAuthAdapter implements AuthPort {
     }
 
     const token = localStorage.getItem('auth_token');
-    if (!token) {
+    if (token === null || token.length === 0) {
       this.userInitialized = true;
       return;
     }
 
     try {
-      const sessionResponse = await firstValueFrom<{
-        userId: number;
-        userEmail: string;
-        person?: {
-          employee?: {
-            employeeId: number;
-          };
-        };
-      }>(
-        this.http.get<{
-          userId: number;
-          userEmail: string;
-          person?: {
-            employee?: {
-              employeeId: number;
-            };
-          };
-        }>(`${this.apiUrl}/auth/session`)
-      );
-
-      // Validar que la respuesta tenga la estructura esperada
-      if (!sessionResponse?.userId || !sessionResponse?.userEmail) {
-        console.error('Estructura de respuesta inesperada:', sessionResponse);
-        throw new Error('Respuesta del servidor inválida: falta userId o userEmail');
-      }
-
-      const user: User = {
-        id: sessionResponse.userId?.toString() || '',
-        email: sessionResponse.userEmail || '',
-        name: sessionResponse.userEmail || '',
-        ...(sessionResponse.person?.employee?.employeeId && {
-          employeeId: sessionResponse.person.employee.employeeId
-        })
-      };
+      const sessionResponse = await this.getSessionData();
+      const user = this.mapSessionToUser(sessionResponse);
 
       this.currentUser = user;
       this.userInitialized = true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.warn('No se pudo restaurar la sesión del usuario:', error);
+
+      const httpError = error instanceof HttpErrorResponse ? error : null;
+      const errorInstance = error instanceof Error ? error : null;
+
       console.warn('Detalles del error:', {
-        status: error?.status,
-        message: error?.message,
-        error: error?.error
+        status: httpError?.status,
+        message: errorInstance?.message ?? httpError?.message,
+        error: httpError?.error,
       });
 
       // Solo limpiar el token si el servidor específicamente dice que es inválido (401/403)
       // O si la respuesta no tiene la estructura esperada (posible token corrupto)
-      if (error?.status === 401 || error?.status === 403 || error?.message?.includes('Respuesta del servidor inválida')) {
+      const isUnauthorized = httpError?.status === 401 || httpError?.status === 403;
+      const isInvalidResponse = errorInstance?.message?.includes('Respuesta del servidor inválida');
+
+      if (isUnauthorized || isInvalidResponse === true) {
         console.warn('Token inválido o respuesta inválida, limpiando sesión');
         if (isPlatformBrowser(this.platformId)) {
           localStorage.removeItem('auth_token');
@@ -264,5 +258,102 @@ export class HttpAuthAdapter implements AuthPort {
       this.userInitialized = true;
     }
   }
-}
 
+  /**
+   * Obtiene los datos completos de la sesión desde el servidor
+   */
+  private async getSessionData(): Promise<SessionResponse> {
+    return await firstValueFrom(this.http.get<SessionResponse>(`${this.apiUrl}/auth/session`));
+  }
+
+  /**
+   * Mapea la respuesta de la sesión a la interfaz User
+   */
+  private mapSessionToUser(sessionResponse: SessionResponse): User {
+    // Validar que la respuesta tenga la estructura esperada
+    if (sessionResponse.userId === undefined || sessionResponse.userEmail === undefined) {
+      console.error('Estructura de respuesta inesperada:', sessionResponse);
+      throw new Error('Respuesta del servidor inválida: falta userId o userEmail');
+    }
+
+    // Construir nombre completo desde person
+    let fullName = sessionResponse.userEmail;
+    if (sessionResponse.person !== undefined) {
+      const parts: string[] = [];
+      const personData = sessionResponse.person;
+      if (personData.personFirstname !== undefined && personData.personFirstname.length > 0) {
+        parts.push(personData.personFirstname);
+      }
+      if (personData.personLastname !== undefined && personData.personLastname.length > 0) {
+        parts.push(personData.personLastname);
+      }
+      if (
+        personData.personSecondLastname !== undefined &&
+        personData.personSecondLastname.length > 0
+      ) {
+        parts.push(personData.personSecondLastname);
+      }
+      if (parts.length > 0) {
+        fullName = parts.join(' ');
+      }
+    }
+
+    // Mapear Employee si existe
+    let employee: Employee | undefined;
+    if (sessionResponse.person?.employee !== undefined) {
+      const emp = sessionResponse.person.employee;
+      employee = {
+        employeeId: emp.employeeId,
+        employeeCode: emp.employeeCode ?? '',
+        employeeFirstName: emp.employeeFirstName ?? '',
+        employeeLastName: emp.employeeLastName ?? '',
+        employeeSecondLastName: emp.employeeSecondLastName,
+        employeePayrollCode: emp.employeePayrollCode,
+        employeeHireDate: emp.employeeHireDate,
+        employeePhoto: emp.employeePhoto,
+        employeeWorkSchedule: emp.employeeWorkSchedule,
+        employeeTypeOfContract: emp.employeeTypeOfContract,
+        employeeBusinessEmail: emp.employeeBusinessEmail,
+        departmentId: emp.departmentId,
+        positionId: emp.positionId,
+        companyId: emp.companyId,
+        businessUnitId: emp.businessUnitId,
+      };
+    }
+
+    // Mapear Person
+    let person: Person | undefined;
+    if (sessionResponse.person !== undefined) {
+      const p = sessionResponse.person;
+      person = {
+        personId: p.personId,
+        personFirstname: p.personFirstname ?? '',
+        personLastname: p.personLastname ?? '',
+        personSecondLastname: p.personSecondLastname,
+        personPhone: p.personPhone,
+        personEmail: p.personEmail,
+        personPhoneSecondary: p.personPhoneSecondary,
+        personGender: p.personGender,
+        personBirthday: p.personBirthday,
+        personCurp: p.personCurp,
+        personRfc: p.personRfc,
+        personImssNss: p.personImssNss,
+        personMaritalStatus: p.personMaritalStatus,
+        personPlaceOfBirthCountry: p.personPlaceOfBirthCountry,
+        personPlaceOfBirthState: p.personPlaceOfBirthState,
+        personPlaceOfBirthCity: p.personPlaceOfBirthCity,
+        employee: employee,
+      };
+    }
+
+    const user: User = {
+      id: sessionResponse.userId.toString(),
+      email: sessionResponse.userEmail,
+      name: fullName,
+      ...(employee !== undefined && { employeeId: employee.employeeId }),
+      person: person,
+    };
+
+    return user;
+  }
+}

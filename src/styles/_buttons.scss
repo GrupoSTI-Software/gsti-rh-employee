@@ -1,0 +1,107 @@
+@use './variables' as *;
+@use './mixins' as *;
+
+.btn {
+  padding: $padding;
+  border: none;
+  border-radius: $radius-md;
+  font-size: $font-size;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $gap-sm;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Variante Primary - Botón principal con color vibrante */
+  &.primary {
+    background-color: var(--primary) !important;
+    color: white;
+  }
+
+  /* Variante Secondary */
+  &.secondary {
+    background-color: var(--secondary);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-hover);
+    }
+  }
+
+  /* Variante Outline */
+  &.outline {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+
+    &:hover:not(:disabled) {
+      border-color: var(--primary);
+      background-color: rgba(var(--primary-rgb), 0.1);
+      color: var(--primary);
+    }
+  }
+
+  /* Variante Ghost */
+  &.ghost {
+    background-color: transparent;
+    color: var(--text-secondary);
+
+    &:hover:not(:disabled) {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+  }
+
+  /* Variante Success */
+  &.success {
+    background-color: var(--success);
+    color: white;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+  }
+
+  /* Variante Danger */
+  &.danger {
+    background-color: var(--danger);
+    color: white;
+
+    &:hover:not(:disabled) {
+      filter: brightness(1.1);
+    }
+  }
+
+  /* Tamaños */
+  &.btn-sm {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+  }
+
+  &.btn-lg {
+    padding: $spacing-lg $spacing-xl;
+    font-size: $font-size-lg;
+  }
+
+  /* Botón de ancho completo */
+  &.btn-block {
+    width: 100%;
+  }
+}

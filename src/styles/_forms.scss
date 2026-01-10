@@ -1,0 +1,99 @@
+@use './variables' as *;
+@use './mixins' as *;
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: $gap-xs;
+
+  label {
+    font-size: $font-size;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary);
+  }
+
+  input[type='email'],
+  input[type='password'],
+  input[type='text'] {
+    padding: $spacing-md;
+    border: 1px solid var(--border-color);
+    border-radius: $radius;
+    font-size: $font-size-base;
+    background: var(--bg-input);
+    transition: all 0.2s ease;
+    outline: none;
+    color: var(--text-primary);
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+      background: var(--bg-primary);
+    }
+
+    &.error {
+      border-color: var(--danger);
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(var(--danger-rgb), 0.1);
+      }
+    }
+
+    &::placeholder {
+      color: var(--text-input);
+      font-size: $font-size-sm;
+    }
+
+    /* Estilos específicos para dark mode */
+    [data-theme='dark'] & {
+      background: var(--bg-input);
+
+      &:focus {
+        background: var(--bg-input);
+      }
+    }
+  }
+
+  .password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    input {
+      padding-right: 4rem;
+      width: 100%;
+    }
+
+    .password-toggle-button {
+      position: absolute;
+      right: 0.35rem;
+      background: transparent !important;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      transition: color 0.2s ease, transform 0.2s ease;
+      border-radius: $radius;
+      min-width: 2rem;
+      min-height: 2rem;
+      outline: none;
+
+      &:active {
+        transform: scale(0.95);
+      }
+    }
+  }
+
+  .error-message {
+    @include error-message;
+  }
+}
+
+.error-alert {
+  @include error-alert;
+}
