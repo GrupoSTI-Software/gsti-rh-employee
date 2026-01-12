@@ -50,7 +50,226 @@ Los mensajes de commit DEBEN seguir el estándar Conventional Commits con estas 
 - `FEAT: Agregar login` ❌ (tipo en mayúsculas)
 - `feat(auth): Add new feature` ❌ (todo en inglés)
 
-## Angular
+## Angular 21 - Buenas Prácticas Oficiales
 - Este es un proyecto Angular 21 con arquitectura hexagonal
 - Usar `inject()` en lugar de inyección por constructor
 - Seguir las convenciones de la arquitectura hexagonal del proyecto (domain, application, infrastructure, presentation)
+- Usar Signals para manejo de estado reactivo en lugar de BehaviorSubject cuando sea posible
+- Preferir componentes standalone sobre módulos NgModule
+- Utilizar control flow moderno (`@if`, `@for`, `@switch`) en lugar de directivas estructurales (`*ngIf`, `*ngFor`, `*ngSwitch`)
+- Implementar lazy loading para rutas y componentes pesados
+- Usar `ChangeDetectionStrategy.OnPush` en todos los componentes para optimizar el rendimiento
+- Aplicar `trackBy` en todas las iteraciones `@for` para mejorar el rendimiento del DOM
+- Usar `DestroyRef` y `takeUntilDestroyed()` para gestionar suscripciones
+- Preferir async pipe o `toSignal()` sobre suscripciones manuales
+- Utilizar typed forms (formularios tipados) con `FormGroup<T>`
+- Implementar deferrable views (`@defer`) para carga diferida de componentes pesados
+
+### Componentes de Presentación
+- Los componentes de presentación DEBEN tener archivos separados:
+  - Template en archivo `.html` (NO usar `template` inline en el decorador)
+  - Estilos en archivo `.scss` (NO usar `styles` inline en el decorador)
+  - Lógica en archivo `.ts`
+- Los estilos DEBEN utilizar las variables y mixins existentes como primera opción:
+  - Importar variables y mixins desde `src/styles/` usando `@use`
+  - Usar variables SCSS (`$spacing-*`, `$font-size-*`, `$radius-*`, etc.) antes de valores hardcodeados
+  - Usar mixins existentes (`@include card`, `@include button-primary`, `@include input-base`, etc.) antes de crear estilos personalizados
+  - Usar variables CSS (`var(--primary)`, `var(--text-primary)`, etc.) para colores y temas
+  - Solo crear estilos personalizados cuando no exista una variable o mixin que cubra la necesidad
+- Esto garantiza consistencia en el diseño y facilita el mantenimiento del sistema de diseño
+
+## Validación de Código (Lint, ESLint y Prettier)
+Todo el código DEBE cumplir con las validaciones de lint, ESLint y Prettier:
+
+- **ESLint**: El código debe pasar todas las reglas de ESLint sin errores ni advertencias
+- **Prettier**: El formato del código debe cumplir con la configuración de Prettier
+- **Lint**: No deben existir errores de lint en ningún archivo modificado o creado
+
+### Reglas obligatorias:
+1. Siempre verificar que el código no tenga errores de lint antes de finalizar cualquier cambio
+2. Ejecutar las validaciones después de cualquier modificación de código
+3. Corregir todos los errores de lint, ESLint y Prettier antes de considerar el código como completado
+4. No dejar errores de formato o lint sin corregir
+
+### Comandos útiles:
+- Verificar lint: `npm run lint` o equivalente
+- Formatear código: `npm run format` o `npx prettier --write .`
+- Corregir automáticamente: `npm run lint:fix` o equivalente
+
+## Principios SOLID
+Todos los desarrollos DEBEN seguir los principios SOLID:
+
+### Single Responsibility (Responsabilidad Única)
+- Cada clase, componente o servicio debe tener una única responsabilidad
+- Si una clase hace más de una cosa, dividirla en clases más pequeñas
+- Los componentes solo deben manejar lógica de presentación
+
+### Open/Closed (Abierto/Cerrado)
+- Las entidades deben estar abiertas para extensión pero cerradas para modificación
+- Usar interfaces y clases abstractas para permitir extensibilidad
+- Implementar patrones como Strategy o Template Method cuando sea necesario
+
+### Liskov Substitution (Sustitución de Liskov)
+- Las clases derivadas deben ser sustituibles por sus clases base
+- No modificar el comportamiento esperado en las implementaciones
+
+### Interface Segregation (Segregación de Interfaces)
+- Preferir interfaces pequeñas y específicas sobre interfaces grandes y generales
+- Los clientes no deben depender de interfaces que no usan
+
+### Dependency Inversion (Inversión de Dependencias)
+- Depender de abstracciones, no de implementaciones concretas
+- Usar inyección de dependencias con `inject()`
+- Las capas de alto nivel no deben depender de capas de bajo nivel
+
+## Arquitectura Hexagonal y Vertical Slicing
+Respetar estrictamente la arquitectura del proyecto:
+
+### Estructura de Capas
+```
+modules/
+  └── [feature]/
+      ├── domain/           # Entidades, value objects, interfaces de puertos
+      ├── application/      # Casos de uso, servicios de aplicación
+      ├── infrastructure/   # Adaptadores, implementaciones HTTP, storage
+      └── presentation/     # Componentes, páginas, UI
+```
+
+### Reglas de Dependencia
+- La capa `domain` NO debe depender de ninguna otra capa
+- La capa `application` solo puede depender de `domain`
+- La capa `infrastructure` implementa los puertos definidos en `domain`
+- La capa `presentation` puede depender de `application` y `domain`
+- NUNCA importar de `infrastructure` directamente en `presentation`
+
+### Vertical Slicing
+- Cada feature debe ser autocontenida dentro de su módulo
+- Evitar dependencias cruzadas entre módulos/features
+- Los componentes compartidos van en `shared/`
+- Cada slice debe poder desarrollarse y probarse de forma independiente
+
+## Optimización de Rendimiento
+Siempre buscar la optimización del código generado:
+
+- Implementar estrategias de caché cuando sea apropiado
+- Evitar cálculos repetitivos en templates (usar computed signals o memoización)
+- Minimizar el número de suscripciones activas
+- Usar `OnPush` change detection en todos los componentes
+- Implementar virtual scrolling para listas largas
+- Optimizar imports (importar solo lo necesario de las librerías)
+- Evitar re-renders innecesarios usando `trackBy` y signals
+- Considerar el bundle size al agregar dependencias
+- Usar `@defer` para componentes que no son críticos en el primer renderizado
+
+## Documentación y Comentarios
+
+### JSDoc en Español
+Todas las funciones, métodos y clases DEBEN documentarse con JSDoc en español:
+
+```typescript
+/**
+ * Obtiene la información del empleado por su identificador.
+ *
+ * @param employeeId - Identificador único del empleado
+ * @returns Promesa con los datos del empleado o null si no existe
+ * @throws {HttpErrorResponse} Si hay un error en la comunicación con el servidor
+ * @example
+ * const employee = await this.getEmployeeById('123');
+ */
+async getEmployeeById(employeeId: string): Promise<Employee | null> {
+  // ...
+}
+```
+
+### Comentarios de Procesos Complejos
+- Agregar comentarios explicativos en español para lógica compleja
+- Documentar el "por qué" de decisiones no obvias
+- Incluir referencias a documentación externa si aplica
+
+```typescript
+// Validamos el token antes de hacer la petición porque el interceptor
+// no tiene acceso al contexto de navegación del PWA
+if (!this.isTokenValid()) {
+  // Redirigimos al login si el token expiró para evitar
+  // múltiples intentos de refresh fallidos
+  return this.redirectToLogin();
+}
+```
+
+## Logging y Console
+
+### Prohibido: console.log()
+- NO usar `console.log()` en ningún caso
+- El código NO debe contener `console.log` en producción ni desarrollo
+
+### Permitido: Solo en manejo de errores
+Solo se permite logging estructurado dentro de bloques `catch`:
+
+```typescript
+// ✅ CORRECTO - Dentro de un catch
+try {
+  await this.authService.login(credentials);
+} catch (error) {
+  console.error('Error al iniciar sesión:', error);
+  // o
+  console.warn('Advertencia en autenticación:', error);
+  // o
+  console.info('Información de debug:', error);
+}
+
+// ❌ INCORRECTO - Fuera de catch o usando console.log
+console.log('Usuario logueado'); // NO PERMITIDO
+```
+
+## Convenciones de Nombrado
+
+### Constantes (UPPER_SNAKE_CASE)
+Las constantes globales, de módulo, de clase o valores literales que no cambian DEBEN usar UPPER_SNAKE_CASE (mayúsculas con guiones bajos):
+
+```typescript
+// ✅ CORRECTO - Constantes globales/de módulo/de clase
+const API_BASE_URL = 'https://api.example.com';
+const MAX_RETRY_ATTEMPTS = 3;
+const DEFAULT_PAGE_SIZE = 10;
+const AUTH_TOKEN_KEY = 'auth_token';
+
+// ❌ INCORRECTO
+const apiBaseUrl = 'https://api.example.com';
+const maxRetryAttempts = 3;
+```
+
+**Nota importante**: Las variables locales (dentro de funciones o métodos), aunque usen `const`, deben usar camelCase, NO UPPER_SNAKE_CASE.
+
+### Variables y Parámetros (camelCase)
+Las variables mutables, parámetros y variables locales constantes (dentro de funciones/métodos) usan camelCase:
+
+```typescript
+// ✅ CORRECTO - Variables locales (incluso con const)
+let currentUser = null;
+const getUserById = (userId: string) => {
+  const userData = fetchUser(userId); // Variable local con const - camelCase
+  const result = processData(userData); // Variable local con const - camelCase
+  return result;
+};
+
+// ❌ INCORRECTO - Variables locales con UPPER_SNAKE_CASE
+const getUserById = (userId: string) => {
+  const USER_DATA = fetchUser(userId); // NO PERMITIDO para variables locales
+  return USER_DATA;
+};
+```
+
+### Interfaces y Tipos (PascalCase)
+```typescript
+// ✅ CORRECTO
+interface EmployeeData { ... }
+type AuthResponse = { ... };
+```
+
+### Archivos y Carpetas (kebab-case)
+```typescript
+// ✅ CORRECTO
+// employee-data.model.ts
+// auth-response.interface.ts
+// http-auth.adapter.ts
+```
