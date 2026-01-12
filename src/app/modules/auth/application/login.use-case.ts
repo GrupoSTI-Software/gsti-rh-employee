@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { AuthResult } from '../domain/auth.port';
+import { IAuthResult } from '../domain/auth.port';
 import { AUTH_PORT } from '../domain/auth.token';
 import { DeviceService } from '@core/services/device.service';
 
@@ -14,7 +14,7 @@ export class LoginUseCase {
   private readonly authPort = inject(AUTH_PORT);
   private readonly deviceService = inject(DeviceService);
 
-  async execute(email: string, password: string): Promise<AuthResult> {
+  async execute(email: string, password: string): Promise<IAuthResult> {
     // Validaciones de negocio
     if (!email || !password) {
       return {

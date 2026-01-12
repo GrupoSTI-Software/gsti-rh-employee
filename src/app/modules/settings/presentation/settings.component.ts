@@ -13,12 +13,12 @@ import { Subscription } from 'rxjs';
 
 type Language = 'es' | 'en';
 
-interface ThemeOption {
+interface IThemeOption {
   value: Theme;
   label: string;
 }
 
-interface LanguageOption {
+interface ILanguageOption {
   value: Language;
   label: string;
 }
@@ -56,7 +56,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   });
 
   // Opciones de tema con traducciones (usando getter para reactividad)
-  get themeOptions(): ThemeOption[] {
+  get themeOptions(): IThemeOption[] {
     return [
       { value: 'light', label: this.translateService.instant('settings.themeOption.light') },
       { value: 'dark', label: this.translateService.instant('settings.themeOption.dark') },
@@ -65,7 +65,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   // Opciones de idioma
-  readonly languageOptions: LanguageOption[] = [
+  readonly languageOptions: ILanguageOption[] = [
     { value: 'es', label: 'Español' },
     { value: 'en', label: 'English' },
   ];

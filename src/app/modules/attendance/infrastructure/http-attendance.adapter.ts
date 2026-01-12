@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AttendancePort, Attendance, AttendanceApiResponse } from '../domain/attendance.port';
+import { IAttendancePort, IAttendance, IAttendanceApiResponse } from '../domain/attendance.port';
 import { environment } from '@env/environment';
 
 /**
@@ -12,7 +12,7 @@ import { environment } from '@env/environment';
 @Injectable({
   providedIn: 'root',
 })
-export class HttpAttendanceAdapter implements AttendancePort {
+export class HttpAttendanceAdapter implements IAttendancePort {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
 
@@ -23,10 +23,10 @@ export class HttpAttendanceAdapter implements AttendancePort {
     dateStart: string,
     dateEnd: string,
     employeeId: number,
-  ): Promise<Attendance | null> {
+  ): Promise<IAttendance | null> {
     try {
-      const response = await firstValueFrom<AttendanceApiResponse>(
-        this.http.get<AttendanceApiResponse>(
+      const response = await firstValueFrom<IAttendanceApiResponse>(
+        this.http.get<IAttendanceApiResponse>(
           `${this.apiUrl}/v1/assists?date=${dateStart}&date-end=${dateEnd}&employeeId=${employeeId}`,
         ),
       );

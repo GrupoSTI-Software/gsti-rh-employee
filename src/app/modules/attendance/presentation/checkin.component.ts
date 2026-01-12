@@ -8,8 +8,8 @@ import { Dialog } from 'primeng/dialog';
 import { GetAttendanceUseCase } from '../application/get-attendance.use-case';
 import { StoreAssistUseCase } from '../application/store-assist.use-case';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
-import { Attendance, Exception, Assistance } from '../domain/attendance.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
+import { IAttendance, IException, IAssistance } from '../domain/attendance.port';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CheckInIconComponent } from '@shared/components/icons/check-in-icon/check-in-icon.component';
 import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/check-out-icon.component';
@@ -49,13 +49,13 @@ import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-o
 export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly storeAssistUseCase = inject(StoreAssistUseCase);
-  private readonly authPort = inject<AuthPort>(AUTH_PORT);
+  private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translateService = inject(TranslateService);
   private timeInterval?: ReturnType<typeof setInterval>;
 
-  readonly attendance = signal<Attendance | null>(null);
+  readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly currentDate = signal<Date>(new Date());
@@ -846,7 +846,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   /**
    * Obtiene las excepciones del attendance actual
    */
-  getExceptions(): Exception[] {
+  getExceptions(): IException[] {
     return this.attendance()?.exceptions ?? [];
   }
 
@@ -881,7 +881,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   /**
    * Obtiene los registros de asistencia del attendance actual
    */
-  getRecords(): Assistance[] {
+  getRecords(): IAssistance[] {
     return this.attendance()?.assistFlatList ?? [];
   }
 

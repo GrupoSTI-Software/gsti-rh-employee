@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal, effect, untracked, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { environment } from '@env/environment';
 
 export type AvatarSize = 'small' | 'medium' | 'large' | 'xlarge';
@@ -14,7 +14,7 @@ export type AvatarSize = 'small' | 'medium' | 'large' | 'xlarge';
   styleUrl: './avatar.component.scss',
 })
 export class AvatarComponent {
-  private readonly authPort = inject<AuthPort>(AUTH_PORT);
+  private readonly authPort = inject<IAuthPort>(AUTH_PORT);
 
   // Inputs para personalizar el avatar
   size = input<AvatarSize>('medium');

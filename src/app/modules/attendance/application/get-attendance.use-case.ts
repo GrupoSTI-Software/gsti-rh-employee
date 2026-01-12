@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ATTENDANCE_PORT } from '../domain/attendance.token';
-import { Attendance, AttendancePort } from '../domain/attendance.port';
+import { IAttendance, IAttendancePort } from '../domain/attendance.port';
 
 /**
  * Caso de uso para obtener las asistencias del empleado
@@ -9,7 +9,7 @@ import { Attendance, AttendancePort } from '../domain/attendance.port';
   providedIn: 'root',
 })
 export class GetAttendanceUseCase {
-  private readonly attendancePort = inject<AttendancePort>(ATTENDANCE_PORT);
+  private readonly attendancePort = inject<IAttendancePort>(ATTENDANCE_PORT);
 
   /**
    * Ejecuta el caso de uso para obtener asistencias
@@ -18,7 +18,7 @@ export class GetAttendanceUseCase {
     dateStart: string,
     dateEnd: string,
     employeeId: number,
-  ): Promise<Attendance | null> {
+  ): Promise<IAttendance | null> {
     try {
       return await this.attendancePort.getAttendance(dateStart, dateEnd, employeeId);
     } catch (error) {

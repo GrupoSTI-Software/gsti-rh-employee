@@ -2,29 +2,35 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
-import { AuthPort, AuthResult, User, Person, Employee } from '../domain/auth.port';
+import {
+  IAuthPort,
+  IAuthResult,
+  IUser,
+  IPerson,
+  IEmployee,
+  IDeviceInfo,
+} from '../domain/auth.port';
 import { environment } from '@env/environment';
-import { DeviceInfo } from '../domain/device-info.interface';
 
 /**
- * Interfaces para las respuestas de la API
+ * Interfaces para las respuestas de la API (específicas de esta implementación)
  */
-interface LoginUserData {
+interface ILoginUserData {
   userId?: number;
   userEmail?: string;
 }
 
-interface LoginResponse {
+interface ILoginResponse {
   type: string;
   title: string;
   message: string;
   data: {
     token: string;
-    user: LoginUserData;
+    user: ILoginUserData;
   };
 }
 
-interface SessionEmployeeData {
+interface ISessionEmployeeData {
   employeeId: number;
   employeeCode?: string;
   employeeFirstName?: string;
@@ -42,7 +48,7 @@ interface SessionEmployeeData {
   businessUnitId?: number;
 }
 
-interface SessionPersonData {
+interface ISessionPersonData {
   personId: number;
   personFirstname?: string;
   personLastname?: string;
@@ -59,13 +65,13 @@ interface SessionPersonData {
   personPlaceOfBirthCountry?: string;
   personPlaceOfBirthState?: string;
   personPlaceOfBirthCity?: string;
-  employee?: SessionEmployeeData;
+  employee?: ISessionEmployeeData;
 }
 
-interface SessionResponse {
+interface ISessionResponse {
   userId: number;
   userEmail: string;
-  person?: SessionPersonData;
+  person?: ISessionPersonData;
 }
 
 /**
@@ -75,14 +81,14 @@ interface SessionResponse {
 @Injectable({
   providedIn: 'root',
 })
-export class HttpAuthAdapter implements AuthPort {
+export class HttpAuthAdapter implements IAuthPort {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = environment.apiUrl;
-  private currentUser: User | null = null;
+  private currentUser: IUser | null = null;
   private userInitialized = false;
 
-  async login(email: string, password: string, deviceInfo?: DeviceInfo): Promise<AuthResult> {
+  async login(email: string, password: string, deviceInfo?: IDeviceInfo): Promise<IAuthResult> {
     try {
       const payload: {
         userEmail: string;
@@ -107,7 +113,7 @@ export class HttpAuthAdapter implements AuthPort {
       }
 
       const loginResponse = await firstValueFrom(
-        this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, payload),
+        this.http.post<ILoginResponse>(`${this.apiUrl}/auth/login`, payload),
       );
 
       // Verificar que la respuesta sea exitosa
@@ -136,7 +142,7 @@ export class HttpAuthAdapter implements AuthPort {
           console.warn('Error al obtener sesión completa, usando datos del login:', sessionError);
           // Si falla la sesión, usar solo los datos del login
           const userData = loginResponse.data.user;
-          const user: User = {
+          const user: IUser = {
             id: userData.userId?.toString() ?? '',
             email: userData.userEmail ?? '',
             name: userData.userEmail ?? '',
@@ -198,7 +204,7 @@ export class HttpAuthAdapter implements AuthPort {
     return token !== null && token.length > 0;
   }
 
-  getCurrentUser(): User | null {
+  getCurrentUser(): IUser | null {
     return this.currentUser;
   }
 
@@ -262,14 +268,14 @@ export class HttpAuthAdapter implements AuthPort {
   /**
    * Obtiene los datos completos de la sesión desde el servidor
    */
-  private async getSessionData(): Promise<SessionResponse> {
-    return await firstValueFrom(this.http.get<SessionResponse>(`${this.apiUrl}/auth/session`));
+  private async getSessionData(): Promise<ISessionResponse> {
+    return await firstValueFrom(this.http.get<ISessionResponse>(`${this.apiUrl}/auth/session`));
   }
 
   /**
-   * Mapea la respuesta de la sesión a la interfaz User
+   * Mapea la respuesta de la sesión a la interfaz IUser
    */
-  private mapSessionToUser(sessionResponse: SessionResponse): User {
+  private mapSessionToUser(sessionResponse: ISessionResponse): IUser {
     // Validar que la respuesta tenga la estructura esperada
     if (sessionResponse.userId === undefined || sessionResponse.userEmail === undefined) {
       console.error('Estructura de respuesta inesperada:', sessionResponse);
@@ -299,7 +305,7 @@ export class HttpAuthAdapter implements AuthPort {
     }
 
     // Mapear Employee si existe
-    let employee: Employee | undefined;
+    let employee: IEmployee | undefined;
     if (sessionResponse.person?.employee !== undefined) {
       const emp = sessionResponse.person.employee;
       employee = {
@@ -322,7 +328,7 @@ export class HttpAuthAdapter implements AuthPort {
     }
 
     // Mapear Person
-    let person: Person | undefined;
+    let person: IPerson | undefined;
     if (sessionResponse.person !== undefined) {
       const p = sessionResponse.person;
       person = {
@@ -346,7 +352,7 @@ export class HttpAuthAdapter implements AuthPort {
       };
     }
 
-    const user: User = {
+    const user: IUser = {
       id: sessionResponse.userId.toString(),
       email: sessionResponse.userEmail,
       name: fullName,

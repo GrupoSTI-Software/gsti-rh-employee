@@ -1,4 +1,4 @@
 import { InjectionToken } from '@angular/core';
-import { AuthPort } from './auth.port';
+import { IAuthPort } from './auth.port';
 
-export const AUTH_PORT = new InjectionToken<AuthPort>('AuthPort');
+export const AUTH_PORT = new InjectionToken<IAuthPort>('AuthPort');

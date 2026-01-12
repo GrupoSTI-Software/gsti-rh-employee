@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ATTENDANCE_PORT } from '../domain/attendance.token';
-import { AttendancePort } from '../domain/attendance.port';
+import { IAttendancePort } from '../domain/attendance.port';
 
 /**
  * Caso de uso para registrar una asistencia
@@ -9,7 +9,7 @@ import { AttendancePort } from '../domain/attendance.port';
   providedIn: 'root',
 })
 export class StoreAssistUseCase {
-  private readonly attendancePort = inject<AttendancePort>(ATTENDANCE_PORT);
+  private readonly attendancePort = inject<IAttendancePort>(ATTENDANCE_PORT);
 
   /**
    * Ejecuta el caso de uso para registrar asistencia

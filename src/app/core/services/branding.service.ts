@@ -1,6 +1,6 @@
 import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { SystemSettings } from '@modules/system-settings/domain/system-settings.port';
+import { ISystemSettings } from '@modules/system-settings/domain/system-settings.port';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
 
 /**
@@ -14,7 +14,7 @@ export class BrandingService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
 
-  readonly settings = signal<SystemSettings | null>(null);
+  readonly settings = signal<ISystemSettings | null>(null);
   readonly loading = signal(false);
   private manifestVersion = 0;
 
@@ -83,7 +83,7 @@ export class BrandingService {
       (_e: Event) => {
         // Forzar actualización del manifest antes de mostrar el prompt de instalación
         const currentSettings = this.settings();
-        if (currentSettings) {
+        if (currentSettings !== null) {
           void this.updateManifest(currentSettings).then(() => {
             // Pequeño delay para asegurar que el manifest se haya actualizado
             return new Promise<void>((resolve) => setTimeout(resolve, 100));
@@ -103,7 +103,7 @@ export class BrandingService {
     }
 
     const currentSettings = this.settings();
-    if (currentSettings) {
+    if (currentSettings !== null) {
       await this.updateManifest(currentSettings);
     }
   }
@@ -111,7 +111,7 @@ export class BrandingService {
   /**
    * Aplica las configuraciones de branding a la aplicación
    */
-  private async applyBranding(settings: SystemSettings): Promise<void> {
+  private async applyBranding(settings: ISystemSettings): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
@@ -223,16 +223,28 @@ export class BrandingService {
    * Nota: Algunos navegadores pueden cachear el manifest, por lo que es importante
    * actualizarlo antes de que el usuario intente instalar la PWA
    */
-  private async updateManifest(settings: SystemSettings): Promise<void> {
+  private async updateManifest(settings: ISystemSettings): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    const faviconUrl = settings.systemSettingFavicon || '/assets/gsti/icon.png';
-    const logoUrl = settings.systemSettingLogo || '/assets/gsti/adaptive-icon.png';
+    const faviconUrl =
+      settings.systemSettingFavicon.trim() !== ''
+        ? settings.systemSettingFavicon
+        : '/assets/gsti/icon.png';
+    const logoUrl =
+      settings.systemSettingLogo.trim() !== ''
+        ? settings.systemSettingLogo
+        : '/assets/gsti/adaptive-icon.png';
     // Asegurar que el tradeName viene del servicio, sin fallback por defecto
-    const tradeName = settings.systemSettingTradeName?.trim() || 'GSTI PWA';
-    const sidebarColor = settings.systemSettingSidebarColor || '093057';
+    const tradeName =
+      settings.systemSettingTradeName.trim() !== ''
+        ? settings.systemSettingTradeName.trim()
+        : 'GSTI PWA';
+    const sidebarColor =
+      settings.systemSettingSidebarColor.trim() !== ''
+        ? settings.systemSettingSidebarColor
+        : '093057';
 
     // Incrementar versión del manifest para forzar actualización
     this.manifestVersion++;
@@ -389,7 +401,7 @@ export class BrandingService {
   /**
    * Actualiza los meta tags de la aplicación
    */
-  private updateMetaTags(settings: SystemSettings): void {
+  private updateMetaTags(settings: ISystemSettings): void {
     // Actualizar description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {

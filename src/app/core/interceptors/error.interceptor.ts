@@ -5,7 +5,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { catchError, throwError } from 'rxjs';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 
 /**
  * Interceptor para manejar errores HTTP globales.
@@ -14,7 +14,7 @@ import { AuthPort } from '@modules/auth/domain/auth.port';
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
-  const authPort = inject<AuthPort>(AUTH_PORT);
+  const authPort = inject<IAuthPort>(AUTH_PORT);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {

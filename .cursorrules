@@ -259,11 +259,85 @@ const getUserById = (userId: string) => {
 };
 ```
 
-### Interfaces y Tipos (PascalCase)
+### Interfaces (Prefijo I + PascalCase)
+Todas las interfaces DEBEN usar el prefijo `I` seguido de PascalCase:
+
 ```typescript
 // ✅ CORRECTO
-interface EmployeeData { ... }
+interface IEmployee { ... }
+interface IAuthResponse { ... }
+interface IUserProfile { ... }
+
+// ❌ INCORRECTO
+interface Employee { ... }  // Falta prefijo I
+interface AuthResponse { ... }  // Falta prefijo I
+```
+
+#### Archivos de Interfaces (.interface.ts)
+- Los archivos que contienen interfaces DEBEN usar la extensión `.interface.ts`
+- Cada archivo DEBE contener UNA SOLA interfaz
+- NO mezclar interfaces en un mismo archivo
+- El nombre del archivo debe ser en kebab-case y corresponder al nombre de la interfaz (sin el prefijo I)
+
+```typescript
+// ✅ CORRECTO
+// employee.interface.ts
+export interface IEmployee { ... }
+
+// auth-response.interface.ts
+export interface IAuthResponse { ... }
+
+// ❌ INCORRECTO
+// employee.ts  // Falta extensión .interface.ts
+// employee.model.ts  // Extensión incorrecta
+// employees.interface.ts  // Múltiples interfaces en un archivo
+export interface IEmployee { ... }
+export interface IEmployeeList { ... }  // NO mezclar interfaces
+```
+
+### Enums (Prefijo E + PascalCase)
+Todos los enums DEBEN usar el prefijo `E` seguido de PascalCase:
+
+```typescript
+// ✅ CORRECTO
+enum EPersonType { ... }
+enum EStatus { ... }
+enum ERole { ... }
+
+// ❌ INCORRECTO
+enum PersonType { ... }  // Falta prefijo E
+enum Status { ... }  // Falta prefijo E
+```
+
+#### Archivos de Enums (.enum.ts)
+- Los archivos que contienen enums DEBEN usar la extensión `.enum.ts`
+- Cada archivo DEBE contener UN SOLO enum
+- NO mezclar enums en un mismo archivo
+- El nombre del archivo debe ser en kebab-case y corresponder al nombre del enum (sin el prefijo E)
+
+```typescript
+// ✅ CORRECTO
+// person-type.enum.ts
+export enum EPersonType { ... }
+
+// status.enum.ts
+export enum EStatus { ... }
+
+// ❌ INCORRECTO
+// person-type.ts  // Falta extensión .enum.ts
+// person-type.model.ts  // Extensión incorrecta
+// types.enum.ts  // Múltiples enums en un archivo
+export enum EPersonType { ... }
+export enum EStatus { ... }  // NO mezclar enums
+```
+
+### Tipos (PascalCase)
+Los tipos (type aliases) siguen PascalCase sin prefijo:
+
+```typescript
+// ✅ CORRECTO
 type AuthResponse = { ... };
+type UserPreferences = { ... };
 ```
 
 ### Archivos y Carpetas (kebab-case)
@@ -271,5 +345,6 @@ type AuthResponse = { ... };
 // ✅ CORRECTO
 // employee-data.model.ts
 // auth-response.interface.ts
+// person-type.enum.ts
 // http-auth.adapter.ts
 ```

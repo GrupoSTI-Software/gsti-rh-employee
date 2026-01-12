@@ -1,6 +1,6 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { DeviceInfo } from '@modules/auth/domain/device-info.interface';
+import { IDeviceInfo } from '@modules/auth/domain/auth.port';
 
 /**
  * Servicio para obtener información del dispositivo
@@ -33,7 +33,7 @@ export class DeviceService {
   /**
    * Obtiene la información completa del dispositivo
    */
-  getDeviceInfo(): DeviceInfo {
+  getDeviceInfo(): IDeviceInfo {
     if (!isPlatformBrowser(this.platformId)) {
       return {
         deviceBrand: null,

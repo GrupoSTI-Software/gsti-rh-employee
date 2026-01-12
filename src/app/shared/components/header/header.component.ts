@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 import { SidebarService } from '@core/services/sidebar.service';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { BrandingService } from '@core/services/branding.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
@@ -18,7 +18,7 @@ import { filter, Subscription } from 'rxjs';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private readonly sidebarService = inject(SidebarService);
-  private readonly authPort = inject<AuthPort>(AUTH_PORT);
+  private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly platformId = inject(PLATFORM_ID);

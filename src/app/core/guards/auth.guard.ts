@@ -3,7 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { HttpErrorResponse } from '@angular/common/http';
 
 /**
@@ -11,7 +11,7 @@ import { HttpErrorResponse } from '@angular/common/http';
  * Si el usuario no está autenticado, será redirigido al login
  */
 export const authGuard: CanActivateFn = async (route, state) => {
-  const authPort = inject<AuthPort>(AUTH_PORT);
+  const authPort = inject<IAuthPort>(AUTH_PORT);
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
 

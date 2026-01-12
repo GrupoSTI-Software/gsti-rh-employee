@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { SidebarService } from '@core/services/sidebar.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 
@@ -41,7 +41,7 @@ export interface MenuItem {
 export class SidebarComponent implements OnInit, OnDestroy {
   private readonly sidebarService = inject(SidebarService);
   private readonly router = inject(Router);
-  private readonly authPort = inject<AuthPort>(AUTH_PORT);
+  private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private subscription?: Subscription;
 
   isOpen = false;

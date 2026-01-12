@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { SYSTEM_SETTINGS_PORT } from '../domain/system-settings.token';
-import { SystemSettings, SystemSettingsPort } from '../domain/system-settings.port';
+import { ISystemSettings, ISystemSettingsPort } from '../domain/system-settings.port';
 
 /**
  * Caso de uso para obtener las configuraciones activas del sistema
@@ -9,13 +9,13 @@ import { SystemSettings, SystemSettingsPort } from '../domain/system-settings.po
   providedIn: 'root',
 })
 export class GetSystemSettingsUseCase {
-  private readonly systemSettingsPort = inject<SystemSettingsPort>(SYSTEM_SETTINGS_PORT);
+  private readonly systemSettingsPort = inject<ISystemSettingsPort>(SYSTEM_SETTINGS_PORT);
 
   /**
    * Ejecuta el caso de uso para obtener las configuraciones activas
    * @returns Promise con las configuraciones del sistema o null si hay error
    */
-  async execute(): Promise<SystemSettings | null> {
+  async execute(): Promise<ISystemSettings | null> {
     try {
       return await this.systemSettingsPort.getActiveSettings();
     } catch (error) {

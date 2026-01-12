@@ -1,7 +1,11 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { SystemSettingsPort, SystemSettingsApiResponse } from '../domain/system-settings.port';
+import {
+  ISystemSettingsPort,
+  ISystemSettingsApiResponse,
+  ISystemSettings,
+} from '../domain/system-settings.port';
 import { environment } from '@env/environment';
 
 /**
@@ -11,7 +15,7 @@ import { environment } from '@env/environment';
 @Injectable({
   providedIn: 'root',
 })
-export class HttpSystemSettingsAdapter implements SystemSettingsPort {
+export class HttpSystemSettingsAdapter implements ISystemSettingsPort {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = environment.apiUrl;
@@ -20,12 +24,10 @@ export class HttpSystemSettingsAdapter implements SystemSettingsPort {
    * Obtiene las configuraciones activas del sistema desde la API
    * @returns Promise con las configuraciones del sistema o null si hay error
    */
-  async getActiveSettings(): Promise<
-    import('../domain/system-settings.port').SystemSettings | null
-  > {
+  async getActiveSettings(): Promise<ISystemSettings | null> {
     try {
-      const response = await firstValueFrom<SystemSettingsApiResponse>(
-        this.http.get<SystemSettingsApiResponse>(`${this.apiUrl}/system-settings-active`),
+      const response = await firstValueFrom<ISystemSettingsApiResponse>(
+        this.http.get<ISystemSettingsApiResponse>(`${this.apiUrl}/system-settings-active`),
       );
 
       if (response?.data?.systemSetting !== null && response?.data?.systemSetting !== undefined) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
-import { AuthPort } from '@modules/auth/domain/auth.port';
+import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { trigger, transition, style, animate } from '@angular/animations';
 
@@ -23,7 +23,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
   ],
 })
 export class ProfileComponent implements OnInit {
-  private readonly authPort = inject<AuthPort>(AUTH_PORT);
+  private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
 
   readonly loading = signal(true);
