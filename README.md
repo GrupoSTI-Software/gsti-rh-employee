@@ -54,6 +54,69 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Git Hooks y Validaciones (Husky)
+
+Este proyecto utiliza **Husky** para ejecutar validaciones automáticas antes de hacer commits y push, garantizando la calidad del código.
+
+### Validaciones Automáticas
+
+#### 1. Commit Message (commit-msg hook)
+Los mensajes de commit deben seguir el estándar **Conventional Commits**:
+
+**Formato:**
+```
+<tipo>: <Descripción en español>
+```
+
+**Reglas:**
+- ✅ El **tipo** debe estar siempre en **minúsculas** y en **inglés**
+- ✅ La **descripción** puede iniciar con mayúscula
+- ✅ El **cuerpo** y **footer** sin límite de longitud
+- ✅ Todo (excepto el tipo) debe estar en **español**
+
+**Tipos permitidos (en inglés y minúsculas):**
+- `feat`: Nueva funcionalidad
+- `fix`: Corrección de errores
+- `docs`: Cambios en documentación
+- `style`: Cambios de formato (espacios, comas, etc.)
+- `refactor`: Refactorización de código
+- `perf`: Mejoras de rendimiento
+- `test`: Añadir o modificar tests
+- `build`: Cambios en el sistema de build o dependencias
+- `ci`: Cambios en CI/CD
+- `chore`: Tareas de mantenimiento
+- `revert`: Revertir un commit anterior
+
+**Ejemplos válidos:**
+```bash
+git commit -m "feat: Agregar componente de login"
+git commit -m "fix: Corregir validación de formulario"
+git commit -m "docs: Actualizar README con instrucciones"
+```
+
+**Ejemplos inválidos:**
+```bash
+git commit -m "agregando feature"  # ❌ No sigue el formato
+git commit -m "FEAT: Algo"         # ❌ Tipo en mayúsculas
+git commit -m "Feat: Algo"         # ❌ Tipo debe ser todo minúsculas
+```
+
+#### 2. Pre-Push Validation (pre-push hook)
+Antes de permitir un `git push`, se ejecutan automáticamente:
+
+1. **ESLint**: Valida que el código cumpla con las reglas de calidad
+2. **Build**: Compila el proyecto para asegurar que no hay errores
+
+Si alguna validación falla, el push será rechazado.
+
+### Instalación Inicial
+
+Al clonar el repositorio y ejecutar `npm install`, los hooks se configuran automáticamente.
+
+### Más Información
+
+Para más detalles sobre los hooks configurados, consulta [.husky/README.md](.husky/README.md).
+
 ## Arquitectura del Proyecto
 
 Este proyecto utiliza **Arquitectura Hexagonal (Ports and Adapters)** combinada con **Vertical Slicing** por módulos. Esta arquitectura proporciona una separación clara de responsabilidades y facilita el mantenimiento y escalabilidad del código.

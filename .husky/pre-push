@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Ejecutando linter..."
+npm run lint
+
+if [ $? -ne 0 ]; then
+  echo "❌ El linter encontró errores. Por favor corrígelos antes de hacer push."
+  exit 1
+fi
+
+echo "✅ Linter pasó correctamente"
+
+echo "🏗️  Compilando proyecto..."
+npm run build
+
+if [ $? -ne 0 ]; then
+  echo "❌ El build falló. Por favor corrige los errores antes de hacer push."
+  exit 1
+fi
+
+echo "✅ Build completado exitosamente"
+echo "🚀 Listo para hacer push!"
