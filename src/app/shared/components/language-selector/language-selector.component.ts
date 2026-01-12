@@ -4,7 +4,7 @@ import {
   HostListener,
   ElementRef,
   PLATFORM_ID,
-  ChangeDetectorRef
+  ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { isPlatformBrowser } from '@angular/common';
@@ -17,7 +17,7 @@ type Language = 'es' | 'en';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './language-selector.component.html',
-  styleUrl: './language-selector.component.scss'
+  styleUrl: './language-selector.component.scss',
 })
 export class LanguageSelectorComponent {
   private readonly translateService = inject(TranslateService);
@@ -27,22 +27,22 @@ export class LanguageSelectorComponent {
 
   readonly languages: { code: Language; label: string; flag: string }[] = [
     { code: 'es', label: 'Español', flag: '🇪🇸' },
-    { code: 'en', label: 'English', flag: '🇺🇸' }
+    { code: 'en', label: 'English', flag: '🇺🇸' },
   ];
   showDropdown = false;
 
   get currentLanguage(): Language {
-    return (this.translateService.currentLang || 'es') as Language;
+    return (this.translateService.currentLang ?? 'es') as Language;
   }
 
   get currentLanguageFlag(): string {
     const lang = this.languages.find((l) => l.code === this.currentLanguage);
-    return lang?.flag || '🌐';
+    return lang?.flag ?? '🌐';
   }
 
   get currentLanguageLabel(): string {
     const lang = this.languages.find((l) => l.code === this.currentLanguage);
-    return lang?.label || 'ES';
+    return lang?.label ?? 'ES';
   }
 
   setLanguage(lang: Language): void {
@@ -57,19 +57,16 @@ export class LanguageSelectorComponent {
       },
       error: (err) => {
         console.error('Error changing language:', err);
-      }
+      },
     });
   }
 
-
   @HostListener('document:click', ['$event'])
   onClickOutside(event: MouseEvent): void {
-    if (
-      this.showDropdown &&
-      !this.elementRef.nativeElement.contains(event.target)
-    ) {
+    const target = event.target as Node | null;
+    const nativeElement = this.elementRef.nativeElement as HTMLElement;
+    if (this.showDropdown === true && target !== null && !nativeElement.contains(target)) {
       this.showDropdown = false;
     }
   }
 }
-

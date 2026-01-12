@@ -41,9 +41,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 
@@ -51,13 +49,14 @@ app.use((req, res, next) => {
  * Start the server if this module is the main entry point, or it is ran via PM2.
  * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
  */
-if (isMainModule(import.meta.url) || process.env['pm_id']) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, (error) => {
+if (isMainModule(import.meta.url) || process.env['pm_id'] !== undefined) {
+  const port = process.env['PORT'] ?? '4000';
+  app.listen(Number.parseInt(port, 10), (error) => {
     if (error) {
       throw error;
     }
 
+    // eslint-disable-next-line no-console
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }

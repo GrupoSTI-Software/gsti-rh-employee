@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs';
  * Servicio para manejar el estado del sidebar/drawer
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SidebarService {
   private readonly sidebarState = new BehaviorSubject<boolean>(false);
@@ -39,4 +39,3 @@ export class SidebarService {
     return this.sidebarState.value;
   }
 }
-

@@ -33,10 +33,10 @@ interface LanguageOption {
     trigger('fadeInUp', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(30px)' }),
-        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
-    ])
-  ]
+        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class SettingsComponent implements OnInit, OnDestroy {
   readonly theme = inject(ThemeService);
@@ -47,7 +47,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   // Signal para el idioma actual que se actualiza cuando cambia
   readonly currentLanguage = signal<Language>(
-    (this.translateService.currentLang || 'es') as Language
+    (this.translateService.currentLang ?? 'es') as Language,
   );
 
   readonly currentLanguageLabel = computed(() => {
@@ -60,14 +60,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     return [
       { value: 'light', label: this.translateService.instant('settings.themeOption.light') },
       { value: 'dark', label: this.translateService.instant('settings.themeOption.dark') },
-      { value: 'system', label: this.translateService.instant('settings.themeOption.system') }
+      { value: 'system', label: this.translateService.instant('settings.themeOption.system') },
     ];
   }
 
   // Opciones de idioma
   readonly languageOptions: LanguageOption[] = [
     { value: 'es', label: 'Español' },
-    { value: 'en', label: 'English' }
+    { value: 'en', label: 'English' },
   ];
 
   // Propiedades para el binding con ngModel (no pueden ser signals)
@@ -84,7 +84,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
       next: (event) => {
         this.currentLanguage.set(event.lang as Language);
         this.selectedLanguage = event.lang as Language;
-      }
+      },
     });
   }
 
@@ -105,7 +105,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
    * Cambia el idioma cuando se selecciona una opción del select
    */
   onLanguageChange(): void {
-    if (this.selectedLanguage) {
+    if (this.selectedLanguage !== null && this.selectedLanguage !== undefined) {
       this.translateService.use(this.selectedLanguage).subscribe({
         next: () => {
           if (isPlatformBrowser(this.platformId)) {
@@ -116,13 +116,12 @@ export class SettingsComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error changing language:', err);
-        }
+        },
       });
     }
   }
 
   navigateToProfile(): void {
-    this.router.navigate(['/dashboard/profile']);
+    void this.router.navigate(['/dashboard/profile']);
   }
 }
-

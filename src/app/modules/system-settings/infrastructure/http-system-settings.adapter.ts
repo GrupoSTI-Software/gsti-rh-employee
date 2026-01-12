@@ -9,7 +9,7 @@ import { environment } from '@env/environment';
  * Implementa el puerto SystemSettingsPort usando HTTP
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HttpSystemSettingsAdapter implements SystemSettingsPort {
   private readonly http = inject(HttpClient);
@@ -20,15 +20,15 @@ export class HttpSystemSettingsAdapter implements SystemSettingsPort {
    * Obtiene las configuraciones activas del sistema desde la API
    * @returns Promise con las configuraciones del sistema o null si hay error
    */
-  async getActiveSettings() {
+  async getActiveSettings(): Promise<
+    import('../domain/system-settings.port').SystemSettings | null
+  > {
     try {
       const response = await firstValueFrom<SystemSettingsApiResponse>(
-        this.http.get<SystemSettingsApiResponse>(
-          `${this.apiUrl}/system-settings-active`
-        )
+        this.http.get<SystemSettingsApiResponse>(`${this.apiUrl}/system-settings-active`),
       );
 
-      if (response?.data?.systemSetting) {
+      if (response?.data?.systemSetting !== null && response?.data?.systemSetting !== undefined) {
         return response.data.systemSetting;
       }
 
@@ -39,4 +39,3 @@ export class HttpSystemSettingsAdapter implements SystemSettingsPort {
     }
   }
 }
-

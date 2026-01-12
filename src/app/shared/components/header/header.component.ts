@@ -14,7 +14,7 @@ import { filter, Subscription } from 'rxjs';
   standalone: true,
   imports: [CommonModule, TranslatePipe, AvatarComponent],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private readonly sidebarService = inject(SidebarService);
@@ -33,9 +33,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly canGoForward = signal(false);
 
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
-  readonly showLogo = computed(() =>
-    !this.branding.loading() && !!this.branding.settings()
-  );
+  readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
   readonly userName = computed(() => {
     const user = this.authPort.getCurrentUser();
     if (user?.person) {
@@ -46,7 +44,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         return parts.join(' ');
       }
     }
-    return user?.name || user?.email || '';
+    return user?.name ?? user?.email ?? '';
   });
 
   ngOnInit(): void {
@@ -56,11 +54,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.navigationHistory.push(currentUrl);
       this.currentHistoryIndex = 0;
       this.updateNavigationState();
-      
+
       // Suscribirse a cambios de navegación para actualizar el estado
       this.routerSubscription = this.router.events
-        .pipe(filter(event => event instanceof NavigationEnd))
-        .subscribe((event: any) => {
+        .pipe(filter((event) => event instanceof NavigationEnd))
+        .subscribe((event) => {
           if (this.isNavigatingProgrammatically) {
             // Si estamos navegando programáticamente, solo actualizamos el estado
             this.isNavigatingProgrammatically = false;
@@ -68,8 +66,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
             return;
           }
 
-          const url = event.urlAfterRedirects || event.url;
-          
+          const url = (event as NavigationEnd).urlAfterRedirects ?? (event as NavigationEnd).url;
+
           // Si navegamos hacia adelante desde una posición anterior en el historial
           if (this.currentHistoryIndex < this.navigationHistory.length - 1) {
             // Estamos navegando hacia adelante en el historial
@@ -79,7 +77,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
               this.currentHistoryIndex++;
             } else {
               // Nueva navegación, truncar el historial desde aquí
-              this.navigationHistory = this.navigationHistory.slice(0, this.currentHistoryIndex + 1);
+              this.navigationHistory = this.navigationHistory.slice(
+                0,
+                this.currentHistoryIndex + 1,
+              );
               this.navigationHistory.push(url);
               this.currentHistoryIndex = this.navigationHistory.length - 1;
             }
@@ -88,7 +89,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
             this.navigationHistory.push(url);
             this.currentHistoryIndex = this.navigationHistory.length - 1;
           }
-          
+
           this.updateNavigationState();
         });
     }
@@ -106,10 +107,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Verificar si podemos ir hacia atrás
     // Usamos tanto nuestro historial interno como el del navegador
     const canBack = this.currentHistoryIndex > 0 || window.history.length > 1;
-    
+
     // Verificar si podemos ir hacia adelante usando nuestro historial interno
     const canForward = this.currentHistoryIndex < this.navigationHistory.length - 1;
-    
+
     this.canGoBack.set(canBack);
     this.canGoForward.set(canForward);
   }
@@ -121,7 +122,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isNavigatingProgrammatically = true;
         this.currentHistoryIndex--;
         const targetUrl = this.navigationHistory[this.currentHistoryIndex];
-        this.router.navigateByUrl(targetUrl);
+        void this.router.navigateByUrl(targetUrl);
       } else {
         // Usar el historial del navegador
         this.location.back();
@@ -138,7 +139,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isNavigatingProgrammatically = true;
         this.currentHistoryIndex++;
         const targetUrl = this.navigationHistory[this.currentHistoryIndex];
-        this.router.navigateByUrl(targetUrl);
+        void this.router.navigateByUrl(targetUrl);
       } else {
         // Usar el historial del navegador
         this.location.forward();
@@ -153,8 +154,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.authPort.logout();
-    this.router.navigate(['/login']);
+    void this.authPort.logout();
+    void this.router.navigate(['/login']);
   }
 }
-

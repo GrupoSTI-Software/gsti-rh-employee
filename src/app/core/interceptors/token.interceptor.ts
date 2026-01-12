@@ -21,20 +21,19 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   // Clonar la petición y agregar headers
   let clonedReq = req.clone({
     setHeaders: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json'
-    }
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
   });
 
   // Agregar token de autorización si existe
-  if (token) {
+  if (token !== null && token.length > 0) {
     clonedReq = clonedReq.clone({
       setHeaders: {
-        'Authorization': `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
   }
 
   return next(clonedReq);
 };
-

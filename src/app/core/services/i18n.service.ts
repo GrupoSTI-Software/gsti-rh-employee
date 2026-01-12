@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 export type Language = 'es' | 'en';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class I18nService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -16,7 +16,7 @@ export class I18nService {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      this.loadTranslations();
+      void this.loadTranslations();
     }
   }
 
@@ -29,14 +29,12 @@ export class I18nService {
 
   translate(key: string, params?: Record<string, string>): string {
     const lang = this.languageSignal();
-    const translation =
-      this.translations[lang]?.[key] || this.translations['es']?.[key] || key;
+    const translation = this.translations[lang]?.[key] || this.translations['es']?.[key] || key;
 
     if (params) {
       return Object.entries(params).reduce(
-        (text, [paramKey, paramValue]) =>
-          text.replace(`{{${paramKey}}}`, paramValue),
-        translation
+        (text, [paramKey, paramValue]) => text.replace(`{{${paramKey}}}`, paramValue),
+        translation,
       );
     }
 
@@ -48,9 +46,7 @@ export class I18nService {
       return 'es'; // Por defecto español en SSR
     }
 
-    const savedLang = localStorage.getItem(
-      this.LANGUAGE_STORAGE_KEY
-    ) as Language | null;
+    const savedLang = localStorage.getItem(this.LANGUAGE_STORAGE_KEY) as Language | null;
     if (savedLang === 'es' || savedLang === 'en') {
       return savedLang;
     }
@@ -61,12 +57,12 @@ export class I18nService {
     try {
       const [esTranslations, enTranslations] = await Promise.all([
         fetch('/assets/i18n/es.json').then((res) => res.json()),
-        fetch('/assets/i18n/en.json').then((res) => res.json())
+        fetch('/assets/i18n/en.json').then((res) => res.json()),
       ]);
 
       this.translations = {
         es: esTranslations,
-        en: enTranslations
+        en: enTranslations,
       };
     } catch (error) {
       console.error('Error loading translations:', error);
@@ -74,4 +70,3 @@ export class I18nService {
     }
   }
 }
-

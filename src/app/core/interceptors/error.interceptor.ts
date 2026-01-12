@@ -28,20 +28,23 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       const isSessionEndpoint = req.url.includes('/auth/session');
       const isLoginEndpoint = req.url.includes('/auth/login');
 
-      if ((error.status === 401 || error.status === 403) && !isSessionEndpoint && !isLoginEndpoint) {
+      if (
+        (error.status === 401 || error.status === 403) &&
+        !isSessionEndpoint &&
+        !isLoginEndpoint
+      ) {
         // Cerrar sesión y limpiar datos
-        authPort.logout();
+        void authPort.logout();
 
         // Redirigir al login solo si no estamos ya en la página de login o pwa-required
         const currentUrl = router.url;
         if (!currentUrl.includes('/login') && !currentUrl.includes('/pwa-required')) {
-          router.navigate(['/login']);
+          void router.navigate(['/login']);
         }
       }
 
       // Re-lanzar el error para que los componentes puedan manejarlo si es necesario
       return throwError(() => error);
-    })
+    }),
   );
 };
-

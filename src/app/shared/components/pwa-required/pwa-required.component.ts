@@ -12,7 +12,7 @@ import { LanguageSelectorComponent } from '@shared/components/language-selector/
   standalone: true,
   imports: [CommonModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './pwa-required.component.html',
-  styleUrl: './pwa-required.component.scss'
+  styleUrl: './pwa-required.component.scss',
 })
 export class PwaRequiredComponent {
   private readonly router = inject(Router);
@@ -24,17 +24,15 @@ export class PwaRequiredComponent {
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
 
   // Mostrar logo solo cuando el branding esté cargado
-  readonly showLogo = computed(() =>
-    !this.branding.loading() && !!this.branding.settings()
-  );
+  readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
   checkAgain(): void {
     if (this.pwaService.isRunningAsPwa()) {
-      this.router.navigate(['/login']);
+      void this.router.navigate(['/login']);
     }
   }
 
-  getPwaInfo() {
+  getPwaInfo(): ReturnType<typeof this.pwaService.getPwaInfo> {
     return this.pwaService.getPwaInfo();
   }
 
@@ -42,4 +40,3 @@ export class PwaRequiredComponent {
     this.theme.toggleTheme();
   }
 }
-

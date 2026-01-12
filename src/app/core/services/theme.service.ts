@@ -4,7 +4,7 @@ import { isPlatformBrowser } from '@angular/common';
 export type Theme = 'light' | 'dark' | 'system';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -44,7 +44,11 @@ export class ThemeService {
   private getEffectiveTheme(): 'light' | 'dark' {
     const theme = this.themeSignal();
     if (theme === 'system') {
-      if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined' && window.matchMedia) {
+      if (
+        isPlatformBrowser(this.platformId) &&
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia !== 'undefined'
+      ) {
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
       return 'light';
@@ -66,9 +70,13 @@ export class ThemeService {
     }
 
     // Solo escuchar cambios del sistema si el tema está en 'system'
-    if (this.themeSignal() === 'system' && typeof window !== 'undefined' && window.matchMedia) {
+    if (
+      this.themeSignal() === 'system' &&
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia !== 'undefined'
+    ) {
       this.systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      this.systemThemeListener = () => {
+      this.systemThemeListener = (): void => {
         const effectiveTheme = this.getEffectiveTheme();
         this.effectiveTheme.set(effectiveTheme);
         this.applyTheme(effectiveTheme);
@@ -112,4 +120,3 @@ export class ThemeService {
     }
   }
 }
-

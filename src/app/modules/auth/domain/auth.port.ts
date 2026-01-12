@@ -9,6 +9,7 @@ export interface AuthPort {
   logout(): Promise<void>;
   isAuthenticated(): boolean;
   getCurrentUser(): User | null;
+  initializeUserFromToken(): Promise<void>;
 }
 
 export interface AuthResult {

@@ -17,10 +17,10 @@ import { trigger, transition, style, animate } from '@angular/animations';
     trigger('fadeInUp', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(30px)' }),
-        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-      ])
-    ])
-  ]
+        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' })),
+      ]),
+    ]),
+  ],
 })
 export class ProfileComponent implements OnInit {
   private readonly authPort = inject<AuthPort>(AUTH_PORT);
@@ -34,17 +34,20 @@ export class ProfileComponent implements OnInit {
 
   readonly fullName = computed(() => {
     const user = this.user();
-    if (!user?.person) return user?.name || user?.email || '';
+    if (user?.person === null || user?.person === undefined) return user?.name ?? user?.email ?? '';
     const parts: string[] = [];
-    if (user.person.personFirstname) parts.push(user.person.personFirstname);
-    if (user.person.personLastname) parts.push(user.person.personLastname);
-    if (user.person.personSecondLastname) parts.push(user.person.personSecondLastname);
-    return parts.length > 0 ? parts.join(' ') : user.email || '';
+    if (user.person.personFirstname !== null && user.person.personFirstname !== undefined)
+      parts.push(user.person.personFirstname);
+    if (user.person.personLastname !== null && user.person.personLastname !== undefined)
+      parts.push(user.person.personLastname);
+    if (user.person.personSecondLastname !== null && user.person.personSecondLastname !== undefined)
+      parts.push(user.person.personSecondLastname);
+    return parts.length > 0 ? parts.join(' ') : (user.email ?? '');
   });
 
   readonly seniority = computed(() => {
     const hireDate = this.user()?.person?.employee?.employeeHireDate;
-    if (!hireDate) return null;
+    if (hireDate === null || hireDate === undefined) return null;
     return this.calculateSeniority(hireDate);
   });
 
@@ -136,17 +139,27 @@ export class ProfileComponent implements OnInit {
    * Formatea una fecha para mostrar según el idioma seleccionado
    */
   formatDate(dateString: string | undefined): string {
-    if (!dateString) return '---';
+    if (dateString === null || dateString === undefined || dateString.length === 0) return '---';
     try {
       const date = new Date(dateString);
-      const currentLang = this.translateService.currentLang || 'es';
+      const currentLang = this.translateService.currentLang ?? 'es';
       const isEnglish = currentLang === 'en';
 
       if (isEnglish) {
         // Formato en inglés: "December 29, 1995"
         const monthNames = [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
         ];
         const month = monthNames[date.getMonth()];
         const day = date.getDate();
@@ -155,8 +168,18 @@ export class ProfileComponent implements OnInit {
       } else {
         // Formato en español: "29 de diciembre de 1995"
         const monthNames = [
-          'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-          'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+          'enero',
+          'febrero',
+          'marzo',
+          'abril',
+          'mayo',
+          'junio',
+          'julio',
+          'agosto',
+          'septiembre',
+          'octubre',
+          'noviembre',
+          'diciembre',
         ];
         const month = monthNames[date.getMonth()];
         const day = date.getDate();
@@ -172,7 +195,7 @@ export class ProfileComponent implements OnInit {
    * Formatea un número de teléfono removiendo formato
    */
   formatPhoneForCopy(phone: string | undefined): string {
-    if (!phone) return '';
+    if (phone === null || phone === undefined || phone.length === 0) return '';
     // Remover paréntesis, espacios y guiones
     return phone.replace(/[()\s-]/g, '');
   }
@@ -182,13 +205,19 @@ export class ProfileComponent implements OnInit {
    */
   getPlaceOfBirth(): string {
     const user = this.user();
-    if (!user?.person) return '---';
+    if (user?.person === null || user?.person === undefined) return '---';
 
     const parts: string[] = [];
-    if (user.person.personPlaceOfBirthCity) {
+    if (
+      user.person.personPlaceOfBirthCity !== null &&
+      user.person.personPlaceOfBirthCity !== undefined
+    ) {
       parts.push(user.person.personPlaceOfBirthCity);
     }
-    if (user.person.personPlaceOfBirthState) {
+    if (
+      user.person.personPlaceOfBirthState !== null &&
+      user.person.personPlaceOfBirthState !== undefined
+    ) {
       parts.push(user.person.personPlaceOfBirthState);
     }
 
@@ -198,7 +227,7 @@ export class ProfileComponent implements OnInit {
   /**
    * Copia un valor al portapapeles
    */
-  async copyToClipboard(value: string, fieldName: string, isPhone: boolean = false): Promise<void> {
+  async copyToClipboard(value: string, fieldName: string, isPhone = false): Promise<void> {
     const textToCopy = isPhone ? this.formatPhoneForCopy(value) : value;
 
     try {
@@ -215,23 +244,22 @@ export class ProfileComponent implements OnInit {
   /**
    * Maneja el evento de click para copiar al portapapeles
    */
-  onClickCopy(event: Event, value: string, fieldName: string, isPhone: boolean = false): void {
+  onClickCopy(event: Event, value: string, fieldName: string, isPhone = false): void {
     event.preventDefault();
     event.stopPropagation();
-    if (!value || value === '---') return;
-    this.copyToClipboard(value, fieldName, isPhone);
+    if (value === null || value === undefined || value === '---') return;
+    void this.copyToClipboard(value, fieldName, isPhone);
   }
 
   /**
    * Maneja el evento de teclado para copiar al portapapeles (accesibilidad)
    */
-  onKeyDownCopy(event: KeyboardEvent, value: string, fieldName: string, isPhone: boolean = false): void {
+  onKeyDownCopy(event: KeyboardEvent, value: string, fieldName: string, isPhone = false): void {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       event.stopPropagation();
-      if (!value || value === '---') return;
-      this.copyToClipboard(value, fieldName, isPhone);
+      if (value === null || value === undefined || value === '---') return;
+      void this.copyToClipboard(value, fieldName, isPhone);
     }
   }
 }
-

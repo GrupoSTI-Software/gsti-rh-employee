@@ -4,7 +4,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { AuthPort } from '@modules/auth/domain/auth.port';
-import { HttpAuthAdapter } from '@modules/auth/infrastructure/http-auth.adapter';
+import { HttpErrorResponse } from '@angular/common/http';
 
 /**
  * Guard que protege rutas que requieren autenticación
@@ -25,30 +25,28 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const hasToken = authPort.isAuthenticated();
 
   if (!hasToken) {
-    router.navigate(['/login'], {
-      queryParams: { returnUrl: state.url }
+    void router.navigate(['/login'], {
+      queryParams: { returnUrl: state.url },
     });
     return false;
   }
 
-  // Si es HttpAuthAdapter, asegurarse de que el usuario esté inicializado
-  if (authPort instanceof HttpAuthAdapter) {
-    try {
-      await authPort.initializeUserFromToken();
-    } catch (error: any) {
-      // Si el error es 401/403, el token fue limpiado en initializeUserFromToken
-      // Verificar nuevamente si hay token
-      if (error?.status === 401 || error?.status === 403) {
-        if (!authPort.isAuthenticated()) {
-          router.navigate(['/login'], {
-            queryParams: { returnUrl: state.url }
-          });
-          return false;
-        }
+  // Asegurarse de que el usuario esté inicializado
+  try {
+    await authPort.initializeUserFromToken();
+  } catch (error: unknown) {
+    // Si el error es 401/403, el token fue limpiado en initializeUserFromToken
+    // Verificar nuevamente si hay token
+    if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+      if (!authPort.isAuthenticated()) {
+        void router.navigate(['/login'], {
+          queryParams: { returnUrl: state.url },
+        });
+        return false;
       }
-      // Si es otro tipo de error (red, timeout), continuar con el token existente
-      // El usuario puede seguir usando la app si el token es válido
     }
+    // Si es otro tipo de error (red, timeout), continuar con el token existente
+    // El usuario puede seguir usando la app si el token es válido
   }
 
   // Verificar nuevamente después de la inicialización
@@ -58,9 +56,8 @@ export const authGuard: CanActivateFn = async (route, state) => {
   }
 
   // Redirigir al login con la URL de retorno
-  router.navigate(['/login'], {
-    queryParams: { returnUrl: state.url }
+  void router.navigate(['/login'], {
+    queryParams: { returnUrl: state.url },
   });
   return false;
 };
-

@@ -26,19 +26,17 @@ export interface MenuItem {
     trigger('slideInOut', [
       transition(':enter', [
         style({ transform: 'translateX(-100%)' }),
-        animate('300ms ease-out', style({ transform: 'translateX(0)' }))
+        animate('300ms ease-out', style({ transform: 'translateX(0)' })),
       ]),
-      transition(':leave', [
-        animate('300ms ease-in', style({ transform: 'translateX(-100%)' }))
-      ])
+      transition(':leave', [animate('300ms ease-in', style({ transform: 'translateX(-100%)' }))]),
     ]),
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0 }),
-        animate('200ms ease-out', style({ opacity: 1 }))
-      ])
-    ])
-  ]
+        animate('200ms ease-out', style({ opacity: 1 })),
+      ]),
+    ]),
+  ],
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private readonly sidebarService = inject(SidebarService);
@@ -59,11 +57,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
         return parts.join(' ');
       }
     }
-    return user?.name || user?.email || '';
+    return user?.name ?? user?.email ?? '';
   });
   readonly userEmail = computed(() => {
     const user = this.user();
-    return user?.email || '';
+    return user?.email ?? '';
   });
 
   readonly menuItems: MenuItem[] = [
@@ -71,28 +69,26 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'Asistencia',
       route: '/dashboard/checkin',
       icon: 'pi-clock',
-      translationKey: 'menu.attendance'
+      translationKey: 'menu.attendance',
     },
     {
       label: 'Perfil',
       route: '/dashboard/profile',
       icon: 'pi-user',
-      translationKey: 'menu.profile'
+      translationKey: 'menu.profile',
     },
     {
       label: 'Configuración',
       route: '/dashboard/settings',
       icon: 'pi-cog',
-      translationKey: 'menu.settings'
-    }
+      translationKey: 'menu.settings',
+    },
   ];
 
   ngOnInit(): void {
-    this.subscription = this.sidebarService.sidebarState$.subscribe(
-      (isOpen) => {
-        this.isOpen = isOpen;
-      }
-    );
+    this.subscription = this.sidebarService.sidebarState$.subscribe((isOpen) => {
+      this.isOpen = isOpen;
+    });
   }
 
   ngOnDestroy(): void {
@@ -104,14 +100,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   navigate(route: string): void {
-    this.router.navigate([route]);
+    void this.router.navigate([route]);
     this.close();
   }
 
   logout(): void {
-    this.authPort.logout();
+    void this.authPort.logout();
     this.close();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }
-

@@ -11,13 +11,25 @@ export default tseslint.config(
       'out-tsc/**',
       'tmp/**',
       '.angular/**',
-      '**/*.spec.ts'
+      '**/*.spec.ts',
+      'src/environments/**',
+      'scripts/**'
     ]
   },
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.stylistic,
-  ...angular.configs.tsRecommended,
+  // Configuración base de JavaScript - solo para archivos .js
+  {
+    files: ['**/*.js'],
+    ...js.configs.recommended
+  },
+  // Configuración de TypeScript - solo para archivos .ts
+  {
+    files: ['**/*.ts'],
+    extends: [
+      ...tseslint.configs.recommended,
+      ...tseslint.configs.stylistic,
+      ...angular.configs.tsRecommended
+    ]
+  },
   {
     files: ['**/*.ts'],
     ignores: ['**/app.config.ts', '**/app.config.server.ts'],
@@ -128,16 +140,9 @@ export default tseslint.config(
   {
     files: ['**/*.html'],
     rules: {
-      // Reglas de accesibilidad de Angular
-      '@angular-eslint/template/accessibility-alt-text': 'error',
-      '@angular-eslint/template/accessibility-elements-content': 'error',
-      '@angular-eslint/template/accessibility-label-has-associated-control':
-        'error',
-      '@angular-eslint/template/accessibility-table-scope': 'error',
-      '@angular-eslint/template/accessibility-valid-aria': 'error',
-      '@angular-eslint/template/button-has-type': 'error',
+      // Las reglas de accesibilidad ya vienen de angular.configs.templateAccessibility
+      // Solo personalizamos algunas
       '@angular-eslint/template/click-events-have-key-events': 'warn',
-      '@angular-eslint/template/no-positive-tabindex': 'error',
 
       // Deshabilitar reglas que requieren atributos en lowercase
       // Angular usa camelCase para directivas y propiedades (ej: [formGroup], formControlName, [@fadeIn])
@@ -156,4 +161,3 @@ export default tseslint.config(
     }
   }
 );
-

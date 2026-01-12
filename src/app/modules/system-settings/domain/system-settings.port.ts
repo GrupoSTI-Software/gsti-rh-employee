@@ -42,4 +42,3 @@ export interface SystemSettingsApiResponse {
     systemSetting: SystemSettings;
   };
 }
-

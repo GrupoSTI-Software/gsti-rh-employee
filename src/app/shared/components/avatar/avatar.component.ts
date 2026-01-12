@@ -11,7 +11,7 @@ export type AvatarSize = 'small' | 'medium' | 'large' | 'xlarge';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './avatar.component.html',
-  styleUrl: './avatar.component.scss'
+  styleUrl: './avatar.component.scss',
 })
 export class AvatarComponent {
   private readonly authPort = inject<AuthPort>(AUTH_PORT);
@@ -31,7 +31,7 @@ export class AvatarComponent {
    */
   readonly userPhoto = computed(() => {
     const photoUrl = this.user()?.person?.employee?.employeePhoto;
-    if (!photoUrl) {
+    if (photoUrl === null || photoUrl === undefined || photoUrl === '') {
       return null;
     }
 
@@ -49,7 +49,7 @@ export class AvatarComponent {
   readonly userInitials = computed(() => {
     const user = this.user();
     if (!user?.person) {
-      if (!user?.name) return 'U';
+      if (user?.name === undefined || user.name === '') return 'U';
       const names = user.name.split(' ');
       if (names.length >= 2) {
         return (names[0][0] + names[1][0]).toUpperCase();
@@ -57,12 +57,12 @@ export class AvatarComponent {
       return user.name[0].toUpperCase();
     }
     const person = user.person;
-    const firstname = person.personFirstname || '';
-    const lastname = person.personLastname || '';
-    if (firstname && lastname) {
+    const firstname = person.personFirstname ?? '';
+    const lastname = person.personLastname ?? '';
+    if (firstname !== '' && lastname !== '') {
       return (firstname[0] + lastname[0]).toUpperCase();
     }
-    if (firstname) {
+    if (firstname !== '') {
       return firstname[0].toUpperCase();
     }
     return 'U';
@@ -78,21 +78,21 @@ export class AvatarComponent {
         return parts.join(' ');
       }
     }
-    return user?.name || user?.email || 'Usuario';
+    return user?.name ?? user?.email ?? 'Usuario';
   });
 
   constructor() {
     // Resetear el error de imagen solo cuando cambia la URL de la foto
     effect(() => {
       const photo = this.userPhoto();
-      
+
       // Si la URL de la foto cambió, resetear el error para intentar cargarla
-      if (photo && photo !== this.lastPhotoUrl) {
+      if (photo !== null && photo !== undefined && photo !== this.lastPhotoUrl) {
         this.lastPhotoUrl = photo;
         untracked(() => {
           this.imageError.set(false);
         });
-      } else if (!photo) {
+      } else if (photo === null || photo === undefined) {
         // Si no hay foto, asegurar que se muestren las iniciales
         this.lastPhotoUrl = null;
         untracked(() => {
@@ -110,9 +110,7 @@ export class AvatarComponent {
     // Marcar error para mostrar iniciales
     this.imageError.set(true);
     // Prevenir que el navegador muestre el icono de imagen rota
-    if (img) {
-      img.style.display = 'none';
-    }
+    img.style.display = 'none';
   }
 
   /**

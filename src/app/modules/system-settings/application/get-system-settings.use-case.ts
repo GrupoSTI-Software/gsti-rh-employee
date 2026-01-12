@@ -6,7 +6,7 @@ import { SystemSettings, SystemSettingsPort } from '../domain/system-settings.po
  * Caso de uso para obtener las configuraciones activas del sistema
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GetSystemSettingsUseCase {
   private readonly systemSettingsPort = inject<SystemSettingsPort>(SYSTEM_SETTINGS_PORT);
@@ -24,4 +24,3 @@ export class GetSystemSettingsUseCase {
     }
   }
 }
-

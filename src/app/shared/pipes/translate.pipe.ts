@@ -1,18 +1,11 @@
-import {
-  Pipe,
-  PipeTransform,
-  inject,
-  ChangeDetectorRef,
-  OnDestroy,
-  NgZone
-} from '@angular/core';
+import { Pipe, PipeTransform, inject, ChangeDetectorRef, OnDestroy, NgZone } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 @Pipe({
   name: 'translate',
   standalone: true,
-  pure: false
+  pure: false,
 })
 export class TranslatePipe implements PipeTransform, OnDestroy {
   private readonly translateService = inject(TranslateService);
@@ -37,15 +30,14 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
     });
 
     // Suscribirse a cambios en las traducciones
-    this.translationChangeSubscription =
-      this.translateService.onTranslationChange.subscribe(() => {
-        this.ngZone.run(() => {
-          if (this.lastKey) {
-            this.updateValue();
-            this.cdr.markForCheck();
-          }
-        });
+    this.translationChangeSubscription = this.translateService.onTranslationChange.subscribe(() => {
+      this.ngZone.run(() => {
+        if (this.lastKey) {
+          this.updateValue();
+          this.cdr.markForCheck();
+        }
       });
+    });
   }
 
   transform(key: string, params?: Record<string, string>): string {
@@ -53,8 +45,7 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
 
     // Verificar si cambió la clave, los parámetros o el idioma
     const keyChanged = key !== this.lastKey;
-    const paramsChanged =
-      JSON.stringify(params) !== JSON.stringify(this.lastParams);
+    const paramsChanged = JSON.stringify(params) !== JSON.stringify(this.lastParams);
     const langChanged = currentLang !== this.lastLang;
 
     if (keyChanged || paramsChanged || langChanged) {
@@ -79,7 +70,7 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
       } else {
         this.value = this.translateService.instant(this.lastKey);
       }
-    } catch (error) {
+    } catch {
       console.warn(`Translation key "${this.lastKey}" not found`);
       this.value = this.lastKey;
     }
@@ -94,4 +85,3 @@ export class TranslatePipe implements PipeTransform, OnDestroy {
     }
   }
 }
-

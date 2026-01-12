@@ -1,11 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import {
-  AttendancePort,
-  Attendance,
-  AttendanceApiResponse
-} from '../domain/attendance.port';
+import { AttendancePort, Attendance, AttendanceApiResponse } from '../domain/attendance.port';
 import { environment } from '@env/environment';
 
 /**
@@ -14,7 +10,7 @@ import { environment } from '@env/environment';
  * Nota: El token de autenticación se agrega automáticamente mediante el interceptor
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class HttpAttendanceAdapter implements AttendancePort {
   private readonly http = inject(HttpClient);
@@ -26,19 +22,17 @@ export class HttpAttendanceAdapter implements AttendancePort {
   async getAttendance(
     dateStart: string,
     dateEnd: string,
-    employeeId: number
+    employeeId: number,
   ): Promise<Attendance | null> {
     try {
       const response = await firstValueFrom<AttendanceApiResponse>(
         this.http.get<AttendanceApiResponse>(
-          `${this.apiUrl}/v1/assists?date=${dateStart}&date-end=${dateEnd}&employeeId=${employeeId}`
-        )
+          `${this.apiUrl}/v1/assists?date=${dateStart}&date-end=${dateEnd}&employeeId=${employeeId}`,
+        ),
       );
 
       // Obtener el día específico que estamos buscando
-      const calendarDay = response.data?.employeeCalendar?.find(
-        (day) => day.day === dateStart
-      );
+      const calendarDay = response.data?.employeeCalendar?.find((day) => day.day === dateStart);
 
       if (!calendarDay?.assist) {
         return null;
@@ -48,12 +42,12 @@ export class HttpAttendanceAdapter implements AttendancePort {
 
       // Formatear tiempos desde checkInDateTime, checkOutDateTime, etc.
       const formatTime = (dateString: string | null): string | null => {
-        if (!dateString) return null;
+        if (dateString === null || dateString.length === 0) return null;
         try {
           const date = new Date(dateString);
           return date.toLocaleTimeString('es-MX', {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
         } catch {
           return null;
@@ -62,9 +56,9 @@ export class HttpAttendanceAdapter implements AttendancePort {
 
       // Formatear tiempos desde los objetos checkIn, checkOut, etc. si existen
       const formatTimeFromObject = (
-        obj: { assistPunchTimeUtc: string | null } | null
+        obj: { assistPunchTimeUtc: string | null } | null,
       ): string | null => {
-        if (!obj?.assistPunchTimeUtc) return null;
+        if (obj?.assistPunchTimeUtc === null || obj?.assistPunchTimeUtc === undefined) return null;
         return formatTime(obj.assistPunchTimeUtc);
       };
 
@@ -75,7 +69,13 @@ export class HttpAttendanceAdapter implements AttendancePort {
 
       // Calcular hora de fin del turno basado en las horas activas
       const calculateShiftEnd = (timeStart: string, activeHours: string): string | null => {
-        if (!timeStart || !activeHours) return null;
+        if (
+          timeStart === null ||
+          timeStart.length === 0 ||
+          activeHours === null ||
+          activeHours.length === 0
+        )
+          return null;
         try {
           const [hours, minutes] = timeStart.split(':').map(Number);
           const activeHoursNum = parseFloat(activeHours);
@@ -85,18 +85,18 @@ export class HttpAttendanceAdapter implements AttendancePort {
           startDate.setMinutes(startDate.getMinutes() + Math.round((activeHoursNum % 1) * 60));
           return startDate.toLocaleTimeString('es-MX', {
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
           });
         } catch {
           return null;
         }
       };
 
-      const shiftTimeStart = assist.dateShift?.shiftTimeStart || null;
+      const shiftTimeStart = assist.dateShift?.shiftTimeStart ?? null;
       const shiftTimeEnd = assist.dateShift
         ? calculateShiftEnd(assist.dateShift.shiftTimeStart, assist.dateShift.shiftActiveHours)
         : null;
-      const shiftName = assist.dateShift?.shiftName || null;
+      const shiftName = assist.dateShift?.shiftName ?? null;
 
       const hasException =
         assist.isRestDay ||
@@ -112,13 +112,9 @@ export class HttpAttendanceAdapter implements AttendancePort {
         checkEatInTime: formatTimeFromObject(assist.checkEatIn),
         checkEatOutTime: formatTimeFromObject(assist.checkEatOut),
         checkInStatus:
-          assist.checkInStatus === 'fault' && hasException
-            ? ''
-            : assist.checkInStatus || null,
+          assist.checkInStatus === 'fault' && hasException ? '' : (assist.checkInStatus ?? null),
         checkOutStatus:
-          assist.checkOutStatus === 'fault' && hasException
-            ? ''
-            : assist.checkOutStatus || null,
+          assist.checkOutStatus === 'fault' && hasException ? '' : (assist.checkOutStatus ?? null),
         checkEatInStatus: null, // No viene en la nueva estructura
         checkEatOutStatus: null, // No viene en la nueva estructura
         shiftInfo: shiftInfo,
@@ -129,24 +125,27 @@ export class HttpAttendanceAdapter implements AttendancePort {
         isWorkDisabilityDate: assist.isWorkDisabilityDate,
         isVacationDate: assist.isVacationDate,
         isHoliday: assist.isHoliday,
-        assistFlatList: assist.assitFlatList || [],
-        exceptions: (assist.exceptions || []).map((exc: any) => ({
-          shiftExceptionId: exc.shiftExceptionId,
-          employeeId: exc.employeeId,
-          exceptionTypeId: exc.exceptionTypeId,
-          shiftExceptionsDate: exc.shiftExceptionsDate,
-          shiftExceptionsDescription: exc.shiftExceptionsDescription,
-          shiftExceptionCheckInTime: exc.shiftExceptionCheckInTime,
-          shiftExceptionCheckOutTime: exc.shiftExceptionCheckOutTime,
-          shiftExceptionEnjoymentOfSalary: exc.shiftExceptionEnjoymentOfSalary,
-          shiftExceptionTimeByTime: exc.shiftExceptionTimeByTime,
-          workDisabilityPeriodId: exc.workDisabilityPeriodId,
-          shiftExceptionsCreatedAt: exc.shiftExceptionsCreatedAt,
-          shiftExceptionsUpdatedAt: exc.shiftExceptionsUpdatedAt,
-          deletedAt: exc.deletedAt,
-          vacationSettingId: exc.vacationSettingId,
-          exceptionType: exc.exceptionType
-        }))
+        assistFlatList: assist.assitFlatList ?? [],
+        exceptions: (assist.exceptions ?? []).map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (exc: any) => ({
+            shiftExceptionId: exc.shiftExceptionId,
+            employeeId: exc.employeeId,
+            exceptionTypeId: exc.exceptionTypeId,
+            shiftExceptionsDate: exc.shiftExceptionsDate,
+            shiftExceptionsDescription: exc.shiftExceptionsDescription,
+            shiftExceptionCheckInTime: exc.shiftExceptionCheckInTime,
+            shiftExceptionCheckOutTime: exc.shiftExceptionCheckOutTime,
+            shiftExceptionEnjoymentOfSalary: exc.shiftExceptionEnjoymentOfSalary === true ? 1 : 0,
+            shiftExceptionTimeByTime: exc.shiftExceptionTimeByTime === true ? '1' : null,
+            workDisabilityPeriodId: exc.workDisabilityPeriodId,
+            shiftExceptionsCreatedAt: exc.shiftExceptionsCreatedAt,
+            shiftExceptionsUpdatedAt: exc.shiftExceptionsUpdatedAt,
+            deletedAt: exc.deletedAt,
+            vacationSettingId: exc.vacationSettingId,
+            exceptionType: exc.exceptionType,
+          }),
+        ),
       };
     } catch (error: unknown) {
       console.error('Error al obtener asistencia:', error);
@@ -161,19 +160,17 @@ export class HttpAttendanceAdapter implements AttendancePort {
     employeeId: number,
     latitude: number,
     longitude: number,
-    precision: number
+    precision: number,
   ): Promise<boolean> {
     try {
       const payload = {
         employeeId,
         assistLatitude: latitude,
         assistLongitude: longitude,
-        assistPrecision: precision
+        assistPrecision: precision,
       };
 
-      await firstValueFrom(
-        this.http.post(`${this.apiUrl}/v1/assists`, payload)
-      );
+      await firstValueFrom(this.http.post(`${this.apiUrl}/v1/assists`, payload));
 
       return true;
     } catch (error: unknown) {
@@ -182,4 +179,3 @@ export class HttpAttendanceAdapter implements AttendancePort {
     }
   }
 }
-

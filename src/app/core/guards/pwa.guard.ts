@@ -21,8 +21,8 @@ export const pwaGuard: CanActivateFn = (route, state) => {
   }
 
   // Si no está en modo PWA en producción, redirigir a página de información
-  router.navigate(['/pwa-required'], {
-    queryParams: { returnUrl: state.url }
+  void router.navigate(['/pwa-required'], {
+    queryParams: { returnUrl: state.url },
   });
   return false;
 };
@@ -31,7 +31,7 @@ export const pwaGuard: CanActivateFn = (route, state) => {
  * Guard inverso: permite acceso solo si NO está en modo PWA
  * Útil para páginas de información o instalación
  */
-export const nonPwaGuard: CanActivateFn = (route, state) => {
+export const nonPwaGuard: CanActivateFn = (_route, _state) => {
   const pwaService = inject(PwaDetectionService);
   const router = inject(Router);
   if (!pwaService.isRunningAsPwa()) {
@@ -39,7 +39,6 @@ export const nonPwaGuard: CanActivateFn = (route, state) => {
   }
 
   // Si está en modo PWA, redirigir al login o dashboard
-  router.navigate(['/login']);
+  void router.navigate(['/login']);
   return false;
 };
-

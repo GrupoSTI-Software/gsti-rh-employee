@@ -6,7 +6,7 @@ import { DeviceInfo } from '@modules/auth/domain/device-info.interface';
  * Servicio para obtener información del dispositivo
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DeviceService {
   private readonly platformId = inject(PLATFORM_ID);
@@ -22,7 +22,7 @@ export class DeviceService {
 
     let token = localStorage.getItem(this.DEVICE_TOKEN_KEY);
 
-    if (!token) {
+    if (token === null || token.length === 0) {
       token = this.generateUUID();
       localStorage.setItem(this.DEVICE_TOKEN_KEY, token);
     }
@@ -40,7 +40,7 @@ export class DeviceService {
         deviceModel: 'Unknown',
         deviceOs: 'Unknown',
         deviceType: null,
-        deviceToken: this.generateUUID()
+        deviceToken: this.generateUUID(),
       };
     }
 
@@ -52,7 +52,7 @@ export class DeviceService {
       deviceModel: this.getDeviceModel(platform, userAgent),
       deviceOs: this.getDeviceOs(platform, userAgent),
       deviceType: this.getDeviceType(userAgent),
-      deviceToken: this.getOrCreateDeviceToken()
+      deviceToken: this.getOrCreateDeviceToken(),
     };
   }
 
@@ -78,7 +78,7 @@ export class DeviceService {
     if (/Android/i.test(userAgent)) {
       // Intentar extraer la marca del dispositivo Android
       const match = userAgent.match(/Android.*?; ([^)]+)\)/);
-      if (match && match[1]) {
+      if (match?.[1] !== undefined) {
         return match[1].split(' ')[0];
       }
       return 'Android';
@@ -112,7 +112,7 @@ export class DeviceService {
     // Para Android
     if (/Android/i.test(userAgent)) {
       const match = userAgent.match(/Android.*?; ([^)]+)\)/);
-      if (match && match[1]) {
+      if (match?.[1] !== undefined) {
         return match[1];
       }
       return 'Android Device';
@@ -128,7 +128,7 @@ export class DeviceService {
           '11.0': 'Windows 11',
           '6.3': 'Windows 8.1',
           '6.2': 'Windows 8',
-          '6.1': 'Windows 7'
+          '6.1': 'Windows 7',
         };
         return versionMap[version] || `Windows ${version}`;
       }
@@ -181,7 +181,7 @@ export class DeviceService {
           '11.0': 'Windows 11',
           '6.3': 'Windows 8.1',
           '6.2': 'Windows 8',
-          '6.1': 'Windows 7'
+          '6.1': 'Windows 7',
         };
         return versionMap[version] || `Windows ${version}`;
       }
@@ -212,4 +212,3 @@ export class DeviceService {
     return null;
   }
 }
-

@@ -5,11 +5,7 @@ export interface AttendancePort {
   /**
    * Obtiene las asistencias del empleado para un rango de fechas
    */
-  getAttendance(
-    dateStart: string,
-    dateEnd: string,
-    employeeId: number
-  ): Promise<Attendance | null>;
+  getAttendance(dateStart: string, dateEnd: string, employeeId: number): Promise<Attendance | null>;
 
   /**
    * Registra una asistencia (check-in/check-out)
@@ -18,7 +14,7 @@ export interface AttendancePort {
     employeeId: number,
     latitude: number,
     longitude: number,
-    precision: number
+    precision: number,
   ): Promise<boolean>;
 }
 
@@ -171,7 +167,7 @@ export interface EmployeeAssist {
   isWorkDisabilityDate: boolean;
   isHoliday: boolean;
   isBirthday: boolean;
-  holiday: any | null;
+  holiday: unknown | null;
   hasExceptions: boolean;
   exceptions: Exception[];
   assitFlatList: Assistance[];
@@ -179,4 +175,3 @@ export interface EmployeeAssist {
   isCheckInEatNextDay: boolean;
   isCheckOutEatNextDay: boolean;
 }
-

@@ -9,7 +9,6 @@ import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
   standalone: true,
   imports: [CommonModule, RouterOutlet, HeaderComponent, SidebarComponent],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
 })
 export default class DashboardComponent {}
-

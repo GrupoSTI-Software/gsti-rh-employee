@@ -1,5 +1,12 @@
 @if (isOpen) {
-  <div class="sidebar-overlay" (click)="close()" [@fadeIn]></div>
+  <div
+    class="sidebar-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+    [@fadeIn]
+  ></div>
   <aside class="sidebar" [@slideInOut]>
     <div class="sidebar-header">
       <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'menu.close' | translate">
@@ -40,4 +47,3 @@
     </div>
   </aside>
 }
-

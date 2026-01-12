@@ -10,7 +10,7 @@ import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.direc
   standalone: true,
   imports: [RouterOutlet, PullToRefreshDirective],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App implements OnInit {
   protected readonly title = signal('gsti-pwa-empleado');
@@ -24,7 +24,7 @@ export class App implements OnInit {
 
     // Cargar branding lo más temprano posible (antes de ngOnInit)
     // Esto asegura que el favicon y manifest se actualicen antes de que el usuario instale la PWA
-    this.branding.loadBranding();
+    void this.branding.loadBranding();
   }
 
   ngOnInit(): void {
@@ -33,7 +33,7 @@ export class App implements OnInit {
     this.translate.setDefaultLang('es');
 
     // Obtener idioma guardado o usar el por defecto
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined') {
       const savedLang = localStorage.getItem('app-language');
       const langToUse = savedLang === 'en' || savedLang === 'es' ? savedLang : 'es';
       this.translate.use(langToUse);
