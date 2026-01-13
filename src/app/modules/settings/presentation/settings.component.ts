@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService, Theme } from '@core/services/theme.service';
+import { LoggerService } from '@core/services/logger.service';
+import { SecureStorageService } from '@core/services/secure-storage.service';
 import { Select } from 'primeng/select';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { PLATFORM_ID } from '@angular/core';
@@ -12,6 +14,11 @@ import { isPlatformBrowser } from '@angular/common';
 import { Subscription } from 'rxjs';
 
 type Language = 'es' | 'en';
+
+/**
+ * Clave para almacenar el idioma de la aplicación
+ */
+const LANGUAGE_STORAGE_KEY = 'app-language';
 
 interface IThemeOption {
   value: Theme;
@@ -43,6 +50,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly translateService = inject(TranslateService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly logger = inject(LoggerService);
+  private readonly secureStorage = inject(SecureStorageService);
   private langChangeSubscription?: Subscription;
 
   // Signal para el idioma actual que se actualiza cuando cambia
@@ -109,13 +118,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
       this.translateService.use(this.selectedLanguage).subscribe({
         next: () => {
           if (isPlatformBrowser(this.platformId)) {
-            localStorage.setItem('app-language', this.selectedLanguage);
+            this.secureStorage.setItem(LANGUAGE_STORAGE_KEY, this.selectedLanguage);
           }
           // Actualizar el signal inmediatamente
           this.currentLanguage.set(this.selectedLanguage);
         },
         error: (err) => {
-          console.error('Error changing language:', err);
+          this.logger.error('Error changing language:', err);
         },
       });
     }

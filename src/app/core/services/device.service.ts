@@ -1,6 +1,12 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { IDeviceInfo } from '@modules/auth/domain/auth.port';
+import { SecureStorageService } from './secure-storage.service';
+
+/**
+ * Clave para almacenar el token del dispositivo
+ */
+const DEVICE_TOKEN_KEY = 'device_token';
 
 /**
  * Servicio para obtener información del dispositivo
@@ -10,7 +16,7 @@ import { IDeviceInfo } from '@modules/auth/domain/auth.port';
 })
 export class DeviceService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly DEVICE_TOKEN_KEY = 'device_token';
+  private readonly secureStorage = inject(SecureStorageService);
 
   /**
    * Obtiene o genera un token único del dispositivo
@@ -20,11 +26,11 @@ export class DeviceService {
       return this.generateUUID();
     }
 
-    let token = localStorage.getItem(this.DEVICE_TOKEN_KEY);
+    let token = this.secureStorage.getItem(DEVICE_TOKEN_KEY);
 
     if (token === null || token.length === 0) {
       token = this.generateUUID();
-      localStorage.setItem(this.DEVICE_TOKEN_KEY, token);
+      this.secureStorage.setItem(DEVICE_TOKEN_KEY, token);
     }
 
     return token;

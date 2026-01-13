@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { ATTENDANCE_PORT } from '../domain/attendance.token';
 import { IAttendancePort } from '../domain/attendance.port';
+import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Caso de uso para registrar una asistencia
@@ -10,6 +11,7 @@ import { IAttendancePort } from '../domain/attendance.port';
 })
 export class StoreAssistUseCase {
   private readonly attendancePort = inject<IAttendancePort>(ATTENDANCE_PORT);
+  private readonly logger = inject(LoggerService);
 
   /**
    * Ejecuta el caso de uso para registrar asistencia
@@ -23,7 +25,7 @@ export class StoreAssistUseCase {
     try {
       return await this.attendancePort.storeAssist(employeeId, latitude, longitude, precision);
     } catch (error) {
-      console.error('Error al registrar asistencia:', error);
+      this.logger.error('Error al registrar asistencia:', error);
       return false;
     }
   }

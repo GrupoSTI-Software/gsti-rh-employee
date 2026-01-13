@@ -1,4 +1,4 @@
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -7,6 +7,7 @@ import {
   ISystemSettings,
 } from '../domain/system-settings.port';
 import { environment } from '@env/environment';
+import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Adaptador HTTP para configuraciones del sistema
@@ -17,7 +18,7 @@ import { environment } from '@env/environment';
 })
 export class HttpSystemSettingsAdapter implements ISystemSettingsPort {
   private readonly http = inject(HttpClient);
-  private readonly platformId = inject(PLATFORM_ID);
+  private readonly logger = inject(LoggerService);
   private readonly apiUrl = environment.apiUrl;
 
   /**
@@ -36,7 +37,7 @@ export class HttpSystemSettingsAdapter implements ISystemSettingsPort {
 
       return null;
     } catch (error: unknown) {
-      console.error('Error al obtener configuraciones del sistema:', error);
+      this.logger.error('Error al obtener configuraciones del sistema:', error);
       return null;
     }
   }

@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { SYSTEM_SETTINGS_PORT } from '../domain/system-settings.token';
 import { ISystemSettings, ISystemSettingsPort } from '../domain/system-settings.port';
+import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Caso de uso para obtener las configuraciones activas del sistema
@@ -10,6 +11,7 @@ import { ISystemSettings, ISystemSettingsPort } from '../domain/system-settings.
 })
 export class GetSystemSettingsUseCase {
   private readonly systemSettingsPort = inject<ISystemSettingsPort>(SYSTEM_SETTINGS_PORT);
+  private readonly logger = inject(LoggerService);
 
   /**
    * Ejecuta el caso de uso para obtener las configuraciones activas
@@ -19,7 +21,7 @@ export class GetSystemSettingsUseCase {
     try {
       return await this.systemSettingsPort.getActiveSettings();
     } catch (error) {
-      console.error('Error al obtener configuraciones del sistema:', error);
+      this.logger.error('Error al obtener configuraciones del sistema:', error);
       return null;
     }
   }

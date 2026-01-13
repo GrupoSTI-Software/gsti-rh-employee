@@ -2,6 +2,8 @@ import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { ISystemSettings } from '@modules/system-settings/domain/system-settings.port';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
+import { LoggerService } from '@core/services/logger.service';
+import { StoragePrefixService } from './storage-prefix.service';
 
 /**
  * Servicio para gestionar el branding de la aplicación
@@ -13,6 +15,8 @@ import { GetSystemSettingsUseCase } from '@modules/system-settings/application/g
 export class BrandingService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
+  private readonly logger = inject(LoggerService);
+  private readonly storagePrefixService = inject(StoragePrefixService);
 
   readonly settings = signal<ISystemSettings | null>(null);
   readonly loading = signal(false);
@@ -34,16 +38,19 @@ export class BrandingService {
       if (settings) {
         this.settings.set(settings);
 
+        // Sincronizar el prefijo de storage con el tradename
+        this.storagePrefixService.setTradeName(settings.systemSettingTradeName);
+
         // Remover cualquier manifest estático ANTES de aplicar el branding
         this.removeStaticManifest();
 
         await this.applyBranding(settings);
         this.setupInstallPromptListener();
       } else {
-        console.warn('No se obtuvieron configuraciones del sistema');
+        this.logger.warn('No se obtuvieron configuraciones del sistema');
       }
     } catch (error) {
-      console.error('Error al cargar branding:', error);
+      this.logger.error('Error al cargar branding:', error);
     } finally {
       this.loading.set(false);
     }
@@ -161,7 +168,7 @@ export class BrandingService {
       const img = new Image();
       img.onload = (): void => resolve();
       img.onerror = (): void => {
-        console.warn(`No se pudo cargar el icono: ${url}`);
+        this.logger.warn('No se pudo cargar el icono');
         resolve(); // Resolver de todas formas para no bloquear
       };
       img.src = this.addCacheBusting(url);

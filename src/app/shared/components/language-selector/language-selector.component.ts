@@ -9,8 +9,15 @@ import {
 import { CommonModule } from '@angular/common';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { LoggerService } from '@core/services/logger.service';
+import { SecureStorageService } from '@core/services/secure-storage.service';
 
 type Language = 'es' | 'en';
+
+/**
+ * Clave para almacenar el idioma de la aplicación
+ */
+const LANGUAGE_STORAGE_KEY = 'app-language';
 
 @Component({
   selector: 'app-language-selector',
@@ -24,6 +31,8 @@ export class LanguageSelectorComponent {
   private readonly elementRef = inject(ElementRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly logger = inject(LoggerService);
+  private readonly secureStorage = inject(SecureStorageService);
 
   readonly languages: { code: Language; label: string; flag: string }[] = [
     { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -49,14 +58,14 @@ export class LanguageSelectorComponent {
     this.translateService.use(lang).subscribe({
       next: () => {
         if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem('app-language', lang);
+          this.secureStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
         }
         this.showDropdown = false;
         // Forzar detección de cambios
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error changing language:', err);
+        this.logger.error('Error changing language:', err);
       },
     });
   }

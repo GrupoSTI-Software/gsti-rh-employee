@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IAttendancePort, IAttendance, IAttendanceApiResponse } from '../domain/attendance.port';
 import { environment } from '@env/environment';
+import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Adaptador HTTP para asistencia
@@ -14,6 +15,7 @@ import { environment } from '@env/environment';
 })
 export class HttpAttendanceAdapter implements IAttendancePort {
   private readonly http = inject(HttpClient);
+  private readonly logger = inject(LoggerService);
   private readonly apiUrl = environment.apiUrl;
 
   /**
@@ -148,7 +150,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
         ),
       };
     } catch (error: unknown) {
-      console.error('Error al obtener asistencia:', error);
+      this.logger.error('Error al obtener asistencia:', error);
       return null;
     }
   }
@@ -174,7 +176,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
 
       return true;
     } catch (error: unknown) {
-      console.error('Error al registrar asistencia:', error);
+      this.logger.error('Error al registrar asistencia:', error);
       return false;
     }
   }

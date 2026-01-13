@@ -13,16 +13,52 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Middleware de seguridad - Headers de seguridad HTTP
+ * Protege contra XSS, clickjacking, MIME sniffing, etc.
  */
+app.use((_req, res, next) => {
+  // Prevenir clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+
+  // Prevenir MIME sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Habilitar protección XSS del navegador (legacy, pero útil para navegadores antiguos)
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  // Política de referrer para proteger información sensible
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Política de permisos - restringir APIs sensibles
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(self), microphone=(), geolocation=(self), payment=()',
+  );
+
+  // Content Security Policy - restringir fuentes de contenido
+  // Nota: Ajustar según las necesidades de la aplicación
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Necesario para Angular
+      "style-src 'self' 'unsafe-inline'", // Necesario para estilos dinámicos
+      "img-src 'self' data: https: blob:", // Permitir imágenes de APIs externas
+      "font-src 'self' data:", // Fuentes locales
+      "connect-src 'self' https:", // APIs externas vía HTTPS
+      "frame-ancestors 'none'", // Prevenir embedding
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; '),
+  );
+
+  // Habilitar HSTS en producción (solo funciona con HTTPS)
+  if (process.env['NODE_ENV'] === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  next();
+});
 
 /**
  * Serve static files from /browser

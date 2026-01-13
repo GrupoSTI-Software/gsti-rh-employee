@@ -1,14 +1,20 @@
 import { Injectable, signal, effect, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { SecureStorageService } from './secure-storage.service';
 
 export type Theme = 'light' | 'dark' | 'system';
+
+/**
+ * Clave para almacenar el tema de la aplicación
+ */
+const THEME_STORAGE_KEY = 'app-theme';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ThemeService {
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly THEME_STORAGE_KEY = 'app-theme';
+  private readonly secureStorage = inject(SecureStorageService);
   private readonly themeSignal = signal<Theme>(this.getInitialTheme());
   private systemThemeMediaQuery?: MediaQueryList;
   private systemThemeListener?: (e: MediaQueryListEvent) => void;
@@ -98,8 +104,8 @@ export class ThemeService {
       return 'system'; // Por defecto system en SSR
     }
 
-    // Verificar localStorage
-    const savedTheme = localStorage.getItem(this.THEME_STORAGE_KEY) as Theme | null;
+    // Verificar storage con prefijo
+    const savedTheme = this.secureStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
       return savedTheme;
     }
@@ -116,7 +122,7 @@ export class ThemeService {
 
   private saveTheme(theme: Theme): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(this.THEME_STORAGE_KEY, theme);
+      this.secureStorage.setItem(THEME_STORAGE_KEY, theme);
     }
   }
 }

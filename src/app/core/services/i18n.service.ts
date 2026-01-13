@@ -1,34 +1,49 @@
-import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { LoggerService } from './logger.service';
+import { SecureStorageService } from './secure-storage.service';
 
 export type Language = 'es' | 'en';
 
+/**
+ * Clave para almacenar el idioma de la aplicación
+ */
+const LANGUAGE_STORAGE_KEY = 'app-language';
+
+/**
+ * Servicio de internacionalización
+ * Maneja la carga de traducciones y el cambio de idioma
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class I18nService {
+  private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
-  private readonly LANGUAGE_STORAGE_KEY = 'app-language';
-  private readonly languageSignal = signal<Language>(this.getInitialLanguage());
+  private readonly logger = inject(LoggerService);
+  private readonly secureStorage = inject(SecureStorageService);
+
   private translations: Record<string, Record<string, string>> = {};
+  private currentLang: Language = 'es';
 
-  readonly language = this.languageSignal.asReadonly();
-
-  constructor() {
+  /**
+   * Cambia el idioma de la aplicación
+   */
+  async setLanguage(lang: Language): Promise<void> {
+    this.currentLang = lang;
     if (isPlatformBrowser(this.platformId)) {
-      void this.loadTranslations();
+      this.secureStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
     }
+    await this.loadTranslations(lang);
   }
 
-  setLanguage(lang: Language): void {
-    this.languageSignal.set(lang);
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(this.LANGUAGE_STORAGE_KEY, lang);
-    }
-  }
-
+  /**
+   * Traduce una clave
+   */
   translate(key: string, params?: Record<string, string>): string {
-    const lang = this.languageSignal();
+    const lang = this.currentLang;
     const translation = this.translations[lang]?.[key] || this.translations['es']?.[key] || key;
 
     if (params) {
@@ -41,32 +56,37 @@ export class I18nService {
     return translation;
   }
 
-  private getInitialLanguage(): Language {
-    if (!isPlatformBrowser(this.platformId)) {
-      return 'es'; // Por defecto español en SSR
-    }
-
-    const savedLang = localStorage.getItem(this.LANGUAGE_STORAGE_KEY) as Language | null;
-    if (savedLang === 'es' || savedLang === 'en') {
-      return savedLang;
-    }
-    return 'es'; // Por defecto español
+  /**
+   * Inicializa el servicio con el idioma guardado o por defecto
+   */
+  async initialize(): Promise<void> {
+    const savedLang = this.secureStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
+    const lang = savedLang ?? 'es';
+    await this.setLanguage(lang);
   }
 
-  private async loadTranslations(): Promise<void> {
-    try {
-      const [esTranslations, enTranslations] = await Promise.all([
-        fetch('/assets/i18n/es.json').then((res) => res.json()),
-        fetch('/assets/i18n/en.json').then((res) => res.json()),
-      ]);
+  /**
+   * Obtiene el idioma actual
+   */
+  getCurrentLanguage(): Language {
+    return this.currentLang;
+  }
 
-      this.translations = {
-        es: esTranslations,
-        en: enTranslations,
-      };
+  /**
+   * Carga las traducciones para un idioma
+   */
+  private async loadTranslations(lang: Language): Promise<void> {
+    if (this.translations[lang]) {
+      return;
+    }
+
+    try {
+      const translations = await firstValueFrom(
+        this.http.get<Record<string, string>>(`/assets/i18n/${lang}.json`),
+      );
+      this.translations[lang] = translations;
     } catch (error) {
-      console.error('Error loading translations:', error);
-      this.translations = { es: {}, en: {} };
+      this.logger.error('Error loading translations:', error);
     }
   }
 }

@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
+import { LoggerService } from '@core/services/logger.service';
 import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
@@ -25,6 +26,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 export class ProfileComponent implements OnInit {
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -237,7 +239,7 @@ export class ProfileComponent implements OnInit {
         this.copiedField.set(null);
       }, 2000);
     } catch (err) {
-      console.error('Error al copiar al portapapeles:', err);
+      this.logger.error('Error al copiar al portapapeles:', err);
     }
   }
 

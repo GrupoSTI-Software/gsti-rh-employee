@@ -3,7 +3,13 @@ import { RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
 import { BrandingService } from '@core/services/branding.service';
+import { SecureStorageService } from '@core/services/secure-storage.service';
 import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
+
+/**
+ * Clave para almacenar el idioma de la aplicación
+ */
+const LANGUAGE_STORAGE_KEY = 'app-language';
 
 @Component({
   selector: 'app-root',
@@ -17,6 +23,7 @@ export class App implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly theme = inject(ThemeService);
   private readonly branding = inject(BrandingService);
+  private readonly secureStorage = inject(SecureStorageService);
 
   constructor() {
     // Inicializar tema
@@ -34,7 +41,7 @@ export class App implements OnInit {
 
     // Obtener idioma guardado o usar el por defecto
     if (typeof window !== 'undefined') {
-      const savedLang = localStorage.getItem('app-language');
+      const savedLang = this.secureStorage.getItem(LANGUAGE_STORAGE_KEY);
       const langToUse = savedLang === 'en' || savedLang === 'es' ? savedLang : 'es';
       this.translate.use(langToUse);
     } else {

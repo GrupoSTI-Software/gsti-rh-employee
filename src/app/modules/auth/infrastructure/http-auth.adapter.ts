@@ -11,6 +11,19 @@ import {
   IDeviceInfo,
 } from '../domain/auth.port';
 import { environment } from '@env/environment';
+import { SecureStorageService } from '@core/services/secure-storage.service';
+import { JwtService } from '@core/services/jwt.service';
+import { LoggerService } from '@core/services/logger.service';
+
+/**
+ * Constante para el nombre de la cookie del token de autenticación
+ */
+const AUTH_TOKEN_COOKIE = 'auth_token';
+
+/**
+ * Constante para la clave de datos de usuario cifrados
+ */
+const USER_DATA_KEY = 'user_session';
 
 /**
  * Interfaces para las respuestas de la API (específicas de esta implementación)
@@ -84,6 +97,9 @@ interface ISessionResponse {
 export class HttpAuthAdapter implements IAuthPort {
   private readonly http = inject(HttpClient);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly secureStorage = inject(SecureStorageService);
+  private readonly jwtService = inject(JwtService);
+  private readonly logger = inject(LoggerService);
   private readonly apiUrl = environment.apiUrl;
   private currentUser: IUser | null = null;
   private userInitialized = false;
@@ -123,8 +139,33 @@ export class HttpAuthAdapter implements IAuthPort {
         loginResponse?.data?.user !== undefined
       ) {
         const token = loginResponse.data.token;
+
+        // Validar formato del token antes de guardarlo
+        if (!this.jwtService.isValidFormat(token)) {
+          this.logger.error('Token recibido con formato inválido');
+          return {
+            success: false,
+            error: 'Error de autenticación: token inválido',
+          };
+        }
+
+        // Verificar que el token no esté expirado
+        if (this.jwtService.isExpired(token)) {
+          this.logger.error('Token recibido ya expirado');
+          return {
+            success: false,
+            error: 'Error de autenticación: sesión expirada',
+          };
+        }
+
+        // Guardar token en cookie segura
         if (isPlatformBrowser(this.platformId)) {
-          localStorage.setItem('auth_token', token);
+          // Calcular días hasta expiración para la cookie
+          const daysUntilExpiry = Math.max(
+            1,
+            Math.floor(this.jwtService.getTimeUntilExpiry(token) / 86400),
+          );
+          this.secureStorage.setSecureCookie(AUTH_TOKEN_COOKIE, token, daysUntilExpiry);
         }
 
         // Obtener información completa del usuario desde /auth/session
@@ -133,13 +174,17 @@ export class HttpAuthAdapter implements IAuthPort {
           const user = this.mapSessionToUser(sessionResponse);
 
           this.currentUser = user;
+
+          // Guardar datos del usuario cifrados (sin datos ultra-sensibles)
+          this.storeUserDataSecurely(user);
+
           return {
             success: true,
             token: token,
             user: user,
           };
-        } catch (sessionError) {
-          console.warn('Error al obtener sesión completa, usando datos del login:', sessionError);
+        } catch (_sessionError) {
+          this.logger.warn('Error al obtener sesión completa, usando datos del login');
           // Si falla la sesión, usar solo los datos del login
           const userData = loginResponse.data.user;
           const user: IUser = {
@@ -148,6 +193,8 @@ export class HttpAuthAdapter implements IAuthPort {
             name: userData.userEmail ?? '',
           };
           this.currentUser = user;
+          this.storeUserDataSecurely(user);
+
           return {
             success: true,
             token: token,
@@ -162,7 +209,7 @@ export class HttpAuthAdapter implements IAuthPort {
         error: loginResponse?.message || 'Credenciales inválidas',
       };
     } catch (error: unknown) {
-      console.error('Error en login:', error);
+      this.logger.error('Error en login');
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
@@ -191,25 +238,79 @@ export class HttpAuthAdapter implements IAuthPort {
 
   async logout(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('auth_token');
+      // Limpiar todos los datos de forma segura
+      this.secureStorage.clearAllSecureData();
     }
     this.currentUser = null;
+    this.userInitialized = false;
   }
 
   isAuthenticated(): boolean {
     if (!isPlatformBrowser(this.platformId)) {
       return false;
     }
-    const token = localStorage.getItem('auth_token');
-    return token !== null && token.length > 0;
-  }
 
-  getCurrentUser(): IUser | null {
-    return this.currentUser;
+    // Intentar obtener token de cookie con prefijo
+    const token = this.secureStorage.getCookie(AUTH_TOKEN_COOKIE);
+
+    if (!token || token.length === 0) {
+      return false;
+    }
+
+    // Validar formato del token
+    if (!this.jwtService.isValidFormat(token)) {
+      this.logger.warn('Token con formato inválido encontrado, limpiando sesión');
+      this.secureStorage.deleteCookie(AUTH_TOKEN_COOKIE);
+      return false;
+    }
+
+    // Verificar que el token no esté expirado
+    if (this.jwtService.isExpired(token)) {
+      this.logger.info('Token expirado, limpiando sesión');
+      this.secureStorage.deleteCookie(AUTH_TOKEN_COOKIE);
+      return false;
+    }
+
+    return true;
   }
 
   /**
-   * Inicializa el usuario desde el token guardado en localStorage
+   * Obtiene el token actual si es válido
+   */
+  getToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    const token = this.secureStorage.getCookie(AUTH_TOKEN_COOKIE);
+
+    if (!token || !this.jwtService.isValidFormat(token) || this.jwtService.isExpired(token)) {
+      return null;
+    }
+
+    return token;
+  }
+
+  getCurrentUser(): IUser | null {
+    // Si ya tenemos el usuario en memoria, devolverlo
+    if (this.currentUser) {
+      return this.currentUser;
+    }
+
+    // Intentar recuperar de almacenamiento seguro
+    if (isPlatformBrowser(this.platformId)) {
+      const storedUser = this.retrieveUserDataSecurely();
+      if (storedUser) {
+        this.currentUser = storedUser;
+        return storedUser;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Inicializa el usuario desde el token guardado
    * Se llama automáticamente cuando se recarga la página y hay un token válido
    */
   async initializeUserFromToken(): Promise<void> {
@@ -222,46 +323,126 @@ export class HttpAuthAdapter implements IAuthPort {
       return;
     }
 
-    const token = localStorage.getItem('auth_token');
-    if (token === null || token.length === 0) {
+    // Verificar si hay token válido
+    if (!this.isAuthenticated()) {
       this.userInitialized = true;
       return;
     }
 
+    // Intentar recuperar usuario de almacenamiento seguro primero
+    const storedUser = this.retrieveUserDataSecurely();
+    if (storedUser) {
+      this.currentUser = storedUser;
+      this.userInitialized = true;
+
+      // Actualizar datos en segundo plano si el token no está próximo a expirar
+      const token = this.getToken();
+      if (token && !this.jwtService.isAboutToExpire(token, 600)) {
+        // 10 minutos
+        this.refreshUserDataInBackground();
+      }
+      return;
+    }
+
+    // Si no hay datos guardados, obtener del servidor
     try {
       const sessionResponse = await this.getSessionData();
       const user = this.mapSessionToUser(sessionResponse);
 
       this.currentUser = user;
+      this.storeUserDataSecurely(user);
       this.userInitialized = true;
     } catch (error: unknown) {
-      console.warn('No se pudo restaurar la sesión del usuario:', error);
+      this.logger.warn('No se pudo restaurar la sesión del usuario');
 
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      const errorInstance = error instanceof Error ? error : null;
-
-      console.warn('Detalles del error:', {
-        status: httpError?.status,
-        message: errorInstance?.message ?? httpError?.message,
-        error: httpError?.error,
-      });
 
       // Solo limpiar el token si el servidor específicamente dice que es inválido (401/403)
-      // O si la respuesta no tiene la estructura esperada (posible token corrupto)
       const isUnauthorized = httpError?.status === 401 || httpError?.status === 403;
-      const isInvalidResponse = errorInstance?.message?.includes('Respuesta del servidor inválida');
 
-      if (isUnauthorized || isInvalidResponse === true) {
-        console.warn('Token inválido o respuesta inválida, limpiando sesión');
-        if (isPlatformBrowser(this.platformId)) {
-          localStorage.removeItem('auth_token');
-        }
+      if (isUnauthorized) {
+        this.logger.info('Token inválido, limpiando sesión');
+        this.secureStorage.clearAllSecureData();
         this.currentUser = null;
       }
-      // Si es otro tipo de error (red, timeout, etc.), mantener el token
-      // El usuario podrá seguir usando la app si el token es válido
 
       this.userInitialized = true;
+    }
+  }
+
+  /**
+   * Actualiza los datos del usuario en segundo plano
+   */
+  private refreshUserDataInBackground(): void {
+    this.getSessionData()
+      .then((sessionResponse) => {
+        const user = this.mapSessionToUser(sessionResponse);
+        this.currentUser = user;
+        this.storeUserDataSecurely(user);
+      })
+      .catch(() => {
+        // Ignorar errores en actualización de fondo
+      });
+  }
+
+  /**
+   * Almacena datos del usuario de forma segura
+   * Excluye datos ultra-sensibles como CURP, RFC, NSS
+   */
+  private storeUserDataSecurely(user: IUser): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    // Crear una versión sin datos ultra-sensibles para almacenar
+    const safeUser: IUser = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      employeeId: user.employeeId,
+    };
+
+    // Incluir datos de persona sin campos sensibles
+    if (user.person) {
+      safeUser.person = {
+        personId: user.person.personId,
+        personFirstname: user.person.personFirstname,
+        personLastname: user.person.personLastname,
+        personSecondLastname: user.person.personSecondLastname,
+        personPhone: user.person.personPhone,
+        personEmail: user.person.personEmail,
+        personGender: user.person.personGender,
+        personBirthday: user.person.personBirthday,
+        personMaritalStatus: user.person.personMaritalStatus,
+        personPlaceOfBirthCountry: user.person.personPlaceOfBirthCountry,
+        personPlaceOfBirthState: user.person.personPlaceOfBirthState,
+        personPlaceOfBirthCity: user.person.personPlaceOfBirthCity,
+        // Excluir: personCurp, personRfc, personImssNss
+        employee: user.person.employee,
+      };
+    }
+
+    const userData = JSON.stringify(safeUser);
+    this.secureStorage.setEncryptedItem(USER_DATA_KEY, userData);
+  }
+
+  /**
+   * Recupera datos del usuario de forma segura
+   */
+  private retrieveUserDataSecurely(): IUser | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    const userData = this.secureStorage.getEncryptedItem(USER_DATA_KEY);
+    if (!userData) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(userData) as IUser;
+    } catch {
+      return null;
     }
   }
 
@@ -278,7 +459,7 @@ export class HttpAuthAdapter implements IAuthPort {
   private mapSessionToUser(sessionResponse: ISessionResponse): IUser {
     // Validar que la respuesta tenga la estructura esperada
     if (sessionResponse.userId === undefined || sessionResponse.userEmail === undefined) {
-      console.error('Estructura de respuesta inesperada:', sessionResponse);
+      this.logger.error('Estructura de respuesta inesperada');
       throw new Error('Respuesta del servidor inválida: falta userId o userEmail');
     }
 
@@ -305,7 +486,7 @@ export class HttpAuthAdapter implements IAuthPort {
     }
 
     // Mapear Employee si existe
-    let employee: IEmployee | undefined;
+    let employee: IEmployee | undefined = undefined;
     if (sessionResponse.person?.employee !== undefined) {
       const emp = sessionResponse.person.employee;
       employee = {

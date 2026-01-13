@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { ATTENDANCE_PORT } from '../domain/attendance.token';
 import { IAttendance, IAttendancePort } from '../domain/attendance.port';
+import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Caso de uso para obtener las asistencias del empleado
@@ -10,6 +11,7 @@ import { IAttendance, IAttendancePort } from '../domain/attendance.port';
 })
 export class GetAttendanceUseCase {
   private readonly attendancePort = inject<IAttendancePort>(ATTENDANCE_PORT);
+  private readonly logger = inject(LoggerService);
 
   /**
    * Ejecuta el caso de uso para obtener asistencias
@@ -22,7 +24,7 @@ export class GetAttendanceUseCase {
     try {
       return await this.attendancePort.getAttendance(dateStart, dateEnd, employeeId);
     } catch (error) {
-      console.error('Error al obtener asistencia:', error);
+      this.logger.error('Error al obtener asistencia:', error);
       return null;
     }
   }

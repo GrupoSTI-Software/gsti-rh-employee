@@ -15,6 +15,7 @@ import { CheckInIconComponent } from '@shared/components/icons/check-in-icon/che
 import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/check-out-icon.component';
 import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
+import { LoggerService } from '@core/services/logger.service';
 
 @Component({
   selector: 'app-checkin',
@@ -53,6 +54,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translateService = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
   private timeInterval?: ReturnType<typeof setInterval>;
 
   readonly attendance = signal<IAttendance | null>(null);
@@ -159,11 +161,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
                   },
                   (error) => {
                     if (error.code === error.PERMISSION_DENIED) {
-                      console.warn(
+                      this.logger.warn(
                         'Permiso de ubicación denegado. Se solicitará cuando hagas clic.',
                       );
                     } else {
-                      console.warn('Error al obtener ubicación:', error);
+                      this.logger.warn('Error al obtener ubicación:', error);
                     }
                     // No rechazamos aquí, solo registramos el error
                     resolve();
@@ -172,7 +174,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
                 );
               });
             } else if (geoPermission.state === 'denied') {
-              console.warn(
+              this.logger.warn(
                 'Permiso de ubicación previamente denegado. Ve a la configuración del navegador para permitirlo.',
               );
             }
@@ -190,7 +192,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         }
       }
     } catch (error) {
-      console.warn('Error al solicitar permiso de ubicación:', error);
+      this.logger.warn('Error al solicitar permiso de ubicación:', error);
     }
 
     // Solicitar permiso de cámara (solo en HTTPS o producción)
@@ -207,13 +209,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
     } catch (error: unknown) {
       const err = error as { name?: string };
       if (err.name === 'NotAllowedError') {
-        console.warn(
+        this.logger.warn(
           'Permiso de cámara denegado o requiere interacción del usuario. Se solicitará cuando hagas clic.',
         );
       } else if (err.name === 'NotFoundError') {
-        console.warn('Cámara no encontrada');
+        this.logger.warn('Cámara no encontrada');
       } else {
-        console.warn('Error al solicitar permiso de cámara:', error);
+        this.logger.warn('Error al solicitar permiso de cámara:', error);
       }
       // En localhost HTTP, esto es normal, los permisos se solicitarán al hacer clic
     }
@@ -230,10 +232,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
         },
         (error) => {
           if (error.code === error.PERMISSION_DENIED) {
-            console.warn('Permiso de ubicación denegado');
+            this.logger.warn('Permiso de ubicación denegado');
             reject(new Error('Permiso de ubicación denegado'));
           } else {
-            console.warn('Error al obtener ubicación:', error);
+            this.logger.warn('Error al obtener ubicación:', error);
             reject(error);
           }
         },
@@ -273,7 +275,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       this.attendance.set(attendance);
     } catch (err) {
       this.error.set('Error al cargar la asistencia');
-      console.error(err);
+      this.logger.error('Error al cargar la asistencia:', err);
     } finally {
       this.loading.set(false);
     }
@@ -332,7 +334,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       } else {
         this.error.set('Error al obtener la ubicación o registrar check-in');
       }
-      console.error(err);
+      this.logger.error('Error en handleRegisterCheckIn:', err);
     } finally {
       this.loading.set(false);
     }
@@ -362,7 +364,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         });
         if (geoPermission.state === 'denied') {
           geoPermissionDenied = true;
-          console.warn(
+          this.logger.warn(
             'Permiso de ubicación está denegado. El usuario debe habilitarlo en la configuración del navegador.',
           );
         }
@@ -474,7 +476,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       }
     } catch (err) {
       this.error.set('Error al obtener la ubicación o registrar check-in');
-      console.error(err);
+      this.logger.error('Error en handleCheckIn:', err);
     } finally {
       this.loading.set(false);
     }
@@ -490,7 +492,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     try {
       if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
-        console.warn('La cámara no está disponible');
+        this.logger.warn('La cámara no está disponible');
         return;
       }
 
@@ -589,13 +591,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
     } catch (error: unknown) {
       const err = error as { name?: string };
       if (err.name === 'NotAllowedError') {
-        console.warn('Permiso de cámara denegado');
+        this.logger.warn('Permiso de cámara denegado');
         throw new Error('Se necesita permiso de cámara para registrar asistencia');
       } else if (err.name === 'NotFoundError') {
-        console.warn('Cámara no encontrada');
+        this.logger.warn('Cámara no encontrada');
         throw new Error('No se encontró ninguna cámara');
       } else {
-        console.error('Error al acceder a la cámara:', error);
+        this.logger.error('Error al acceder a la cámara:', error);
         throw error;
       }
     }
@@ -632,7 +634,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       }
     } catch (err) {
       this.error.set('Error al obtener la ubicación o registrar check-out');
-      console.error(err);
+      this.logger.error('Error en handleCheckOut:', err);
     } finally {
       this.loading.set(false);
     }
