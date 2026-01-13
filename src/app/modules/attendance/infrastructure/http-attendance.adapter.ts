@@ -16,7 +16,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpAttendanceAdapter implements IAttendancePort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
-  private readonly apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.API_URL;
 
   /**
    * Obtiene las asistencias del empleado

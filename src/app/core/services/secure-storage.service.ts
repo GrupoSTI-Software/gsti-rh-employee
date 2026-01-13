@@ -123,7 +123,7 @@ export class SecureStorageService {
     ];
 
     // En producción (HTTPS), agregar Secure
-    if (environment.production || window.location.protocol === 'https:') {
+    if (environment.PRODUCTION || window.location.protocol === 'https:') {
       cookieAttributes.push('Secure');
     }
 

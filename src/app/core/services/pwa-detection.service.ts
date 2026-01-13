@@ -9,32 +9,29 @@ export class PwaDetectionService {
 
   /**
    * Verifica si la aplicación está corriendo en modo PWA (standalone)
-   * @returns true si está en modo PWA, false en caso contrario
+   * Solo retorna true si la app fue instalada y está corriendo en modo standalone
+   * @returns true si está en modo PWA instalada, false en caso contrario
    */
   isRunningAsPwa(): boolean {
     if (!isPlatformBrowser(this.platformId)) {
-      // En SSR, siempre permitir (el guard verificará en el cliente)
-      return true;
+      // En SSR, retornar false para que el cliente verifique correctamente
+      // después de la hidratación
+      return false;
     }
 
-    // Método 1: Verificar display-mode standalone (estándar)
+    // Método 1: Verificar display-mode standalone (estándar para Chrome, Edge, etc.)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
 
     // Método 2: Verificar navigator.standalone (iOS Safari)
     const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
 
-    // Método 3: Verificar si está instalada mediante referrer
-    const isInstalled =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      document.referrer.includes('android-app://') ||
-      document.referrer.includes('ios-app://');
+    // Método 3: Verificar si fue abierta desde una app nativa (TWA)
+    const isFromNativeApp =
+      document.referrer.includes('android-app://') || document.referrer.includes('ios-app://');
 
-    // Método 4: Verificar si hay service worker activo
-    const hasServiceWorker =
-      'serviceWorker' in navigator && navigator.serviceWorker.controller !== null;
-
-    // Retornar true si cumple al menos uno de los criterios
-    return isStandalone || isIOSStandalone || isInstalled || hasServiceWorker;
+    // Solo retornar true si está en modo standalone real (instalada como PWA)
+    // NO incluir hasServiceWorker porque el SW puede estar activo en el navegador normal
+    return isStandalone || isIOSStandalone || isFromNativeApp;
   }
 
   /**

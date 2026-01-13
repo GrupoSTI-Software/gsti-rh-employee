@@ -14,7 +14,7 @@ type LogLevel = 'debug' | 'info' | 'warn' | 'error';
   providedIn: 'root',
 })
 export class LoggerService {
-  private readonly isProduction = environment.production;
+  private readonly isProduction = environment.PRODUCTION;
 
   /**
    * Log de debug (solo desarrollo)

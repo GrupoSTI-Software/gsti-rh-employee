@@ -41,7 +41,7 @@ export class AvatarComponent {
     }
 
     // Construir la URL del proxy
-    const apiUrl = environment.apiUrl;
+    const apiUrl = environment.API_URL;
     const encodedUrl = encodeURIComponent(photoUrl);
     return `${apiUrl}/proxy-image?url=${encodedUrl}`;
   });

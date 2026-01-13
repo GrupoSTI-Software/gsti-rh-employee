@@ -100,7 +100,7 @@ export class HttpAuthAdapter implements IAuthPort {
   private readonly secureStorage = inject(SecureStorageService);
   private readonly jwtService = inject(JwtService);
   private readonly logger = inject(LoggerService);
-  private readonly apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.API_URL;
   private currentUser: IUser | null = null;
   private userInitialized = false;
 
