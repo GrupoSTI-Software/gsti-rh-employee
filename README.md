@@ -1,183 +1,150 @@
-# GstiPwaEmpleado
+# GSTI PWA Empleado
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
+Aplicación web progresiva (PWA) para empleados de GSTI RH. Permite gestionar asistencia, perfil de usuario y configuraciones personales desde cualquier dispositivo.
 
-## Development server
+## Tecnologías
 
-To start a local development server, run:
+| Tecnología | Versión | Descripción |
+|------------|---------|-------------|
+| Angular | 21.x | Framework principal |
+| TypeScript | 5.9.x | Lenguaje de programación |
+| PrimeNG | 21.x | Biblioteca de componentes UI |
+| RxJS | 7.8.x | Programación reactiva |
+| SCSS | - | Preprocesador CSS |
+| Husky | 9.x | Git hooks |
+| ESLint | 9.x | Linter de código |
+| Vitest | 4.x | Framework de testing |
+| ngx-translate | 17.x | Internacionalización |
 
-```bash
-ng serve
-```
+## Requisitos Previos
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+- **Node.js**: 20.x o superior
+- **npm**: 11.x o superior
+- **Angular CLI**: 21.x
 
 ```bash
-ng build
+# Verificar versiones instaladas
+node -v
+npm -v
+ng version
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Instalación
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+### 1. Clonar el repositorio
 
 ```bash
-ng test
+git clone <url-del-repositorio>
+cd gsti-rh-employee
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+### 2. Instalar dependencias
 
 ```bash
-ng e2e
+npm install
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+> **Nota:** Este comando también configura automáticamente los Git Hooks de Husky.
 
-## Git Hooks y Validaciones (Husky)
+### 3. Configurar variables de entorno
 
-Este proyecto utiliza **Husky** para ejecutar validaciones automáticas antes de hacer commits y push, garantizando la calidad del código.
+Copia el archivo de ejemplo y configura las variables:
 
-### Validaciones Automáticas
-
-#### 1. Commit Message (commit-msg hook)
-Los mensajes de commit deben seguir el estándar **Conventional Commits**:
-
-**Formato:**
-```
-<tipo>: <Descripción en español>
-```
-
-**Reglas:**
-- ✅ El **tipo** debe estar siempre en **minúsculas** y en **inglés**
-- ✅ La **descripción** puede iniciar con mayúscula
-- ✅ El **cuerpo** y **footer** sin límite de longitud
-- ✅ Todo (excepto el tipo) debe estar en **español**
-
-**Tipos permitidos (en inglés y minúsculas):**
-- `feat`: Nueva funcionalidad
-- `fix`: Corrección de errores
-- `docs`: Cambios en documentación
-- `style`: Cambios de formato (espacios, comas, etc.)
-- `refactor`: Refactorización de código
-- `perf`: Mejoras de rendimiento
-- `test`: Añadir o modificar tests
-- `build`: Cambios en el sistema de build o dependencias
-- `ci`: Cambios en CI/CD
-- `chore`: Tareas de mantenimiento
-- `revert`: Revertir un commit anterior
-
-**Ejemplos válidos:**
 ```bash
-git commit -m "feat: Agregar componente de login"
-git commit -m "fix: Corregir validación de formulario"
-git commit -m "docs: Actualizar README con instrucciones"
+cp src/environments/environment.example.ts src/environments/environment.ts
 ```
 
-**Ejemplos inválidos:**
+Edita `src/environments/environment.ts`:
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'https://tu-api-url/api',
+};
+```
+
+## Scripts Disponibles
+
+| Script | Descripción |
+|--------|-------------|
+| `npm start` | Inicia servidor de desarrollo con lint en tiempo real |
+| `npm run start:dev-only` | Inicia solo el servidor de desarrollo |
+| `npm run build` | Compila el proyecto para producción |
+| `npm run lint` | Ejecuta ESLint en todo el proyecto |
+| `npm run lint:fix` | Corrige automáticamente errores de lint |
+| `npm run lint:watch` | Ejecuta lint en modo watch |
+| `npm test` | Ejecuta pruebas con Vitest |
+| `npm run ssl` | Inicia servidor con SSL habilitado |
+
+### Servidor de Desarrollo
+
 ```bash
-git commit -m "agregando feature"  # ❌ No sigue el formato
-git commit -m "FEAT: Algo"         # ❌ Tipo en mayúsculas
-git commit -m "Feat: Algo"         # ❌ Tipo debe ser todo minúsculas
+# Opción recomendada: desarrollo con lint en tiempo real
+npm start
+
+# Solo servidor de desarrollo
+npm run start:dev-only
 ```
 
-#### 2. Pre-Push Validation (pre-push hook)
-Antes de permitir un `git push`, se ejecutan automáticamente:
+Navega a `http://localhost:4200/`. La aplicación se recarga automáticamente cuando modificas archivos.
 
-1. **ESLint**: Valida que el código cumpla con las reglas de calidad
-2. **Build**: Compila el proyecto para asegurar que no hay errores
+### Compilación para Producción
 
-Si alguna validación falla, el push será rechazado.
+```bash
+npm run build
+```
 
-### Instalación Inicial
-
-Al clonar el repositorio y ejecutar `npm install`, los hooks se configuran automáticamente.
-
-### Más Información
-
-Para más detalles sobre los hooks configurados, consulta [.husky/README.md](.husky/README.md).
+Los artefactos se generan en el directorio `dist/gsti-pwa-empleado/`.
 
 ## Arquitectura del Proyecto
 
-Este proyecto utiliza **Arquitectura Hexagonal (Ports and Adapters)** combinada con **Vertical Slicing** por módulos. Esta arquitectura proporciona una separación clara de responsabilidades y facilita el mantenimiento y escalabilidad del código.
+Este proyecto implementa **Arquitectura Hexagonal (Ports and Adapters)** combinada con **Vertical Slicing** por módulos.
 
-### Estructura de Módulos
-
-Cada módulo de negocio (como `auth`, `attendance`, `system-settings`) sigue la misma estructura interna:
+### Estructura de Capas
 
 ```
 modules/
-  └── nombre-modulo/
-      ├── domain/          # Capa de dominio (interfaces, contratos)
-      │   ├── *.port.ts    # Puerto (interfaz) que define el contrato
-      │   └── *.token.ts   # InjectionToken para Angular DI
-      ├── application/     # Casos de uso (lógica de negocio)
+  └── [feature]/
+      ├── domain/           # Entidades, interfaces de puertos, tokens
+      │   ├── entities/     # Interfaces de entidades del dominio
+      │   ├── *.port.ts     # Puerto (interfaz) que define el contrato
+      │   └── *.token.ts    # InjectionToken para Angular DI
+      ├── application/      # Casos de uso (lógica de negocio)
       │   └── *.use-case.ts
-      ├── infrastructure/  # Adaptadores (implementaciones concretas)
+      ├── infrastructure/   # Adaptadores (implementaciones concretas)
       │   └── http-*.adapter.ts
-      └── presentation/    # Componentes UI (vistas)
-          └── *.component.ts
+      └── presentation/     # Componentes UI (vistas)
+          ├── *.component.ts
+          ├── *.component.html
+          └── *.component.scss
 ```
 
-### ¿Por qué Arquitectura Hexagonal por Módulo?
-
-En lugar de tener una estructura plana como:
+### Reglas de Dependencia
 
 ```
-❌ Estructura plana (NO recomendada)
-app/
-  ├── domain/
-  │   ├── auth.port.ts
-  │   ├── attendance.port.ts
-  │   └── system-settings.port.ts
-  ├── application/
-  │   ├── login.use-case.ts
-  │   └── get-attendance.use-case.ts
-  ├── infrastructure/
-  │   ├── http-auth.adapter.ts
-  │   └── http-attendance.adapter.ts
-  └── presentation/
-      ├── login.component.ts
-      └── checkin.component.ts
+┌─────────────────────────────────────────────────────────────┐
+│                      PRESENTATION                            │
+│         (Componentes, páginas, UI)                          │
+│         ↓ puede importar application y domain               │
+├─────────────────────────────────────────────────────────────┤
+│                      APPLICATION                             │
+│         (Casos de uso, servicios de aplicación)             │
+│         ↓ solo puede importar domain                        │
+├─────────────────────────────────────────────────────────────┤
+│                        DOMAIN                                │
+│         (Entidades, puertos, tokens)                        │
+│         ✗ NO depende de ninguna capa                        │
+├─────────────────────────────────────────────────────────────┤
+│                     INFRASTRUCTURE                           │
+│         (Adaptadores HTTP, storage, etc.)                   │
+│         ↑ implementa los puertos del domain                 │
+│         ✗ NUNCA importar directamente en presentation       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Optamos por una **estructura modular vertical** porque:
+### Inyección de Dependencias
 
-1. **Encapsulación**: Cada módulo contiene todo lo relacionado con su dominio (domain, application, infrastructure, presentation) en un solo lugar, facilitando la comprensión y mantenimiento.
-
-2. **Escalabilidad**: Cuando el proyecto crece, es más fácil encontrar y modificar código relacionado. No necesitas buscar en múltiples carpetas generales.
-
-3. **Independencia**: Los módulos pueden evolucionar independientemente. Puedes cambiar la implementación de un módulo sin afectar otros.
-
-4. **Claridad**: Un desarrollador nuevo puede entender rápidamente qué hace un módulo viendo su estructura completa.
-
-5. **Reutilización**: Si necesitas extraer un módulo completo a otra aplicación, solo copias la carpeta del módulo.
-
-### Inyección de Dependencias y Arquitectura Hexagonal
-
-#### Flujo de Inyección de Dependencias
-
-La arquitectura hexagonal utiliza **InjectionTokens** de Angular para desacoplar las interfaces (puertos) de sus implementaciones (adaptadores). Aquí te explicamos cómo funciona:
+La arquitectura hexagonal usa **InjectionTokens** para desacoplar interfaces de implementaciones:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -190,247 +157,444 @@ La arquitectura hexagonal utiliza **InjectionTokens** de Angular para desacoplar
 │ 2. Caso de Uso (Application Layer)                          │
 │    private readonly authPort = inject(AUTH_PORT)            │
 │    ↓                                                         │
-│    "Necesito algo que cumpla con AuthPort (interfaz)"      │
+│    "Necesito algo que cumpla con IAuthPort (interfaz)"      │
 └──────────────────┬──────────────────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ 3. Angular Dependency Injection                             │
-│    "Alguien pidió AUTH_PORT..."                            │
-│    ↓                                                         │
-│    "Busco en app.config.ts..."                             │
+│    "Busco en app.config.ts..."                              │
 │    ↓                                                         │
 │    "Encontré: provide: AUTH_PORT, useClass: HttpAuthAdapter"│
-│    ↓                                                         │
-│    "Creo una instancia de HttpAuthAdapter"                 │
 └──────────────────┬──────────────────────────────────────────┘
                    │
                    ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 4. Adaptador (Infrastructure Layer)                        │
-│    export class HttpAuthAdapter implements AuthPort ✅      │
-│    ↓                                                         │
-│    "Soy la implementación concreta"                        │
-│    "Tengo el método login() que hace HTTP real"            │
+│ 4. Adaptador (Infrastructure Layer)                         │
+│    export class HttpAuthAdapter implements IAuthPort ✅     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Ejemplo Práctico
+#### Ejemplo de Implementación
 
-**1. Definición del Puerto (Interfaz) - `domain/auth.port.ts`**
+**1. Puerto (Interfaz) - `domain/auth.port.ts`**
 ```typescript
-export interface AuthPort {
-  login(email: string, password: string, deviceInfo?: DeviceInfo): Promise<AuthResult>;
+export interface IAuthPort {
+  login(email: string, password: string, deviceInfo?: IDeviceInfo): Promise<IAuthResult>;
   logout(): Promise<void>;
   isAuthenticated(): boolean;
-  getCurrentUser(): User | null;
 }
 ```
 
-**2. Token de Inyección - `domain/auth.token.ts`**
+**2. Token - `domain/auth.token.ts`**
 ```typescript
-export const AUTH_PORT = new InjectionToken<AuthPort>('AuthPort');
+export const AUTH_PORT = new InjectionToken<IAuthPort>('AuthPort');
 ```
 
 **3. Caso de Uso - `application/login.use-case.ts`**
 ```typescript
 export class LoginUseCase {
-  private readonly authPort = inject(AUTH_PORT); // ← Pide la interfaz, no la clase
+  private readonly authPort = inject(AUTH_PORT);
   
-  async execute(email: string, password: string): Promise<AuthResult> {
+  async execute(email: string, password: string): Promise<IAuthResult> {
     return this.authPort.login(email, password, deviceInfo);
   }
 }
 ```
 
-**4. Configuración del Provider - `app.config.ts`**
+**4. Provider - `app.config.ts`**
 ```typescript
 export const appConfig: ApplicationConfig = {
   providers: [
-    {
-      provide: AUTH_PORT,        // ← Token/Interfaz que se pide
-      useClass: HttpAuthAdapter   // ← Clase concreta que se inyecta
-    }
+    { provide: AUTH_PORT, useClass: HttpAuthAdapter }
   ]
 };
 ```
 
-**5. Implementación del Adaptador - `infrastructure/http-auth.adapter.ts`**
+### Módulos del Proyecto
+
+| Módulo | Descripción |
+|--------|-------------|
+| `auth` | Autenticación y gestión de sesión |
+| `attendance` | Registro de asistencia (check-in/check-out) |
+| `system-settings` | Configuración del sistema y branding |
+| `dashboard` | Layout principal de la aplicación |
+| `profile` | Perfil del usuario |
+| `settings` | Configuración de la aplicación |
+
+## Convenciones de Código
+
+### Principios SOLID
+
+El código debe seguir los principios **SOLID**:
+
+- **S**ingle Responsibility: Una clase/componente = una responsabilidad
+- **O**pen/Closed: Abierto para extensión, cerrado para modificación
+- **L**iskov Substitution: Las clases derivadas son sustituibles por sus bases
+- **I**nterface Segregation: Interfaces pequeñas y específicas
+- **D**ependency Inversion: Depender de abstracciones, no implementaciones
+
+### Angular 21 - Buenas Prácticas
+
 ```typescript
-export class HttpAuthAdapter implements AuthPort {
-  async login(...): Promise<AuthResult> {
-    // Implementación concreta usando HttpClient
+// ✅ Usar inject() en lugar de inyección por constructor
+private readonly authPort = inject(AUTH_PORT);
+
+// ✅ Usar Signals para estado reactivo
+readonly isLoading = signal(false);
+readonly userData = computed(() => this.userSignal()?.name);
+
+// ✅ Control flow moderno en templates
+@if (isLoading()) {
+  <spinner />
+} @else {
+  <content />
+}
+
+// ✅ ChangeDetectionStrategy.OnPush en todos los componentes
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+
+// ✅ trackBy en iteraciones
+@for (item of items; track item.id) {
+  <item-component [data]="item" />
+}
+
+// ✅ Componentes standalone
+@Component({
+  standalone: true,
+  imports: [CommonModule, RouterModule]
+})
+```
+
+### Convenciones de Nombrado
+
+| Tipo | Convención | Ejemplo |
+|------|------------|---------|
+| **Constantes globales** | UPPER_SNAKE_CASE | `API_BASE_URL`, `MAX_RETRY_ATTEMPTS` |
+| **Variables locales** | camelCase | `userData`, `isLoading` |
+| **Interfaces** | Prefijo `I` + PascalCase | `IEmployee`, `IAuthResponse` |
+| **Enums** | Prefijo `E` + PascalCase | `EPersonType`, `EStatus` |
+| **Tipos** | PascalCase | `AuthResponse`, `UserPreferences` |
+| **Archivos** | kebab-case | `employee-data.model.ts`, `auth-response.interface.ts` |
+
+#### Archivos de Interfaces y Enums
+
+```bash
+# Interfaces: una por archivo con extensión .interface.ts
+employee.interface.ts        # export interface IEmployee { ... }
+auth-response.interface.ts   # export interface IAuthResponse { ... }
+
+# Enums: uno por archivo con extensión .enum.ts
+person-type.enum.ts          # export enum EPersonType { ... }
+status.enum.ts               # export enum EStatus { ... }
+```
+
+### Estilos SCSS
+
+Los componentes deben usar variables y mixins existentes:
+
+```scss
+@use 'src/styles/variables' as *;
+@use 'src/styles/mixins' as *;
+
+.my-component {
+  @include card;
+  padding: $spacing-lg;
+  border-radius: $radius-md;
+  
+  .title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+  }
+  
+  .button {
+    @include button-primary;
   }
 }
 ```
 
-#### Ventajas de esta Arquitectura
+#### Variables Disponibles
 
-1. **Desacoplamiento**: `LoginUseCase` no conoce `HttpAuthAdapter`, solo conoce la interfaz `AuthPort`.
+- **Espaciados**: `$spacing-xs` hasta `$spacing-4xl`
+- **Border Radius**: `$radius-sm`, `$radius-md`, `$radius-lg`
+- **Tamaños de fuente**: `$font-size-xs` hasta `$font-size-3xl`
+- **Pesos de fuente**: `$font-weight-normal`, `$font-weight-medium`, `$font-weight-semibold`, `$font-weight-bold`
+- **Transiciones**: `$transition-fast`, `$transition-base`, `$transition-slow`
+- **Variables CSS**: `var(--primary)`, `var(--text-primary)`, `var(--bg-primary)`, etc.
 
-2. **Testeable**: Puedes crear un mock de `AuthPort` para pruebas sin necesidad de hacer llamadas HTTP reales:
-   ```typescript
-   {
-     provide: AUTH_PORT,
-     useClass: MockAuthAdapter // ← En tests
-   }
-   ```
-
-3. **Intercambiable**: Puedes cambiar la implementación sin modificar el caso de uso:
-   ```typescript
-   // Cambiar de HTTP a GraphQL solo modificando app.config.ts
-   {
-     provide: AUTH_PORT,
-     useClass: GraphQLAuthAdapter // ← Nueva implementación
-   }
-   ```
-
-4. **Mantenible**: Cada capa tiene responsabilidades claras:
-   - **Domain**: Define qué se necesita (contratos)
-   - **Application**: Orquesta la lógica de negocio
-   - **Infrastructure**: Implementa cómo se hace (HTTP, WebSocket, etc.)
-   - **Presentation**: Muestra la información al usuario
-
-### ¿Cuándo Necesitas InjectionTokens?
-
-Los **InjectionTokens** son necesarios cuando trabajas con **interfaces** en Angular. Aquí te explicamos cuándo usarlos y cuándo no:
-
-#### ❌ NO Necesitas InjectionToken (Inyectar Clases Directamente)
-
-Cuando inyectas una **clase directamente**, Angular puede resolverla automáticamente:
+### Documentación JSDoc
 
 ```typescript
-// ✅ SIN InjectionToken - Inyectando una CLASE directamente
-@Injectable({
-  providedIn: 'root'
-})
-export class ThemeService {
+/**
+ * Obtiene la información del empleado por su identificador.
+ *
+ * @param employeeId - Identificador único del empleado
+ * @returns Promesa con los datos del empleado o null si no existe
+ * @throws {HttpErrorResponse} Si hay un error en la comunicación con el servidor
+ */
+async getEmployeeById(employeeId: string): Promise<IEmployee | null> {
   // ...
 }
-
-// En otro componente:
-export class LoginComponent {
-  private readonly theme = inject(ThemeService); // ← Clase directamente
-}
 ```
 
-**¿Por qué funciona?** Angular puede identificar la clase `ThemeService` en tiempo de ejecución porque es una clase real de JavaScript.
-
-#### ✅ SÍ Necesitas InjectionToken (Inyectar Interfaces)
-
-Cuando quieres inyectar una **interfaz**, necesitas un InjectionToken porque las interfaces no existen en JavaScript:
+### Logging
 
 ```typescript
-// ❌ ESTO NO FUNCIONA - Las interfaces no existen en JavaScript
-export interface AuthPort {
-  login(...): Promise<AuthResult>;
-}
+// ❌ PROHIBIDO: console.log()
+console.log('Usuario logueado');
 
-export class LoginUseCase {
-  private authPort = inject(AuthPort); // ❌ ERROR: AuthPort no existe en runtime
-}
-```
-
-**¿Por qué no funciona?** TypeScript elimina las interfaces al compilar a JavaScript. En tiempo de ejecución, `AuthPort` no existe.
-
-**Solución con InjectionToken:**
-
-```typescript
-// ✅ CON InjectionToken - Inyectando una INTERFAZ
-export interface AuthPort {
-  login(...): Promise<AuthResult>;
-}
-
-// Crear el token que "representa" la interfaz
-export const AUTH_PORT = new InjectionToken<AuthPort>('AuthPort');
-
-// En el caso de uso:
-export class LoginUseCase {
-  private readonly authPort = inject(AUTH_PORT); // ✅ Funciona!
+// ✅ PERMITIDO: Solo dentro de bloques catch
+try {
+  await this.authService.login(credentials);
+} catch (error) {
+  console.error('Error al iniciar sesión:', error);
 }
 ```
 
-#### Comparación Visual
+## ESLint y Prettier
 
-```
-┌─────────────────────────────────────────────────────────┐
-│ INYECTAR CLASE (NO necesita Token)                       │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  ThemeService (clase)                                   │
-│    ↓                                                     │
-│  inject(ThemeService) ✅                                │
-│                                                          │
-│  Angular puede encontrar ThemeService porque es una     │
-│  clase real de JavaScript                               │
-└─────────────────────────────────────────────────────────┘
+### Configuración de ESLint
 
-┌─────────────────────────────────────────────────────────┐
-│ INYECTAR INTERFAZ (SÍ necesita Token)                   │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  AuthPort (interfaz) → NO EXISTE en JavaScript         │
-│    ↓                                                     │
-│  AUTH_PORT (InjectionToken) → SÍ EXISTE en JavaScript   │
-│    ↓                                                     │
-│  inject(AUTH_PORT) ✅                                   │
-│                                                          │
-│  El Token es la "llave" que Angular usa para encontrar │
-│  la implementación (HttpAuthAdapter)                   │
-└─────────────────────────────────────────────────────────┘
+El proyecto usa ESLint 9 con reglas estrictas de TypeScript y Angular:
+
+```javascript
+// Reglas principales
+'@typescript-eslint/no-explicit-any': 'error',
+'@typescript-eslint/no-unused-vars': 'error',
+'@typescript-eslint/no-floating-promises': 'error',
+'@typescript-eslint/explicit-function-return-type': 'warn',
+'no-console': ['warn', { allow: ['error', 'warn'] }],
+
+// Arquitectura hexagonal
+'no-restricted-imports': ['error', {
+  patterns: [{
+    group: ['**/infrastructure/**'],
+    message: 'No se puede importar desde infrastructure. Usa puertos/interfaces del dominio.'
+  }]
+}],
 ```
 
-#### Tabla de Referencia Rápida
+### Configuración de Prettier
 
-| Escenario | ¿Necesitas Token? | Ejemplo |
-|-----------|-------------------|---------|
-| Inyectar una clase directamente | ❌ NO | `inject(ThemeService)` |
-| Inyectar una interfaz | ✅ SÍ | `inject(AUTH_PORT)` |
-| Arquitectura hexagonal (puertos) | ✅ SÍ | Siempre, porque usas interfaces |
-| Servicios simples sin abstracción | ❌ NO | `inject(DeviceService)` |
-
-#### En Arquitectura Hexagonal: Siempre Necesitas InjectionToken
-
-En arquitectura hexagonal siempre usas **interfaces (puertos)**, no clases concretas, por lo que **siempre necesitas InjectionTokens**:
-
-```typescript
-// 1. Definir el PUERTO (interfaz)
-export interface AuthPort {
-  login(...): Promise<AuthResult>;
-}
-
-// 2. Crear el TOKEN (necesario para Angular)
-export const AUTH_PORT = new InjectionToken<AuthPort>('AuthPort');
-
-// 3. Implementar el ADAPTADOR (clase concreta)
-export class HttpAuthAdapter implements AuthPort {
-  // implementación...
-}
-
-// 4. Configurar el PROVIDER (conectar token → implementación)
+```json
 {
-  provide: AUTH_PORT,        // ← Token (representa la interfaz)
-  useClass: HttpAuthAdapter   // ← Clase concreta
-}
-
-// 5. Usar en el CASO DE USO
-export class LoginUseCase {
-  private authPort = inject(AUTH_PORT); // ← Pide el token
+  "printWidth": 100,
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": "*.html",
+      "options": { "parser": "angular" }
+    }
+  ]
 }
 ```
 
-**Conclusión**: El InjectionToken es la forma de Angular de decir: *"Cuando alguien pida este token, dale esta implementación concreta"*. Es el puente entre la interfaz (que no existe en runtime) y la clase concreta (que sí existe).
+### Comandos de Lint
 
-### Módulos Actuales
+```bash
+# Verificar errores
+npm run lint
 
-- **auth**: Autenticación y gestión de sesión de usuario
-- **attendance**: Registro de asistencia (check-in/check-out)
-- **system-settings**: Configuración del sistema y branding dinámico
-- **dashboard**: Layout principal de la aplicación
-- **profile**: Perfil del usuario
-- **settings**: Configuración de la aplicación
-- **biometrics**: Configuración de autenticación biométrica
+# Corregir automáticamente
+npm run lint:fix
 
-## Additional Resources
+# Lint en modo watch (se ejecuta con npm start)
+npm run lint:watch
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Git Hooks (Husky)
+
+### Hooks Configurados
+
+| Hook | Descripción |
+|------|-------------|
+| `commit-msg` | Valida formato de mensajes de commit |
+| `pre-push` | Ejecuta lint y build antes de push |
+
+### Formato de Commits (Conventional Commits)
+
+```
+<tipo>: <Descripción en español>
+
+[Cuerpo opcional en español]
+
+[Footer opcional en español]
+```
+
+#### Reglas
+
+| Elemento | Regla |
+|----------|-------|
+| **Tipo** | Minúsculas, en inglés |
+| **Descripción** | Español, puede iniciar con mayúscula |
+| **Cuerpo** | Español, sin límite de caracteres |
+| **Footer** | Español, sin límite de caracteres |
+
+#### Tipos Permitidos
+
+| Tipo | Descripción | Ejemplo |
+|------|-------------|---------|
+| `feat` | Nueva funcionalidad | `feat: Agregar módulo de reportes` |
+| `fix` | Corrección de error | `fix: Corregir cálculo de horas extras` |
+| `docs` | Documentación | `docs: Actualizar guía de instalación` |
+| `style` | Formato de código | `style: Aplicar prettier a componentes` |
+| `refactor` | Refactorización | `refactor: Simplificar lógica del servicio` |
+| `perf` | Mejora de rendimiento | `perf: Optimizar carga de imágenes` |
+| `test` | Tests | `test: Agregar tests para AuthService` |
+| `build` | Build/dependencias | `build: Actualizar Angular a v21` |
+| `ci` | Integración continua | `ci: Agregar workflow de GitHub Actions` |
+| `chore` | Mantenimiento | `chore: Limpiar archivos temporales` |
+| `revert` | Revertir cambios | `revert: Revertir commit abc123` |
+
+#### Ejemplos
+
+```bash
+# ✅ Commits válidos
+git commit -m "feat: Agregar componente de login"
+git commit -m "fix: Corregir validación de correo electrónico"
+
+# Con cuerpo descriptivo
+git commit -m "feat: Implementar sistema de notificaciones
+
+Este commit agrega:
+- Integración con Firebase Cloud Messaging
+- Soporte para notificaciones en segundo plano
+- Configuración de permisos
+
+Cierra el issue #45"
+
+# ❌ Commits inválidos
+git commit -m "agregando feature"   # No sigue el formato
+git commit -m "FEAT: Algo nuevo"    # Tipo en mayúsculas
+git commit -m "feat: Add login"     # Descripción en inglés
+```
+
+### Validación Pre-Push
+
+Antes de cada `git push` se ejecuta automáticamente:
+
+1. **ESLint**: Valida la calidad del código
+2. **Build**: Compila el proyecto
+
+```bash
+git push origin mi-rama
+
+# Salida esperada:
+# 🔍 Ejecutando linter...
+# ✅ Linter pasó correctamente
+# 🏗️  Compilando proyecto...
+# ✅ Build completado exitosamente
+# 🚀 Listo para hacer push!
+```
+
+### Saltarse Validaciones (NO RECOMENDADO)
+
+```bash
+# Solo en casos excepcionales (hotfix urgente, emergencias)
+git commit --no-verify -m "mensaje"
+git push --no-verify
+```
+
+## Despliegue
+
+### Build de Producción
+
+```bash
+# Compilar para producción
+npm run build
+
+# Los archivos se generan en:
+# dist/gsti-pwa-empleado/browser/  (archivos estáticos)
+# dist/gsti-pwa-empleado/server/   (SSR)
+```
+
+### Variables de Entorno de Producción
+
+Configura `src/environments/environment.prod.ts`:
+
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.produccion.com/api',
+};
+```
+
+### Servidor SSR
+
+```bash
+# Ejecutar servidor con Server-Side Rendering
+npm run serve:ssr:gsti-pwa-empleado
+```
+
+### PWA
+
+La aplicación incluye configuración de PWA con:
+
+- Service Worker para funcionamiento offline
+- Manifest para instalación en dispositivos
+- Iconos optimizados para diferentes resoluciones
+
+## Flujo de Trabajo Recomendado
+
+```bash
+# 1. Crear rama para feature/fix
+git checkout -b feat/nueva-funcionalidad
+
+# 2. Desarrollar con servidor y lint en tiempo real
+npm start
+
+# 3. Hacer commits frecuentes
+git add .
+git commit -m "feat: Agregar validación de formulario"
+
+# 4. Verificar antes de push
+npm run lint
+npm run build
+
+# 5. Push (validaciones automáticas)
+git push origin feat/nueva-funcionalidad
+
+# 6. Crear Pull Request
+```
+
+## Solución de Problemas
+
+### Errores de Lint
+
+```bash
+# Ver todos los errores
+npm run lint
+
+# Corregir automáticamente
+npm run lint:fix
+```
+
+### Errores de Build
+
+```bash
+# Compilar y ver errores detallados
+npm run build
+
+# Errores comunes:
+# - Imports faltantes
+# - Variables no usadas
+# - Errores de tipo TypeScript
+```
+
+### Hooks no funcionan
+
+```bash
+# Reinstalar husky
+npm run prepare
+```
+
+## Recursos Adicionales
+
+- [Angular CLI](https://angular.dev/tools/cli)
+- [Angular Style Guide](https://angular.dev/style-guide)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+- [Arquitectura Hexagonal](https://alistair.cockburn.us/hexagonal-architecture/)
+- [PrimeNG Components](https://primeng.org/)
