@@ -16,6 +16,8 @@ import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-a
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
+import { BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT } from '@modules/attendance/domain/employee-biometric-face-id.token';
+import { HttpEmployeeBiometricFaceIdAdapter } from '@modules/attendance/infrastructure/http-employee-biometric-face-id.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -54,6 +56,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: ATTENDANCE_PORT,
       useClass: HttpAttendanceAdapter,
+    },
+    {
+      provide: BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT,
+      useClass: HttpEmployeeBiometricFaceIdAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({

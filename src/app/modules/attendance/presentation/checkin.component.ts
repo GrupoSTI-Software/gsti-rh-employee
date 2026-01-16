@@ -16,6 +16,9 @@ import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/c
 import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
+import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
+import { SecureStorageService } from '@core/services/secure-storage.service';
+import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-checkin',
@@ -49,13 +52,18 @@ import { LoggerService } from '@core/services/logger.service';
 })
 export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
+  private readonly getEmployeeBiometricFaceIdUseCase = inject(GetEmployeeBiometricFaceIdUseCase);
   private readonly storeAssistUseCase = inject(StoreAssistUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
+  private readonly secureStorage = inject(SecureStorageService);
   private timeInterval?: ReturnType<typeof setInterval>;
+
+  // Clave para almacenar la foto del rostro del empleado en base64
+  private readonly EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY = 'employee_biometric_face_id_photo_base64';
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
@@ -296,6 +304,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
     // Solo ejecutar en el navegador
     if (!isPlatformBrowser(this.platformId)) {
       return;
+    }
+    const employeeBiometricFaceId = await this.getEmployeeBiometricFaceIdUseCase.execute(
+      user.employeeId,
+    );
+    if (!employeeBiometricFaceId) {
+      this.error.set('No se encontró la fotografía del rostro del empleado');
+      return;
+    }
+    const employeeBiometricFaceIdPhotoUrl = employeeBiometricFaceId.employeeBiometricFaceIdPhotoUrl;
+
+    // Guardar la foto en base64 de forma segura
+    if (employeeBiometricFaceIdPhotoUrl) {
+      try {
+        await this.savePhotoAsBase64(employeeBiometricFaceIdPhotoUrl);
+      } catch (error) {
+        this.logger.warn('Error al guardar la foto en base64:', error);
+        // Continuar con el proceso aunque falle el guardado
+      }
     }
 
     this.loading.set(true);
@@ -923,5 +949,105 @@ export class CheckinComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       second: '2-digit',
     });
+  }
+
+  /**
+   * Convierte una URL de imagen a base64 y la guarda de forma segura
+   * @param imageUrl - URL de la imagen a convertir
+   * @returns Promesa que se resuelve cuando la imagen se ha guardado
+   */
+  private async savePhotoAsBase64(imageUrl: string): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      // Convertir la URL a base64
+      const base64Image = await this.urlToBase64(imageUrl);
+
+      // Guardar en almacenamiento seguro
+      this.secureStorage.setEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY, base64Image);
+    } catch (error) {
+      this.logger.error('Error al convertir y guardar la imagen en base64:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Construye la URL de la imagen usando el proxy si es necesario
+   * @param url - URL original de la imagen
+   * @returns URL procesada con proxy si es necesario
+   */
+  private buildImageUrl(url: string): string {
+    // Si la URL ya incluye el proxy, retornarla tal cual
+    if (url.includes('/proxy-image')) {
+      return url;
+    }
+
+    // Construir la URL del proxy para evitar problemas de CORS
+    const apiUrl = environment.API_URL;
+    const encodedUrl = encodeURIComponent(url);
+    return `${apiUrl}/proxy-image?url=${encodedUrl}`;
+  }
+
+  /**
+   * Convierte una URL de imagen a base64
+   * @param url - URL de la imagen
+   * @returns Promesa con la imagen en formato base64
+   */
+  private urlToBase64(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      if (!isPlatformBrowser(this.platformId)) {
+        reject(new Error('No disponible en este entorno'));
+        return;
+      }
+
+      // Usar el proxy de imágenes para evitar problemas de CORS
+      const imageUrl = this.buildImageUrl(url);
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = (): void => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('No se pudo obtener el contexto del canvas'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0);
+          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = (): void => {
+        reject(new Error('Error al cargar la imagen'));
+      };
+
+      img.src = imageUrl;
+    });
+  }
+
+  /**
+   * Obtiene la foto del rostro del empleado guardada en base64
+   * @returns La imagen en formato base64 o null si no existe
+   */
+  getStoredPhotoBase64(): string | null {
+    return this.secureStorage.getEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY);
+  }
+
+  /**
+   * Elimina la foto del rostro del empleado guardada
+   */
+  removeStoredPhoto(): void {
+    this.secureStorage.removeEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY);
   }
 }
