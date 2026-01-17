@@ -9,6 +9,7 @@ export interface IEmployeeBiometricFaceIdApiResponse {
   title: string;
   message: string;
   data: {
+    sameToken: boolean;
     employeeBiometricFaceId: IEmployeeBiometricFaceId;
   };
 }

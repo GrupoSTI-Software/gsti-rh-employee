@@ -18,7 +18,9 @@ import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-o
 import { LoggerService } from '@core/services/logger.service';
 import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
 import { SecureStorageService } from '@core/services/secure-storage.service';
-import { environment } from '@env/environment';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
+import * as faceapi from 'face-api.js';
 
 @Component({
   selector: 'app-checkin',
@@ -64,6 +66,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   // Clave para almacenar la foto del rostro del empleado en base64
   private readonly EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY = 'employee_biometric_face_id_photo_base64';
+
+  // Estado de carga de modelos de face-api.js
+  private faceApiModelsLoaded = false;
+  private readonly FACE_API_MODELS_URL = '/assets/face-api-models';
+  private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
@@ -331,8 +338,41 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Verificar y solicitar permisos antes de continuar
       await this.ensurePermissions();
 
+      // Cargar modelos de face-api.js si no están cargados
+      try {
+        await this.loadFaceApiModels();
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Error desconocido al cargar modelos';
+        if (errorMessage.includes('reconocimiento facial')) {
+          this.error.set(
+            'Error al cargar los modelos de reconocimiento facial. Por favor, verifica que los modelos estén descargados correctamente.',
+          );
+        } else {
+          this.error.set(`Error: ${errorMessage}`);
+        }
+        this.loading.set(false);
+        return;
+      }
+
+      // Obtener la foto guardada del empleado
+      const storedPhotoBase64 = this.getStoredPhotoBase64();
+      if (!storedPhotoBase64) {
+        this.error.set('No se encontró la fotografía del empleado guardada');
+        this.loading.set(false);
+        return;
+      }
+
       // Abrir cámara y capturar foto
-      await this.capturePhoto();
+      const capturedPhotoBase64 = await this.capturePhoto();
+
+      // Comparar las fotografías usando face-api.js
+      const isMatch = await this.compareFaces(storedPhotoBase64, capturedPhotoBase64);
+      if (!isMatch) {
+        this.error.set('La fotografía capturada no coincide con la del empleado registrado');
+        this.loading.set(false);
+        return;
+      }
 
       // Obtener ubicación
       const location = await this.getCurrentLocation();
@@ -510,16 +550,16 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   /**
    * Captura una foto usando la cámara del dispositivo
+   * @returns Promesa con la imagen capturada en formato base64
    */
-  private async capturePhoto(): Promise<void> {
+  private async capturePhoto(): Promise<string> {
     if (!isPlatformBrowser(this.platformId)) {
-      return;
+      throw new Error('La captura de foto solo está disponible en el navegador');
     }
 
     try {
       if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
-        this.logger.warn('La cámara no está disponible');
-        return;
+        throw new Error('La cámara no está disponible en este navegador');
       }
 
       // Obtener acceso a la cámara
@@ -579,7 +619,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       document.body.appendChild(cancelButton);
 
       // Esperar a que el usuario capture o cancele
-      return new Promise<void>((resolve, reject) => {
+      return new Promise<string>((resolve, reject) => {
         const cleanup = (): void => {
           stream.getTracks().forEach((track) => track.stop());
           document.body.removeChild(video);
@@ -595,18 +635,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(video, 0, 0);
-            // Aquí podrías enviar la foto al servidor si es necesario
-            // Por ahora solo la capturamos
-            canvas.toBlob(
-              (_blob) => {
-                // Aquí podrías guardar o enviar la foto
-              },
-              'image/jpeg',
-              0.9,
-            );
+            // Convertir canvas a base64
+            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            cleanup();
+            resolve(base64);
+          } else {
+            cleanup();
+            reject(new Error('No se pudo obtener el contexto del canvas'));
           }
-          cleanup();
-          resolve();
         };
 
         cancelButton.onclick = (): void => {
@@ -974,37 +1010,57 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Construye la URL de la imagen usando el proxy si es necesario
-   * @param url - URL original de la imagen
-   * @returns URL procesada con proxy si es necesario
-   */
-  private buildImageUrl(url: string): string {
-    // Si la URL ya incluye el proxy, retornarla tal cual
-    if (url.includes('/proxy-image')) {
-      return url;
-    }
-
-    // Construir la URL del proxy para evitar problemas de CORS
-    const apiUrl = environment.API_URL;
-    const encodedUrl = encodeURIComponent(url);
-    return `${apiUrl}/proxy-image?url=${encodedUrl}`;
-  }
-
-  /**
-   * Convierte una URL de imagen a base64
+   * Convierte una URL de imagen a base64 usando fetch
+   * Intenta cargar la imagen directamente sin proxy para evitar restricciones de dominio
    * @param url - URL de la imagen
    * @returns Promesa con la imagen en formato base64
    */
-  private urlToBase64(url: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-      if (!isPlatformBrowser(this.platformId)) {
-        reject(new Error('No disponible en este entorno'));
-        return;
+  private async urlToBase64(url: string): Promise<string> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('No disponible en este entorno');
+    }
+
+    try {
+      // Intentar cargar la imagen directamente usando fetch
+      const response = await fetch(url, {
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar la imagen: ${response.status} ${response.statusText}`);
       }
 
-      // Usar el proxy de imágenes para evitar problemas de CORS
-      const imageUrl = this.buildImageUrl(url);
+      // Convertir la respuesta a blob
+      const blob = await response.blob();
 
+      // Convertir blob a base64
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = (): void => {
+          const base64String = reader.result as string;
+          resolve(base64String);
+        };
+        reader.onerror = (): void => {
+          reject(new Error('Error al convertir la imagen a base64'));
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('error', error);
+      // Si falla con fetch (por ejemplo, por CORS), intentar con Image + canvas
+      return this.urlToBase64WithImage(url);
+    }
+  }
+
+  /**
+   * Método alternativo: Convierte una URL de imagen a base64 usando Image y canvas
+   * Se usa como fallback si fetch falla por problemas de CORS
+   * @param url - URL de la imagen
+   * @returns Promesa con la imagen en formato base64
+   */
+  private urlToBase64WithImage(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
 
@@ -1029,10 +1085,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
       };
 
       img.onerror = (): void => {
-        reject(new Error('Error al cargar la imagen'));
+        reject(new Error('Error al cargar la imagen con el método alternativo'));
       };
 
-      img.src = imageUrl;
+      img.src = url;
     });
   }
 
@@ -1049,5 +1105,154 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   removeStoredPhoto(): void {
     this.secureStorage.removeEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY);
+  }
+
+  /**
+   * Carga los modelos de face-api.js necesarios para el reconocimiento facial
+   * Los modelos deben estar en la carpeta public/assets/face-api-models/
+   */
+  private async loadFaceApiModels(): Promise<void> {
+    if (this.faceApiModelsLoaded) {
+      return;
+    }
+
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('Los modelos de face-api.js solo están disponibles en el navegador');
+    }
+
+    try {
+      // Cargar los modelos uno por uno para identificar cuál falla
+      this.logger.info(`Cargando modelos de face-api.js desde: ${this.FACE_API_MODELS_URL}`);
+
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo tinyFaceDetector cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar tinyFaceDetector:', error);
+        throw new Error(
+          `Error al cargar el modelo tinyFaceDetector. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      try {
+        await faceapi.nets.faceLandmark68Net.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo faceLandmark68Net cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar faceLandmark68Net:', error);
+        throw new Error(
+          `Error al cargar el modelo faceLandmark68Net. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      try {
+        await faceapi.nets.faceRecognitionNet.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo faceRecognitionNet cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar faceRecognitionNet:', error);
+        throw new Error(
+          `Error al cargar el modelo faceRecognitionNet. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      this.faceApiModelsLoaded = true;
+      this.logger.info('Todos los modelos de face-api.js cargados correctamente');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido al cargar los modelos';
+      this.logger.error('Error al cargar los modelos de face-api.js:', error);
+      throw new Error(
+        `Error al cargar los modelos de reconocimiento facial: ${errorMessage}. Asegúrate de que los modelos estén descargados en ${this.FACE_API_MODELS_URL}`,
+      );
+    }
+  }
+
+  /**
+   * Compara dos imágenes para verificar si contienen el mismo rostro
+   * @param storedPhotoBase64 - Foto guardada del empleado en base64
+   * @param capturedPhotoBase64 - Foto capturada en base64
+   * @returns true si las fotos coinciden, false en caso contrario
+   */
+  private async compareFaces(
+    storedPhotoBase64: string,
+    capturedPhotoBase64: string,
+  ): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('La comparación facial solo está disponible en el navegador');
+    }
+
+    try {
+      // Crear elementos de imagen para ambas fotos
+      const storedImg = await this.base64ToImage(storedPhotoBase64);
+      const capturedImg = await this.base64ToImage(capturedPhotoBase64);
+
+      // Detectar y obtener descriptores faciales de ambas imágenes
+      const storedDescriptor = await this.getFaceDescriptor(storedImg);
+      const capturedDescriptor = await this.getFaceDescriptor(capturedImg);
+
+      // Si no se detectó un rostro en alguna de las imágenes, retornar false
+      if (!storedDescriptor || !capturedDescriptor) {
+        this.logger.warn('No se detectó un rostro en una o ambas imágenes');
+        return false;
+      }
+
+      // Calcular la distancia euclidiana entre los descriptores
+      const distance = faceapi.euclideanDistance(storedDescriptor, capturedDescriptor);
+
+      // Comparar con el umbral (distancia menor = más similar)
+      // Convertir distancia a similitud (0-1, donde 1 es idéntico)
+      const similarity = 1 - Math.min(distance, 1);
+      const isMatch = similarity >= this.FACE_MATCH_THRESHOLD;
+
+      this.logger.info(
+        `Comparación facial: distancia=${distance.toFixed(3)}, similitud=${similarity.toFixed(3)}, coincide=${isMatch}`,
+      );
+
+      return isMatch;
+    } catch (error) {
+      this.logger.error('Error al comparar las fotografías:', error);
+      throw new Error('Error al comparar las fotografías faciales');
+    }
+  }
+
+  /**
+   * Convierte una imagen en base64 a un elemento HTMLImageElement
+   * @param base64 - Imagen en formato base64
+   * @returns Promesa con el elemento de imagen
+   */
+  private base64ToImage(base64: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = (): void => {
+        resolve(img);
+      };
+      img.onerror = (): void => {
+        reject(new Error('Error al cargar la imagen desde base64'));
+      };
+      img.src = base64;
+    });
+  }
+
+  /**
+   * Obtiene el descriptor facial de una imagen usando face-api.js
+   * @param img - Elemento de imagen HTML
+   * @returns Promesa con el descriptor facial o null si no se detecta un rostro
+   */
+  private async getFaceDescriptor(img: HTMLImageElement): Promise<Float32Array | null> {
+    try {
+      // Detectar el rostro con landmarks
+      const detection = await faceapi
+        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        return null;
+      }
+
+      return detection.descriptor;
+    } catch (error) {
+      this.logger.error('Error al obtener el descriptor facial:', error);
+      return null;
+    }
   }
 }
