@@ -14,6 +14,8 @@ import { HttpSystemSettingsAdapter } from '@modules/system-settings/infrastructu
 import { SYSTEM_SETTINGS_PORT } from '@modules/system-settings/domain/system-settings.token';
 import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-attendance.adapter';
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
+import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/http-vacation.adapter';
+import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 
@@ -54,6 +56,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: ATTENDANCE_PORT,
       useClass: HttpAttendanceAdapter,
+    },
+    {
+      provide: VACATION_PORT,
+      useClass: HttpVacationAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({
