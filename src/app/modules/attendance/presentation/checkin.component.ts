@@ -69,7 +69,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   // Estado de carga de modelos de face-api.js
   private faceApiModelsLoaded = false;
-  private readonly FACE_API_MODELS_URL = '/assets/face-api-models';
+  private readonly FACE_API_MODELS_URL = '/face-api-models';
   private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
 
   readonly attendance = signal<IAttendance | null>(null);
