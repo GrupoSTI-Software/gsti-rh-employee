@@ -13,10 +13,14 @@ import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { GetYearsWorkedUseCase } from '../../application/get-years-worked.use-case';
+import { SignVacationUseCase } from '../../application/sign-vacation.use-case';
 import { IYearWorked, IVacationUsed } from '../../domain/vacation.port';
+import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
+import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
+import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
 
 /**
  * Interfaz para representar un día del calendario
@@ -39,13 +43,20 @@ interface ICalendarDay {
 @Component({
   selector: 'app-vacation-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    VacationDetailDrawerComponent,
+    VacationSignatureComponent,
+  ],
   templateUrl: './vacation-calendar.component.html',
   styleUrl: './vacation-calendar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VacationCalendarComponent implements OnInit {
   private readonly getYearsWorkedUseCase = inject(GetYearsWorkedUseCase);
+  private readonly signVacationUseCase = inject(SignVacationUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
@@ -87,6 +98,14 @@ export class VacationCalendarComponent implements OnInit {
 
   // Días de vacaciones como Set para búsqueda rápida (formato: YYYY-MM-DD)
   readonly vacationDaysSet = signal<Set<string>>(new Set());
+
+  // Drawer de detalle
+  readonly showDetailDrawer = signal(false);
+  readonly selectedVacation = signal<IVacationUsed | null>(null);
+  readonly selectedVacationSetting = signal<IVacationSetting | null>(null);
+
+  // Diálogo de firma
+  readonly showSignatureDialog = signal(false);
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -396,5 +415,102 @@ export class VacationCalendarComponent implements OnInit {
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     );
+  }
+
+  /**
+   * Maneja el click en un día del calendario
+   */
+  onDayClick(event: Event, day: ICalendarDay): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Prevenir el click si no es un día de vacaciones del mes actual
+    if (!day.isVacation || !day.isCurrentMonth) {
+      return;
+    }
+
+    // Si es un día de vacaciones, intentar obtener los datos
+    // Si no hay vacationData, intentar buscarlo
+    const vacationData = day.vacationData ?? this.findVacationData(day.date);
+
+    if (vacationData) {
+      this.selectedVacation.set(vacationData);
+      // Buscar la configuración de vacaciones correspondiente
+      const vacationSetting = this.findVacationSetting(vacationData.vacationSettingId);
+      this.selectedVacationSetting.set(vacationSetting);
+      this.showDetailDrawer.set(true);
+    } else {
+      this.logger.warn('No se encontraron datos de vacación para el día seleccionado', {
+        date: day.date,
+        dateKey: this.formatDateKey(day.date),
+      });
+    }
+  }
+
+  /**
+   * Busca la configuración de vacaciones por ID
+   */
+  private findVacationSetting(vacationSettingId: number | null): IVacationSetting | null {
+    if (!vacationSettingId) {
+      return null;
+    }
+
+    const yearsWorked = this.yearsWorked();
+    for (const yearWorked of yearsWorked) {
+      if (yearWorked.vacationSetting?.vacationSettingId === vacationSettingId) {
+        return yearWorked.vacationSetting;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Cierra el drawer de detalle
+   */
+  onDetailDrawerClose(): void {
+    this.showDetailDrawer.set(false);
+    this.selectedVacation.set(null);
+    this.selectedVacationSetting.set(null);
+  }
+
+  /**
+   * Maneja la solicitud de firma desde el drawer
+   */
+  onSignRequested(_vacation: IVacationUsed): void {
+    this.showSignatureDialog.set(true);
+  }
+
+  /**
+   * Cierra el diálogo de firma
+   */
+  onSignatureDialogClose(): void {
+    this.showSignatureDialog.set(false);
+  }
+
+  /**
+   * Maneja el envío de la firma
+   */
+  async onSignatureSubmitted(event: { signature: Blob; vacation: IVacationUsed }): Promise<void> {
+    const { signature, vacation } = event;
+
+    if (!vacation.vacationSettingId) {
+      this.logger.error('No se encontró vacationSettingId en la vacación');
+      return;
+    }
+
+    const success = await this.signVacationUseCase.execute(signature, vacation.vacationSettingId, [
+      vacation.shiftExceptionId,
+    ]);
+
+    if (success) {
+      // Recargar los datos de vacaciones para actualizar la firma
+      await this.loadYearsWorked(undefined);
+      // Cerrar el drawer y el diálogo de firma
+      this.onDetailDrawerClose();
+      this.onSignatureDialogClose();
+    } else {
+      this.logger.error('Error al firmar la vacación');
+    }
   }
 }

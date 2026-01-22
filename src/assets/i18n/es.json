@@ -271,5 +271,41 @@
       "friday": "Vie",
       "saturday": "Sáb"
     }
+  },
+  "vacationDetail": {
+    "title": "Detalle de Vacaciones",
+    "subtitle": "Ver tus detalles de vacaciones",
+    "loading": "Cargando detalles de vacaciones...",
+    "error": "Error al cargar los detalles de vacaciones",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "date": "Fecha",
+    "concept": "Concepto",
+    "period": "Periodo",
+    "signatureStatus": "Estado de Firma",
+    "signed": "Firmado",
+    "notSigned": "No Firmado",
+    "signature": "Firma",
+    "sign": "Firmar",
+    "noData": "No hay datos"
+  },
+  "vacationSignature": {
+    "title": "Firma de Vacaciones",
+    "subtitle": "Firma tus vacaciones",
+    "loading": "Cargando firma de vacaciones...",
+    "error": "Error al cargar la firma de vacaciones",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "instructions": "Firma tus vacaciones",
+    "clear": "Limpiar",
+    "submit": "Enviar"
   }
 }

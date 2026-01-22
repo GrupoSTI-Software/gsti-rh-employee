@@ -21,9 +21,12 @@ export class HttpVacationAdapter implements IVacationPort {
   /**
    * Obtiene los años trabajados y vacaciones del empleado
    */
-  async getYearsWorked(employeeId: number): Promise<IYearWorked[]> {
+  async getYearsWorked(employeeId: number, year?: number): Promise<IYearWorked[]> {
     try {
-      const url = `${this.apiUrl}/employees/${employeeId}/get-years-worked`;
+      let url = `${this.apiUrl}/employees/${employeeId}/get-years-worked`;
+      if (year) {
+        url += `?year=${year}`;
+      }
 
       const response = await firstValueFrom<IYearsWorkedApiResponse>(
         this.http.get<IYearsWorkedApiResponse>(url),
@@ -33,6 +36,38 @@ export class HttpVacationAdapter implements IVacationPort {
     } catch (error: unknown) {
       this.logger.error('Error al obtener años trabajados:', error);
       return [];
+    }
+  }
+
+  /**
+   * Firma las excepciones de turno (vacaciones)
+   * @param signature - Blob de la imagen de la firma
+   * @param vacationSettingId - ID de la configuración de vacaciones
+   * @param shiftExceptionIds - Array de IDs de excepciones de turno a firmar
+   * @returns Promise que se resuelve cuando la firma se envía correctamente
+   */
+  async signShiftExceptions(
+    signature: Blob,
+    vacationSettingId: number,
+    shiftExceptionIds: number[],
+  ): Promise<boolean> {
+    try {
+      const url = `${this.apiUrl}/vacation-authorizations/sign-shift-exceptions`;
+
+      const formData = new FormData();
+      formData.append('signature', signature, 'signature.png');
+      formData.append('vacationSettingId', vacationSettingId.toString());
+
+      shiftExceptionIds.forEach((id) => {
+        formData.append('shiftExceptionIds[]', id.toString());
+      });
+
+      await firstValueFrom(this.http.post(url, formData));
+
+      return true;
+    } catch (error: unknown) {
+      this.logger.error('Error al firmar excepciones de turno:', error);
+      return false;
     }
   }
 }

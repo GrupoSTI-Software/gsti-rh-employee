@@ -1,0 +1,86 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+    [@fadeIn]
+  ></div>
+  <aside class="drawer" [@slideInOut]>
+    <div class="drawer-header">
+        <h2 class="drawer-title">{{ 'vacationDetail.title' | translate }}</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <div class="vacation-detail-content">
+        @if (vacation) {
+          <!-- Día seleccionado -->
+          <div class="detail-section">
+            <div class="detail-label">{{ 'vacationDetail.date' | translate }}</div>
+            <div class="detail-value">{{ formatDate(vacation.shiftExceptionsDate) }}</div>
+          </div>
+
+          <!-- Periodo -->
+          @if (vacationSetting) {
+            <div class="detail-section">
+              <div class="detail-label">{{ 'vacationDetail.period' | translate }}</div>
+              <div class="detail-value">{{ getPeriod() }}</div>
+            </div>
+          }
+
+          <!-- Estado de firma -->
+          <div class="detail-section">
+            <div class="detail-label">{{ 'vacationDetail.signatureStatus' | translate }}</div>
+            <div class="detail-value">
+              @if (isSigned()) {
+                <span class="signature-status signed">
+                  <i class="pi pi-check-circle"></i>
+                  {{ 'vacationDetail.signed' | translate }}
+                </span>
+              } @else {
+                <span class="signature-status unsigned">
+                  <i class="pi pi-times-circle"></i>
+                  {{ 'vacationDetail.notSigned' | translate }}
+                </span>
+              }
+            </div>
+          </div>
+
+          <!-- POR FAVOR YA FUNCIONA!!!!-->
+          @if (isSigned() && vacation.employeeSignature) {
+            <div class="detail-section">
+              <div class="detail-label">{{ 'vacationDetail.signature' | translate }}</div>
+              <div class="signature-image-container">
+                <img [src]="vacation.employeeSignature" alt="Firma del empleado" class="signature-image" />
+              </div>
+            </div>
+          }
+
+          <!-- Botón para firmar si no está firmado -->
+          @if (!isSigned()) {
+            <div class="detail-actions">
+              <button type="button" class="sign-button" (click)="onSignRequest()">
+                <i class="pi pi-pencil"></i>
+                {{ 'vacationDetail.sign' | translate }}
+              </button>
+            </div>
+          }
+        } @else {
+          <div class="no-vacation-data">
+            <i class="pi pi-info-circle"></i>
+            <p>{{ 'vacationDetail.noData' | translate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </aside>
+}

@@ -28,12 +28,24 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   // Obtener el token de la cookie segura con prefijo
   const token = secureStorage.getCookie(AUTH_TOKEN_COOKIE);
 
+  // Detectar si el body es FormData
+  const isFormData = req.body instanceof FormData;
+
+  // Preparar headers base
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+
+  // Solo agregar Content-Type si NO es FormData
+  // FormData necesita que el navegador establezca el Content-Type automáticamente
+  // con el boundary correcto para multipart/form-data
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   // Clonar la petición y agregar headers
   let clonedReq = req.clone({
-    setHeaders: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+    setHeaders: headers,
   });
 
   // Agregar token de autorización si existe y es válido

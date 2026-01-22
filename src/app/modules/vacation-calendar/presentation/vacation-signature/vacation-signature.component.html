@@ -1,0 +1,56 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+    [@fadeIn]
+  ></div>
+  <aside class="drawer" [@slideInOut]>
+    <div class="drawer-header">
+      <h2 class="drawer-title">{{ 'vacationSignature.title' | translate }}</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <div class="signature-container">
+        <p class="signature-instructions">{{ 'vacationSignature.instructions' | translate }}</p>
+
+        <div class="signature-pad-container">
+          <canvas
+            #canvas
+            class="signature-pad"
+          ></canvas>
+        </div>
+
+        <div class="signature-actions">
+          <button type="button" class="clear-button" (click)="clearSignature()" [disabled]="loading()">
+            <i class="pi pi-eraser"></i>
+            {{ 'vacationSignature.clear' | translate }}
+          </button>
+          <button
+            type="button"
+            class="submit-button"
+            (click)="submitSignature()"
+            [disabled]="!hasSignature() || loading()"
+          >
+            @if (loading()) {
+              <i class="pi pi-spin pi-spinner"></i>
+            } @else {
+              <i class="pi pi-check-circle"></i>
+            }
+            {{ 'vacationSignature.submit' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+}

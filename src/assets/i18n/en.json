@@ -271,5 +271,41 @@
       "friday": "Fri",
       "saturday": "Sat"
     }
+  },
+  "vacationDetail": {
+    "title": "Vacation Detail",
+    "subtitle": "View your vacation details",
+    "loading": "Loading vacation details...",
+    "error": "Error loading vacation details",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "date": "Date",
+    "concept": "Concept",
+    "period": "Period",
+    "signatureStatus": "Signature Status",
+    "signed": "Signed",
+    "notSigned": "Not Signed",
+    "signature": "Signature",
+    "sign": "Sign",
+    "noData": "No data"
+  },
+  "vacationSignature": {
+    "title": "Vacation Signature",
+    "subtitle": "Sign your vacation",
+    "loading": "Loading vacation signature...",
+    "error": "Error loading vacation signature",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "instructions": "Sign your vacation",
+    "clear": "Clear",
+    "submit": "Submit"
   }
 }

@@ -86,6 +86,13 @@
               [class.current-month]="day.isCurrentMonth"
               [class.vacation-day]="day.isVacation"
               [class.today]="isToday(day.date) && day.isCurrentMonth"
+              [class.clickable]="day.isVacation && day.isCurrentMonth"
+              (click)="onDayClick($event, day)"
+              [attr.aria-label]="day.isVacation ? ('vacations.vacationDay' | translate) : ''"
+              [attr.role]="day.isVacation && day.isCurrentMonth ? 'button' : null"
+              [attr.tabindex]="day.isVacation && day.isCurrentMonth ? 0 : -1"
+              (keydown.enter)="day.isVacation && day.isCurrentMonth && onDayClick($event, day)"
+              (keydown.space)="day.isVacation && day.isCurrentMonth && onDayClick($event, day)"
             >
               <div class="day-header">
                 <span class="day-number">{{ day.dayNumber }}</span>
@@ -120,3 +127,20 @@
     </div>
   </div>
 </div>
+
+<!-- Drawer de detalle de vacaciones -->
+<app-vacation-detail-drawer
+  [vacation]="selectedVacation()"
+  [vacationSetting]="selectedVacationSetting()"
+  [visible]="showDetailDrawer()"
+  (visibleChange)="showDetailDrawer.set($event)"
+  (signRequested)="onSignRequested($event)"
+/>
+
+<!-- Diálogo de firma -->
+<app-vacation-signature
+  [vacation]="selectedVacation()"
+  [visible]="showSignatureDialog()"
+  (visibleChange)="showSignatureDialog.set($event)"
+  (signatureSubmitted)="onSignatureSubmitted($event)"
+/>
