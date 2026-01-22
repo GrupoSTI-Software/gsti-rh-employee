@@ -80,13 +80,11 @@ export class HttpEmployeeBiometricFaceIdAdapter implements IEmployeeBiometricFac
     try {
       // Crear o obtener el token (solo crea uno nuevo si no existe)
       const token = this.createAndSavePhotoToken();
-      console.log('token', token);
       const response = await firstValueFrom<IEmployeeBiometricFaceIdApiResponse>(
         this.http.get<IEmployeeBiometricFaceIdApiResponse>(
           `${this.apiUrl}/employees/${employeeId}/biometric-face-id-with-token/${token}`,
         ),
       );
-      console.log('sameToken', response.data?.sameToken);
       return response.data?.employeeBiometricFaceId ?? null;
     } catch (error: unknown) {
       this.logger.error('Error al obtener la fotografía del rostro del empleado:', error);

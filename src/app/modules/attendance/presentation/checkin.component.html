@@ -183,6 +183,14 @@
         <span>{{ 'attendance.loading' | translate }}</span>
       </div>
     }
+
+    <!-- Starting -->
+    @if (starting()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'attendance.starting' | translate }}</span>
+      </div>
+      }
     </div>
   </div>
 </div>

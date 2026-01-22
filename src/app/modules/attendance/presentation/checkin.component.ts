@@ -21,7 +21,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
-// import { environment } from '../../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-checkin',
@@ -71,18 +71,26 @@ export class CheckinComponent implements OnInit, OnDestroy {
   // Estado de carga de modelos de face-api.js
   private faceApiModelsLoaded = false;
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
-  private readonly FACE_API_MODELS_URL = ''; //environment.FACE_API_MODELS_URL;
+  private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
   private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
   private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
   private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
+  readonly starting = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly currentDate = signal<Date>(new Date());
   readonly selectedDate = signal<Date>(new Date());
   readonly currentTime = signal<string>('');
+
+  private livenessVideo?: HTMLVideoElement;
+  private livenessUI?: HTMLDivElement;
+  private livenessStream?: MediaStream;
+  private frameCaptureInterval?: ReturnType<typeof setInterval>;
+  private livenessCheckInterval?: ReturnType<typeof setInterval>;
+  private livenessPromiseReject?: (reason?: unknown) => void;
 
   // Datepicker
   showDatePicker = false;
@@ -120,14 +128,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   readonly canCheckIn = computed(() => {
-    const att = this.attendance();
-    return (
-      (att?.checkInTime === null ||
-        att?.checkEatInTime === null ||
-        att?.checkOutTime === null ||
-        att?.checkEatOutTime === null) &&
-      !this.loading()
-    );
+    return !this.loading() && !this.starting();
   });
 
   readonly canCheckOut = computed(() => {
@@ -310,6 +311,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Maneja el registro de check-in con cámara
    */
   async handleRegisterCheckIn(): Promise<void> {
+    this.success.set(null);
+    this.error.set(null);
     if (!this.canCheckIn()) return;
 
     const user = this.authPort.getCurrentUser();
@@ -322,11 +325,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    this.starting.set(true);
     const employeeBiometricFaceId = await this.getEmployeeBiometricFaceIdUseCase.execute(
       user.employeeId,
     );
     if (!employeeBiometricFaceId) {
       this.error.set('No se encontró la fotografía del rostro del empleado');
+      this.starting.set(false);
       return;
     }
     const employeeBiometricFaceIdPhotoUrl = employeeBiometricFaceId.employeeBiometricFaceIdPhotoUrl;
@@ -336,6 +341,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       try {
         await this.savePhotoAsBase64(employeeBiometricFaceIdPhotoUrl);
       } catch (error) {
+        this.starting.set(false);
         this.logger.warn('Error al guardar la foto en base64:', error);
         // Continuar con el proceso aunque falle el guardado
       }
@@ -361,14 +367,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
         } else {
           this.error.set(`Error: ${errorMessage}`);
         }
-        this.loading.set(false);
-        return;
-      }
-
-      // Obtener la foto guardada del empleado
-      const storedPhotoBase64 = this.getStoredPhotoBase64();
-      if (!storedPhotoBase64) {
-        this.error.set('No se encontró la fotografía del empleado guardada');
         this.loading.set(false);
         return;
       }
@@ -402,7 +400,12 @@ export class CheckinComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         return;
       }
-
+      const storedPhotoBase64 = this.getStoredPhotoBase64();
+      if (!storedPhotoBase64) {
+        this.error.set('No se encontró la fotografía del empleado guardada');
+        this.loading.set(false);
+        return;
+      }
       // Comparar las fotografías usando face-api.js
       const isMatch = await this.compareFaces(storedPhotoBase64, capturedPhotoBase64);
       if (!isMatch) {
@@ -410,7 +413,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
         this.loading.set(false);
         return;
       }
-
       // Obtener ubicación
       const location = await this.getCurrentLocation();
 
@@ -550,43 +552,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
         throw error;
       }
       throw new Error('Se necesita permiso de ubicación para registrar asistencia');
-    }
-  }
-
-  async handleCheckIn(): Promise<void> {
-    if (!this.canCheckIn()) return;
-
-    const user = this.authPort.getCurrentUser();
-    if (typeof user?.employeeId !== 'number') {
-      this.error.set('No se encontró el ID del empleado');
-      return;
-    }
-
-    this.loading.set(true);
-    this.error.set(null);
-
-    try {
-      // Obtener ubicación
-      const location = await this.getCurrentLocation();
-
-      const success = await this.storeAssistUseCase.execute(
-        user.employeeId,
-        location.coords.latitude,
-        location.coords.longitude,
-        location.coords.accuracy ?? 0,
-      );
-
-      if (success) {
-        // Recargar asistencia
-        await this.loadAttendance();
-      } else {
-        this.error.set('Error al registrar el check-in');
-      }
-    } catch (err) {
-      this.error.set('Error al obtener la ubicación o registrar check-in');
-      this.logger.error('Error en handleCheckIn:', err);
-    } finally {
-      this.loading.set(false);
     }
   }
 
@@ -748,7 +713,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
       const MAX_FRAME_BUFFER = 4;
       const FRAME_CAPTURE_INTERVAL = 400; // Capturar frame cada 400ms
       const LIVENESS_CHECK_INTERVAL = 800; // Verificar liveness cada 800ms
-
       /**
        * Captura un frame del video y lo agrega al buffer circular
        */
@@ -796,108 +760,92 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Inicializar el color del recuadro como "verificando"
       updateFaceFrameColor('checking');
 
-      /**
-       * Verifica liveness usando los frames del buffer
-       */
-      const checkLiveness = async (): Promise<void> => {
-        if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
-          return;
-        }
-
-        try {
-          // Crear copia del buffer para análisis
-          const framesToAnalyze = [...frameBuffer];
-          const result = await this.detectLivenessFromFrames(framesToAnalyze);
-
-          isLive = result;
-
-          // Actualizar UI según resultado
-          if (isLive) {
-            this.updateLivenessStatusIndicator(statusIndicator, 'verified');
-            updateFaceFrameColor('verified');
-            captureButton.textContent = 'Capturar';
-            captureButton.disabled = false;
-            captureButton.style.backgroundColor = 'var(--primary, #007bff)';
-            captureButton.style.cursor = 'pointer';
-            instructionMessage.textContent = 'Persona verificada - Puedes capturar la foto';
-            instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
-          } else {
-            this.updateLivenessStatusIndicator(statusIndicator, 'failed');
-            updateFaceFrameColor('failed');
-            captureButton.textContent = 'Verificando...';
-            captureButton.disabled = true;
-            captureButton.style.backgroundColor = '#6c757d';
-            captureButton.style.cursor = 'not-allowed';
-            instructionMessage.textContent =
-              'Mueve ligeramente la cabeza o parpadea para verificar';
-            instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-          }
-        } catch (error) {
-          this.logger.warn('Error en verificación de liveness:', error);
-          isLive = false;
-          updateFaceFrameColor('failed');
-        }
-      };
-
-      // Iniciar captura continua de frames
-      const frameCaptureInterval = setInterval(captureFrame, FRAME_CAPTURE_INTERVAL);
-
-      // Iniciar verificación continua de liveness
-      livenessCheckInterval = setInterval(() => {
-        void checkLiveness();
-      }, LIVENESS_CHECK_INTERVAL);
-
-      // Esperar un momento inicial para llenar el buffer
-      await new Promise<void>((resolve) => setTimeout(resolve, 1500));
-
-      // Esperar a que el usuario capture o cancele
       return new Promise<string>((resolve, reject) => {
-        const cleanup = (): void => {
-          isCapturing = true;
-          // Detener intervalos
-          if (frameCaptureInterval) {
-            clearInterval(frameCaptureInterval);
-          }
-          if (livenessCheckInterval) {
-            clearInterval(livenessCheckInterval);
-          }
-          // Detener stream de video
-          stream.getTracks().forEach((track) => track.stop());
-          // Remover elementos del DOM
-          if (document.body.contains(video)) {
-            document.body.removeChild(video);
-          }
-          if (document.body.contains(uiContainer)) {
-            document.body.removeChild(uiContainer);
-          }
-        };
-
-        captureButton.onclick = (): void => {
-          if (!isLive || captureButton.disabled) {
-            return;
-          }
-
+        const captureFinalPhoto = (): void => {
+          if (isCapturing) return;
           isCapturing = true;
 
-          // Crear canvas para capturar la foto final
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
+
           const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(video, 0, 0);
-            // Convertir canvas a base64
-            const base64 = canvas.toDataURL('image/jpeg', 0.9);
-            cleanup();
-            resolve(base64);
-          } else {
-            cleanup();
+          if (!ctx) {
+            this.closeLivenessFromOutside();
             reject(new Error('No se pudo obtener el contexto del canvas'));
+            return;
+          }
+          ctx.drawImage(video, 0, 0);
+          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          this.closeLivenessFromOutside();
+          resolve(base64);
+        };
+
+        /**
+         * Verifica liveness usando los frames del buffer
+         */
+        const checkLiveness = async (): Promise<void> => {
+          if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
+            return;
+          }
+
+          try {
+            // Crear copia del buffer para análisis
+            const framesToAnalyze = [...frameBuffer];
+            const result = await this.detectLivenessFromFrames(framesToAnalyze);
+
+            isLive = result;
+
+            // Actualizar UI según resultado
+            if (isLive) {
+              this.updateLivenessStatusIndicator(statusIndicator, 'verified');
+              updateFaceFrameColor('verified');
+              captureButton.textContent = 'Capturar';
+              captureButton.disabled = false;
+              captureButton.style.backgroundColor = 'var(--primary, #007bff)';
+              captureButton.style.cursor = 'pointer';
+              instructionMessage.textContent = 'Persona verificada - Puedes capturar la foto';
+              instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
+              this.loading.set(false);
+              setTimeout(captureFinalPhoto, 300);
+              return;
+            } else {
+              this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+              updateFaceFrameColor('failed');
+              captureButton.textContent = 'Verificando...';
+              captureButton.disabled = true;
+              captureButton.style.backgroundColor = '#6c757d';
+              captureButton.style.cursor = 'not-allowed';
+              instructionMessage.textContent =
+                'Mueve ligeramente la cabeza o parpadea para verificar';
+              instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            }
+          } catch (error) {
+            this.logger.warn('Error en verificación de liveness:', error);
+            isLive = false;
+            updateFaceFrameColor('failed');
           }
         };
 
+        // Iniciar captura continua de frames
+        const frameCaptureInterval = setInterval(captureFrame, FRAME_CAPTURE_INTERVAL);
+
+        // Iniciar verificación continua de liveness
+        livenessCheckInterval = setInterval(() => {
+          void checkLiveness();
+        }, LIVENESS_CHECK_INTERVAL);
+
+        // Esperar un momento inicial para llenar el buffer
+        //await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+
+        // Esperar a que el usuario cancele
+        this.livenessVideo = video;
+        this.livenessUI = uiContainer;
+        this.livenessStream = stream;
+        this.frameCaptureInterval = frameCaptureInterval;
+        this.livenessCheckInterval = livenessCheckInterval ?? undefined;
         cancelButton.onclick = (): void => {
-          cleanup();
+          this.closeLivenessFromOutside();
           reject(new Error('Captura cancelada'));
         };
       });
@@ -916,6 +864,64 @@ export class CheckinComponent implements OnInit, OnDestroy {
         throw error;
       }
     }
+  }
+
+  private closeLivenessCamera(options: {
+    video?: HTMLVideoElement;
+    uiContainer?: HTMLDivElement;
+    stream?: MediaStream;
+    frameCaptureInterval?: ReturnType<typeof setInterval> | null;
+    livenessCheckInterval?: ReturnType<typeof setInterval> | null;
+  }): void {
+    const { video, uiContainer, stream, frameCaptureInterval, livenessCheckInterval } = options;
+
+    // Detener intervalos
+    if (frameCaptureInterval) {
+      clearInterval(frameCaptureInterval);
+    }
+
+    if (livenessCheckInterval) {
+      clearInterval(livenessCheckInterval);
+    }
+
+    // Detener cámara
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    // Remover elementos del DOM
+    if (video && document.body.contains(video)) {
+      document.body.removeChild(video);
+    }
+
+    if (uiContainer && document.body.contains(uiContainer)) {
+      document.body.removeChild(uiContainer);
+    }
+  }
+
+  public closeLivenessFromOutside(): void {
+    this.closeLivenessCamera({
+      video: this.livenessVideo,
+      uiContainer: this.livenessUI,
+      stream: this.livenessStream,
+      frameCaptureInterval: this.frameCaptureInterval ?? null,
+      livenessCheckInterval: this.livenessCheckInterval ?? null,
+    });
+    // Rechazar la promesa si estaba activa
+    if (this.livenessPromiseReject) {
+      this.livenessPromiseReject(new Error('Captura cancelada externamente'));
+      this.livenessPromiseReject = undefined;
+    }
+    // Limpiar referencias
+    this.loading.set(false);
+    this.starting.set(false);
+    this.error.set(null);
+    this.success.set(null);
+    this.livenessVideo = undefined;
+    this.livenessUI = undefined;
+    this.livenessStream = undefined;
+    this.frameCaptureInterval = undefined;
+    this.livenessCheckInterval = undefined;
   }
 
   /**
@@ -1018,12 +1024,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Esperar a que el usuario capture o cancele
       return new Promise<string>((resolve, reject) => {
-        const cleanup = (): void => {
-          stream.getTracks().forEach((track) => track.stop());
-          document.body.removeChild(video);
-          document.body.removeChild(captureButton);
-          document.body.removeChild(cancelButton);
-        };
+        this.livenessPromiseReject = reject;
 
         captureButton.onclick = (): void => {
           // Crear canvas para capturar la foto
@@ -1035,16 +1036,16 @@ export class CheckinComponent implements OnInit, OnDestroy {
             ctx.drawImage(video, 0, 0);
             // Convertir canvas a base64
             const base64 = canvas.toDataURL('image/jpeg', 0.9);
-            cleanup();
+            this.closeLivenessFromOutside();
             resolve(base64);
           } else {
-            cleanup();
+            this.closeLivenessFromOutside();
             reject(new Error('No se pudo obtener el contexto del canvas'));
           }
         };
 
         cancelButton.onclick = (): void => {
-          cleanup();
+          this.closeLivenessFromOutside();
           reject(new Error('Captura cancelada'));
         };
       });
