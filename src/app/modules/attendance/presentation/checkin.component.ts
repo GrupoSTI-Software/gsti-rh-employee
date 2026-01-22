@@ -21,7 +21,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
-import { environment } from '../../../../environments/environment';
+// import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-checkin',
@@ -71,7 +71,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   // Estado de carga de modelos de face-api.js
   private faceApiModelsLoaded = false;
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
-  private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
+  private readonly FACE_API_MODELS_URL = ''; //environment.FACE_API_MODELS_URL;
   private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
   private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
   private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
