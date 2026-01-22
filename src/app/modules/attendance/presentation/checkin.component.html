@@ -171,7 +171,11 @@
         {{ error() }}
       </div>
     }
-
+    @if (success()) {
+      <div class="success-message" [@fadeInUp]>
+        {{ success() }}
+      </div>
+    }
     <!-- Loading -->
     @if (loading()) {
       <div class="loading-overlay">

@@ -21,6 +21,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-checkin',
@@ -69,8 +70,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   // Estado de carga de modelos de face-api.js
   private faceApiModelsLoaded = false;
-  // Los modelos se sirven desde la carpeta public/assets/face-api-models => /assets/face-api-models
-  private readonly FACE_API_MODELS_URL = '/assets/face-api-models';
+  // En desarrollo: modelos desde GitHub, en producción: modelos locales
+  private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
   private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
   private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
   private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
@@ -78,9 +79,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly success = signal<string | null>(null);
   readonly currentDate = signal<Date>(new Date());
   readonly selectedDate = signal<Date>(new Date());
-
   readonly currentTime = signal<string>('');
 
   // Datepicker
@@ -423,6 +424,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       if (success) {
         // Recargar asistencia
         await this.loadAttendance();
+        this.success.set('Asistencia registrada correctamente');
       } else {
         this.error.set('Error al registrar el check-in');
       }
@@ -589,10 +591,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Captura una foto usando la cámara del dispositivo con verificación de liveness
-   * Analiza múltiples frames para detectar movimiento y verificar que es una persona real
+   * Captura una foto usando la cámara del dispositivo con verificación continua de liveness
+   * La cámara permanece abierta y verifica continuamente si es una persona real
+   * El usuario decide cuándo cerrar la cámara
    * @returns Promesa con la imagen capturada en formato base64
-   * @throws Error si no se detecta liveness (movimiento)
+   * @throws Error si el usuario cancela o hay problemas con la cámara
    */
   private async capturePhotoWithLiveness(): Promise<string> {
     if (!isPlatformBrowser(this.platformId)) {
@@ -633,107 +636,249 @@ export class CheckinComponent implements OnInit, OnDestroy {
         };
       });
 
-      // Crear mensaje de instrucción para el usuario
+      // Crear contenedor para la UI de la cámara
+      const uiContainer = document.createElement('div');
+      uiContainer.style.position = 'fixed';
+      uiContainer.style.top = '0';
+      uiContainer.style.left = '0';
+      uiContainer.style.width = '100%';
+      uiContainer.style.height = '100%';
+      uiContainer.style.zIndex = '10000';
+      uiContainer.style.pointerEvents = 'none';
+      document.body.appendChild(uiContainer);
+
+      // Crear recuadro delimitador para el rostro (rectángulo)
+      const faceFrame = document.createElement('div');
+      faceFrame.style.position = 'fixed';
+      faceFrame.style.top = 'calc(50% - 30px)';
+      faceFrame.style.left = '50%';
+      faceFrame.style.transform = 'translate(-50%, -50%)';
+      faceFrame.style.width = '260px';
+      faceFrame.style.height = '340px';
+      faceFrame.style.border = '3px solid rgba(255, 255, 255, 0.8)';
+      faceFrame.style.borderRadius = '16px';
+      faceFrame.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1)';
+      faceFrame.style.pointerEvents = 'none';
+      faceFrame.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+      faceFrame.id = 'face-frame';
+      uiContainer.appendChild(faceFrame);
+
+      // Crear indicador de estado de liveness
+      const statusIndicator = document.createElement('div');
+      statusIndicator.style.position = 'fixed';
+      statusIndicator.style.top = '20px';
+      statusIndicator.style.left = '50%';
+      statusIndicator.style.transform = 'translateX(-50%)';
+      statusIndicator.style.padding = '12px 24px';
+      statusIndicator.style.borderRadius = '25px';
+      statusIndicator.style.fontSize = '14px';
+      statusIndicator.style.fontWeight = 'bold';
+      statusIndicator.style.textAlign = 'center';
+      statusIndicator.style.transition = 'all 0.3s ease';
+      statusIndicator.style.pointerEvents = 'none';
+      statusIndicator.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      this.updateLivenessStatusIndicator(statusIndicator, 'checking');
+      uiContainer.appendChild(statusIndicator);
+
+      // Crear mensaje de instrucción
       const instructionMessage = document.createElement('div');
       instructionMessage.textContent =
-        'Por favor, mueve ligeramente la cabeza o parpadea mientras verificamos que eres una persona real...';
+        'Mueve ligeramente la cabeza o parpadea para verificar que eres una persona real';
       instructionMessage.style.position = 'fixed';
-      instructionMessage.style.top = '50%';
+      instructionMessage.style.bottom = '120px';
       instructionMessage.style.left = '50%';
-      instructionMessage.style.transform = 'translate(-50%, -50%)';
-      instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      instructionMessage.style.transform = 'translateX(-50%)';
+      instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
       instructionMessage.style.color = 'white';
-      instructionMessage.style.padding = '20px 30px';
-      instructionMessage.style.borderRadius = '12px';
-      instructionMessage.style.fontSize = '16px';
+      instructionMessage.style.padding = '10px 20px';
+      instructionMessage.style.borderRadius = '8px';
+      instructionMessage.style.fontSize = '13px';
       instructionMessage.style.textAlign = 'center';
-      instructionMessage.style.zIndex = '10001';
-      instructionMessage.style.maxWidth = '80%';
-      instructionMessage.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.5)';
-      document.body.appendChild(instructionMessage);
+      instructionMessage.style.maxWidth = '90%';
+      instructionMessage.style.pointerEvents = 'none';
+      uiContainer.appendChild(instructionMessage);
 
-      // Esperar un momento antes de comenzar la captura para que el usuario vea el mensaje
-      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+      // Crear botón para capturar la foto (inicialmente deshabilitado)
+      const captureButton = document.createElement('button');
+      captureButton.textContent = 'Verificando...';
+      captureButton.disabled = true;
+      captureButton.style.position = 'fixed';
+      captureButton.style.bottom = '30px';
+      captureButton.style.left = '50%';
+      captureButton.style.transform = 'translateX(-50%)';
+      captureButton.style.padding = '14px 32px';
+      captureButton.style.backgroundColor = '#6c757d';
+      captureButton.style.color = 'white';
+      captureButton.style.border = 'none';
+      captureButton.style.borderRadius = '25px';
+      captureButton.style.fontSize = '16px';
+      captureButton.style.fontWeight = 'bold';
+      captureButton.style.cursor = 'not-allowed';
+      captureButton.style.transition = 'all 0.3s ease';
+      captureButton.style.pointerEvents = 'auto';
+      captureButton.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      uiContainer.appendChild(captureButton);
 
-      // Capturar múltiples frames para análisis de liveness
-      const frames: string[] = [];
-      const frameInterval = 500; // 500ms entre frames (más tiempo para movimiento natural)
-      const numberOfFrames = 4; // Capturar 4 frames (más frames = mejor detección)
+      // Crear botón para cancelar/cerrar
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = '✕';
+      cancelButton.style.position = 'fixed';
+      cancelButton.style.top = '20px';
+      cancelButton.style.right = '20px';
+      cancelButton.style.width = '44px';
+      cancelButton.style.height = '44px';
+      cancelButton.style.padding = '0';
+      cancelButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      cancelButton.style.color = '#333';
+      cancelButton.style.border = 'none';
+      cancelButton.style.borderRadius = '50%';
+      cancelButton.style.fontSize = '20px';
+      cancelButton.style.fontWeight = 'bold';
+      cancelButton.style.cursor = 'pointer';
+      cancelButton.style.pointerEvents = 'auto';
+      cancelButton.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+      cancelButton.style.transition = 'all 0.2s ease';
+      uiContainer.appendChild(cancelButton);
 
-      for (let i = 0; i < numberOfFrames; i++) {
-        await new Promise<void>((resolve) => setTimeout(resolve, frameInterval));
+      // Estado de la verificación continua
+      let isLive = false;
+      let livenessCheckInterval: ReturnType<typeof setInterval> | null = null;
+      let isCapturing = false;
+      const frameBuffer: string[] = [];
+      const MAX_FRAME_BUFFER = 4;
+      const FRAME_CAPTURE_INTERVAL = 400; // Capturar frame cada 400ms
+      const LIVENESS_CHECK_INTERVAL = 800; // Verificar liveness cada 800ms
+
+      /**
+       * Captura un frame del video y lo agrega al buffer circular
+       */
+      const captureFrame = (): void => {
+        if (isCapturing) return;
         const canvas = document.createElement('canvas');
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(video, 0, 0);
-          const base64 = canvas.toDataURL('image/jpeg', 0.9);
-          frames.push(base64);
+          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          frameBuffer.push(base64);
+          // Mantener solo los últimos MAX_FRAME_BUFFER frames
+          if (frameBuffer.length > MAX_FRAME_BUFFER) {
+            frameBuffer.shift();
+          }
         }
-      }
+      };
 
-      // Actualizar mensaje mientras se verifica
-      instructionMessage.textContent = 'Verificando movimiento...';
+      /**
+       * Actualiza el color del recuadro del rostro según el estado
+       */
+      const updateFaceFrameColor = (status: 'checking' | 'verified' | 'failed'): void => {
+        const frameColors = {
+          checking: {
+            border: 'rgba(255, 193, 7, 0.9)',
+            shadow: '0 0 0 4px rgba(255, 193, 7, 0.3), inset 0 0 30px rgba(255, 193, 7, 0.1)',
+          },
+          verified: {
+            border: 'rgba(40, 167, 69, 0.9)',
+            shadow: '0 0 0 4px rgba(40, 167, 69, 0.3), inset 0 0 30px rgba(40, 167, 69, 0.1)',
+          },
+          failed: {
+            border: 'rgba(220, 53, 69, 0.9)',
+            shadow: '0 0 0 4px rgba(220, 53, 69, 0.3), inset 0 0 30px rgba(220, 53, 69, 0.1)',
+          },
+        };
 
-      // Verificar liveness analizando movimiento entre frames
-      const isLive = await this.detectLivenessFromFrames(frames);
+        const colors = frameColors[status];
+        faceFrame.style.borderColor = colors.border;
+        faceFrame.style.boxShadow = colors.shadow;
+      };
 
-      // Remover mensaje de instrucción
-      document.body.removeChild(instructionMessage);
+      // Inicializar el color del recuadro como "verificando"
+      updateFaceFrameColor('checking');
 
-      if (!isLive) {
-        stream.getTracks().forEach((track) => track.stop());
-        document.body.removeChild(video);
-        throw new Error(
-          'No se detectó movimiento suficiente. Por favor, mueve ligeramente la cabeza o parpadea para verificar que eres una persona real.',
-        );
-      }
+      /**
+       * Verifica liveness usando los frames del buffer
+       */
+      const checkLiveness = async (): Promise<void> => {
+        if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
+          return;
+        }
 
-      // Crear un botón para capturar la foto final
-      const captureButton = document.createElement('button');
-      captureButton.textContent = 'Capturar';
-      captureButton.style.position = 'fixed';
-      captureButton.style.bottom = '20px';
-      captureButton.style.left = '50%';
-      captureButton.style.transform = 'translateX(-50%)';
-      captureButton.style.padding = '12px 24px';
-      captureButton.style.backgroundColor = 'var(--primary)';
-      captureButton.style.color = 'white';
-      captureButton.style.border = 'none';
-      captureButton.style.borderRadius = '8px';
-      captureButton.style.fontSize = '16px';
-      captureButton.style.fontWeight = 'bold';
-      captureButton.style.zIndex = '10000';
-      captureButton.style.cursor = 'pointer';
-      document.body.appendChild(captureButton);
+        try {
+          // Crear copia del buffer para análisis
+          const framesToAnalyze = [...frameBuffer];
+          const result = await this.detectLivenessFromFrames(framesToAnalyze);
 
-      // Crear un botón para cancelar
-      const cancelButton = document.createElement('button');
-      cancelButton.textContent = 'Cancelar';
-      cancelButton.style.position = 'fixed';
-      cancelButton.style.top = '20px';
-      cancelButton.style.right = '20px';
-      cancelButton.style.padding = '8px 16px';
-      cancelButton.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-      cancelButton.style.color = '#000';
-      cancelButton.style.border = 'none';
-      cancelButton.style.borderRadius = '8px';
-      cancelButton.style.fontSize = '14px';
-      cancelButton.style.zIndex = '10000';
-      cancelButton.style.cursor = 'pointer';
-      document.body.appendChild(cancelButton);
+          isLive = result;
+
+          // Actualizar UI según resultado
+          if (isLive) {
+            this.updateLivenessStatusIndicator(statusIndicator, 'verified');
+            updateFaceFrameColor('verified');
+            captureButton.textContent = 'Capturar';
+            captureButton.disabled = false;
+            captureButton.style.backgroundColor = 'var(--primary, #007bff)';
+            captureButton.style.cursor = 'pointer';
+            instructionMessage.textContent = 'Persona verificada - Puedes capturar la foto';
+            instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
+          } else {
+            this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+            updateFaceFrameColor('failed');
+            captureButton.textContent = 'Verificando...';
+            captureButton.disabled = true;
+            captureButton.style.backgroundColor = '#6c757d';
+            captureButton.style.cursor = 'not-allowed';
+            instructionMessage.textContent =
+              'Mueve ligeramente la cabeza o parpadea para verificar';
+            instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+          }
+        } catch (error) {
+          this.logger.warn('Error en verificación de liveness:', error);
+          isLive = false;
+          updateFaceFrameColor('failed');
+        }
+      };
+
+      // Iniciar captura continua de frames
+      const frameCaptureInterval = setInterval(captureFrame, FRAME_CAPTURE_INTERVAL);
+
+      // Iniciar verificación continua de liveness
+      livenessCheckInterval = setInterval(() => {
+        void checkLiveness();
+      }, LIVENESS_CHECK_INTERVAL);
+
+      // Esperar un momento inicial para llenar el buffer
+      await new Promise<void>((resolve) => setTimeout(resolve, 1500));
 
       // Esperar a que el usuario capture o cancele
       return new Promise<string>((resolve, reject) => {
         const cleanup = (): void => {
+          isCapturing = true;
+          // Detener intervalos
+          if (frameCaptureInterval) {
+            clearInterval(frameCaptureInterval);
+          }
+          if (livenessCheckInterval) {
+            clearInterval(livenessCheckInterval);
+          }
+          // Detener stream de video
           stream.getTracks().forEach((track) => track.stop());
-          document.body.removeChild(video);
-          document.body.removeChild(captureButton);
-          document.body.removeChild(cancelButton);
+          // Remover elementos del DOM
+          if (document.body.contains(video)) {
+            document.body.removeChild(video);
+          }
+          if (document.body.contains(uiContainer)) {
+            document.body.removeChild(uiContainer);
+          }
         };
 
         captureButton.onclick = (): void => {
+          if (!isLive || captureButton.disabled) {
+            return;
+          }
+
+          isCapturing = true;
+
           // Crear canvas para capturar la foto final
           const canvas = document.createElement('canvas');
           canvas.width = video.videoWidth;
@@ -764,13 +909,40 @@ export class CheckinComponent implements OnInit, OnDestroy {
       } else if (err.name === 'NotFoundError') {
         this.logger.warn('Cámara no encontrada');
         throw new Error('No se encontró ninguna cámara');
-      } else if (err.message?.includes('movimiento')) {
-        // Re-lanzar el error de liveness con el mensaje original
+      } else if (err.message?.includes('Captura cancelada')) {
         throw error;
       } else {
         this.logger.error('Error al acceder a la cámara:', error);
         throw error;
       }
+    }
+  }
+
+  /**
+   * Actualiza el indicador visual del estado de liveness
+   * @param indicator - Elemento HTML del indicador
+   * @param status - Estado actual: 'checking', 'verified', 'failed'
+   */
+  private updateLivenessStatusIndicator(
+    indicator: HTMLDivElement,
+    status: 'checking' | 'verified' | 'failed',
+  ): void {
+    switch (status) {
+      case 'checking':
+        indicator.textContent = '🔄 Verificando...';
+        indicator.style.backgroundColor = 'rgba(255, 193, 7, 0.95)';
+        indicator.style.color = '#000';
+        break;
+      case 'verified':
+        indicator.textContent = '✓ Persona verificada';
+        indicator.style.backgroundColor = 'rgba(40, 167, 69, 0.95)';
+        indicator.style.color = 'white';
+        break;
+      case 'failed':
+        indicator.textContent = '⚠ Muévete para verificar';
+        indicator.style.backgroundColor = 'rgba(220, 53, 69, 0.95)';
+        indicator.style.color = 'white';
+        break;
     }
   }
 
@@ -1584,8 +1756,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
         movementDirections.length > 1 ? consistentDirection / (movementDirections.length - 1) : 0;
 
       // Analizar variación en landmarks (expresiones faciales, parpadeos)
+      // Y detectar si el movimiento es rígido (foto) vs independiente (persona real)
       let landmarkVariation = 0;
+      let rigidityScore = 0; // Mide qué tan "rígido" es el movimiento (foto = rígido, persona = flexible)
+
       if (faceDetections.every((d) => d && d.landmarks)) {
+        const landmarkMovementVariances: number[] = [];
+
         for (let i = 1; i < faceDetections.length; i++) {
           const prev = faceDetections[i - 1];
           const curr = faceDetections[i];
@@ -1595,13 +1772,35 @@ export class CheckinComponent implements OnInit, OnDestroy {
             const currPositions = curr.landmarks.positions;
 
             if (prevPositions.length === currPositions.length) {
+              const landmarkDistances: number[] = [];
               let totalLandmarkDistance = 0;
+
               for (let j = 0; j < prevPositions.length; j++) {
                 const dx = currPositions[j].x - prevPositions[j].x;
                 const dy = currPositions[j].y - prevPositions[j].y;
-                totalLandmarkDistance += Math.sqrt(dx * dx + dy * dy);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                landmarkDistances.push(dist);
+                totalLandmarkDistance += dist;
               }
+
               const avgLandmarkDistance = totalLandmarkDistance / prevPositions.length;
+
+              // Calcular varianza de las distancias de landmarks
+              // En una foto, todos los landmarks se mueven igual (varianza baja)
+              // En una persona real, hay micro-expresiones (varianza alta)
+              const landmarkDistanceVariance =
+                landmarkDistances.reduce(
+                  (sum, dist) => sum + Math.pow(dist - avgLandmarkDistance, 2),
+                  0,
+                ) / landmarkDistances.length;
+              const landmarkDistanceStdDev = Math.sqrt(landmarkDistanceVariance);
+
+              // Coeficiente de variación de landmarks (stdDev / mean)
+              // Valores bajos = movimiento rígido (foto), valores altos = movimiento flexible (persona)
+              if (avgLandmarkDistance > 0) {
+                landmarkMovementVariances.push(landmarkDistanceStdDev / avgLandmarkDistance);
+              }
+
               // Normalizar por el tamaño del rostro
               const box = prev.detection.box;
               const faceSize = Math.sqrt(box.width * box.height);
@@ -1610,6 +1809,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
           }
         }
         landmarkVariation = landmarkVariation / (faceDetections.length - 1);
+
+        // Calcular rigidez promedio
+        // Una foto movida tiene coeficiente de variación bajo (< 0.3) porque todos los puntos se mueven igual
+        // Una persona real tiene coeficiente alto (> 0.5) porque hay micro-expresiones
+        if (landmarkMovementVariances.length > 0) {
+          const avgLandmarkVariance =
+            landmarkMovementVariances.reduce((a, b) => a + b, 0) / landmarkMovementVariances.length;
+          rigidityScore = avgLandmarkVariance;
+        }
       }
 
       // También analizar variación en el tamaño del rostro (zoom in/out, acercarse/alejarse)
@@ -1625,72 +1833,41 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       const averageSizeVariation = sizeVariation / (facePositions.length - 1);
 
-      // Análisis adicional: Detectar si el movimiento es demasiado uniforme (foto movida)
-      // vs movimiento orgánico (persona real)
-      let movementVariance = 0;
-      if (movements.length > 1) {
-        const mean = movements.reduce((a, b) => a + b, 0) / movements.length;
-        const variance =
-          movements.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / movements.length;
-        movementVariance = Math.sqrt(variance); // Desviación estándar
-      }
-
-      // Análisis de suavidad del movimiento
-      // Movimientos de foto son más rígidos y uniformes, movimientos naturales son más variables
-      const movementCoefficient =
-        movements.length > 0 && averageMovement > 0 ? movementVariance / averageMovement : 0;
-
       // Verificar que la variación de landmarks no sea demasiado alta
       // Fotos movidas pueden tener variación muy alta en landmarks (> 20%)
-      // Personas reales tienen variación más moderada (0.5% - 18%)
-      const hasNaturalLandmarkVariation = landmarkVariation > 0.005 && landmarkVariation < 0.18;
+      // Personas reales tienen variación más moderada (0.3% - 18%)
+      const hasNaturalLandmarkVariation = landmarkVariation > 0.003 && landmarkVariation < 0.18;
 
       // Verificar que el movimiento no sea excesivo (fotos movidas suelen tener movimientos muy grandes > 20%)
-      // Movimiento natural de cabeza/parpadeos es moderado (2-18%)
-      const hasReasonableMovement = averageMovement > 0.02 && averageMovement < 0.18;
+      // Movimiento natural de cabeza/parpadeos es moderado (1% - 15%)
+      const hasReasonableMovement = averageMovement > 0.01 && averageMovement < 0.15;
 
-      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 25%)
-      const hasReasonableSizeVariation = averageSizeVariation < 0.25;
+      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 20%)
+      const hasReasonableSizeVariation = averageSizeVariation < 0.2;
 
-      // El coeficiente de variación es clave: valores altos (> 0.3) indican movimiento orgánico
-      // Si el coeficiente es alto, podemos ser más permisivos con otros factores
-      const hasHighOrganicMovement = movementCoefficient > 0.3;
+      // CLAVE: Verificar que el movimiento NO sea rígido (detectar fotos movidas)
+      // Una foto movida tiene rigidityScore bajo (< 0.25) porque todos los landmarks se mueven igual
+      // Una persona real tiene rigidityScore alto (> 0.25) porque hay micro-expresiones independientes
+      const hasFlexibleMovement = rigidityScore > 0.25;
 
       // Criterios de liveness balanceados:
-      // Si el movimiento es muy orgánico (coeficiente alto), podemos ser más permisivos
-      // Si el movimiento es menos orgánico, necesitamos que todos los criterios se cumplan estrictamente
-      let hasSignificantMovement: boolean;
-      let hasNaturalMovement: boolean;
+      // 1. El movimiento debe ser razonable (no muy poco, no excesivo)
+      // 2. El movimiento debe ser flexible (no rígido como una foto)
+      // 3. Los landmarks deben tener variación natural
 
-      if (hasHighOrganicMovement) {
-        // Movimiento muy orgánico: ser más permisivo pero aún rechazar extremos
-        // Rechazar movimientos extremadamente grandes (> 25%)
-        hasSignificantMovement =
-          (hasReasonableMovement || averageSizeVariation < 0.3) && averageMovement < 0.25;
-        // Menos estricto con consistencia, rechazar consistencia perfecta
-        hasNaturalMovement =
-          (hasNaturalLandmarkVariation || landmarkVariation < 0.25) &&
-          consistencyRatio >= 0.15 &&
-          consistencyRatio < 0.95;
-      } else {
-        // Movimiento menos orgánico: ser más estricto
-        hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
-        hasNaturalMovement =
-          hasNaturalLandmarkVariation &&
-          movementCoefficient > 0.15 && // Requerir al menos algo de variación
-          consistencyRatio >= 0.2 &&
-          consistencyRatio < 0.9;
-      }
+      const hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
+      const hasNaturalMovement =
+        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.9;
 
       const hasMovement = hasSignificantMovement && hasNaturalMovement;
 
       this.logger.info(
-        `Liveness check: averageMovement=${averageMovement.toFixed(4)}, averageSizeVariation=${averageSizeVariation.toFixed(4)}, consistencyRatio=${consistencyRatio.toFixed(4)}, landmarkVariation=${landmarkVariation.toFixed(4)}, movementCoefficient=${movementCoefficient.toFixed(4)}, isLive=${hasMovement}`,
+        `Liveness check: averageMovement=${averageMovement.toFixed(4)}, averageSizeVariation=${averageSizeVariation.toFixed(4)}, consistencyRatio=${consistencyRatio.toFixed(4)}, landmarkVariation=${landmarkVariation.toFixed(4)}, rigidityScore=${rigidityScore.toFixed(4)}, isLive=${hasMovement}`,
       );
 
       if (!hasMovement) {
         this.logger.warn(
-          `Liveness falló: movimiento insuficiente, inconsistente o no natural. hasSignificantMovement=${hasSignificantMovement}, hasNaturalMovement=${hasNaturalMovement}, movementCoefficient=${movementCoefficient.toFixed(4)}. Esto sugiere que podría ser una foto estática o movida artificialmente.`,
+          `Liveness falló: hasSignificantMovement=${hasSignificantMovement}, hasNaturalMovement=${hasNaturalMovement}, rigidityScore=${rigidityScore.toFixed(4)}, hasFlexibleMovement=${hasFlexibleMovement}. ${rigidityScore < 0.4 ? 'Movimiento rígido detectado (posible foto).' : 'Movimiento insuficiente o no natural.'}`,
         );
       }
 
