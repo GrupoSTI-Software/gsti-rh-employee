@@ -21,6 +21,8 @@ import { IVacationUsed } from '../../domain/entities/vacation-used.interface';
 import { LoggerService } from '@core/services/logger.service';
 import SignaturePad from 'signature_pad';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { Dialog } from 'primeng/dialog';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Componente para capturar la firma digital del empleado
@@ -28,7 +30,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 @Component({
   selector: 'app-vacation-signature',
   standalone: true,
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, Dialog],
   templateUrl: './vacation-signature.component.html',
   styleUrl: './vacation-signature.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,7 @@ export class VacationSignatureComponent implements AfterViewInit, OnDestroy, OnC
   private readonly logger = inject(LoggerService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translateService = inject(TranslateService);
 
   @ViewChild('canvas', { static: false }) canvasRef?: ElementRef<HTMLCanvasElement>;
 
@@ -62,6 +65,7 @@ export class VacationSignatureComponent implements AfterViewInit, OnDestroy, OnC
 
   readonly loading = signal(false);
   readonly hasSignatureData = signal(false);
+  readonly showConfirmDialog = signal(false);
 
   private signaturePad?: SignaturePad;
   private resizeObserver?: ResizeObserver;
@@ -249,6 +253,32 @@ export class VacationSignatureComponent implements AfterViewInit, OnDestroy, OnC
     }
 
     return new Blob([array], { type: contentType });
+  }
+
+  /**
+   * Muestra el modal de confirmación antes de enviar la firma
+   */
+  onConfirmSubmit(): void {
+    if (!this.vacation || !this.signaturePad || this.signaturePad.isEmpty()) {
+      this.logger.warn('No se puede enviar la firma: faltan datos o la firma está vacía');
+      return;
+    }
+    this.showConfirmDialog.set(true);
+  }
+
+  /**
+   * Cierra el modal de confirmación
+   */
+  closeConfirmDialog(): void {
+    this.showConfirmDialog.set(false);
+  }
+
+  /**
+   * Confirma y envía la firma
+   */
+  async confirmAndSubmitSignature(): Promise<void> {
+    this.showConfirmDialog.set(false);
+    await this.submitSignature();
   }
 
   /**

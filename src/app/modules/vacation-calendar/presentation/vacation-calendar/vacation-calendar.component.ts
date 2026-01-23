@@ -276,7 +276,8 @@ export class VacationCalendarComponent implements OnInit {
       const vacationDays = new Set<string>();
       data.forEach((yearWorked) => {
         yearWorked.vacationsUsedList.forEach((vacation) => {
-          const date = new Date(vacation.shiftExceptionsDate);
+          // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+          const date = this.parseDateString(vacation.shiftExceptionsDate);
           const dateKey = this.formatDateKey(date);
           vacationDays.add(dateKey);
         });
@@ -291,12 +292,26 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Normaliza una fecha string a Date sin problemas de zona horaria
+   * Parsea la fecha como UTC para evitar cambios de día
+   */
+  private parseDateString(dateString: string): Date {
+    // Si la fecha viene en formato ISO con hora, extraer solo la parte de fecha
+    const dateOnly = dateString.split('T')[0];
+    const [year, month, day] = dateOnly.split('-').map(Number);
+    // Crear fecha en UTC para evitar problemas de zona horaria
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  /**
    * Formatea una fecha como clave YYYY-MM-DD
+   * Usa UTC para evitar problemas de zona horaria
    */
   private formatDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    // Usar UTC para evitar problemas de zona horaria
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -309,7 +324,8 @@ export class VacationCalendarComponent implements OnInit {
 
     for (const yearWorked of yearsWorked) {
       const vacation = yearWorked.vacationsUsedList.find((v) => {
-        const vacationDate = new Date(v.shiftExceptionsDate);
+        // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+        const vacationDate = this.parseDateString(v.shiftExceptionsDate);
         return this.formatDateKey(vacationDate) === dateKey;
       });
 

@@ -39,7 +39,7 @@
           <button
             type="button"
             class="submit-button"
-            (click)="submitSignature()"
+            (click)="onConfirmSubmit()"
             [disabled]="!hasSignature() || loading()"
           >
             @if (loading()) {
@@ -54,3 +54,41 @@
     </div>
   </aside>
 }
+
+<!-- Modal de confirmación -->
+<p-dialog
+  [visible]="showConfirmDialog()"
+  (visibleChange)="showConfirmDialog.set($event)"
+  [modal]="true"
+  [style]="{ width: '90vw', maxWidth: '400px' }"
+  [header]="'vacationSignature.confirmTitle' | translate"
+  (onHide)="closeConfirmDialog()"
+  [closable]="true"
+>
+  <div class="confirm-dialog-content">
+    <p class="confirm-message">{{ 'vacationSignature.confirmMessage' | translate }}</p>
+    <div class="confirm-actions">
+      <button
+        type="button"
+        class="cancel-button"
+        (click)="closeConfirmDialog()"
+        [disabled]="loading()"
+      >
+        {{ 'vacationSignature.cancel' | translate }}
+      </button>
+      <button
+        type="button"
+        class="confirm-button"
+        (click)="confirmAndSubmitSignature()"
+        [disabled]="loading()"
+      >
+        @if (loading()) {
+          <i class="pi pi-spin pi-spinner"></i>
+        } @else {
+          <i class="pi pi-check"></i>
+        }
+        {{ 'vacationSignature.confirm' | translate }}
+      </button>
+    </div>
+  </div>
+</p-dialog>

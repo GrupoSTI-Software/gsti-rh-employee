@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 import { IVacationUsed } from '../../domain/entities/vacation-used.interface';
 import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
 import { trigger, transition, style, animate } from '@angular/animations';
@@ -43,6 +44,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 })
 export class VacationDetailDrawerComponent implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translateService = inject(TranslateService);
 
   @Input() vacation: IVacationUsed | null = null;
   @Input() vacationSetting: IVacationSetting | null = null;
@@ -80,13 +82,39 @@ export class VacationDetailDrawerComponent implements OnChanges {
   }
 
   /**
+   * Normaliza una fecha string a Date sin problemas de zona horaria
+   * Parsea la fecha como UTC para evitar cambios de día
+   */
+  private parseDateString(dateString: string): Date {
+    // Si la fecha viene en formato ISO con hora, extraer solo la parte de fecha
+    const dateOnly = dateString.split('T')[0];
+    const [year, month, day] = dateOnly.split('-').map(Number);
+    // Crear fecha en UTC para evitar problemas de zona horaria
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  /**
    * Formatea la fecha para mostrar
+   * Normaliza la fecha para evitar problemas de zona horaria
+   * Usa el idioma configurado en la aplicación a través de TranslateService
    */
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const currentLang = navigator.language || 'es-MX';
-    const locale = currentLang.startsWith('en') ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, {
+    // Normalizar la fecha para evitar problemas de zona horaria
+    const date = this.parseDateString(dateString);
+    
+    // Usar el idioma configurado en la aplicación en lugar de navigator.language
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    
+    // Convertir la fecha UTC a fecha local para mostrar correctamente
+    // pero manteniendo los valores de día, mes y año correctos
+    const localDate = new Date(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    );
+    
+    return localDate.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

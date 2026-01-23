@@ -306,6 +306,8 @@
     "no": "No",
     "instructions": "Sign your vacation",
     "clear": "Clear",
-    "submit": "Submit"
+    "submit": "Submit",
+    "confirmTitle": "Confirm signature submission",
+    "confirmMessage": "Are you sure you want to submit this signature? This action cannot be undone."
   }
 }

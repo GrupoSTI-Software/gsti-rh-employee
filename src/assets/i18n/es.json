@@ -306,6 +306,8 @@
     "no": "No",
     "instructions": "Firma tus vacaciones",
     "clear": "Limpiar",
-    "submit": "Enviar"
+    "submit": "Enviar",
+    "confirmTitle": "Confirmar envío de firma",
+    "confirmMessage": "¿Estás seguro de que deseas enviar esta firma? Esta acción no se puede deshacer."
   }
 }

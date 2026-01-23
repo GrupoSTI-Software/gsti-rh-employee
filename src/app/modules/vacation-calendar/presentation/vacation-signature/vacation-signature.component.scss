@@ -177,3 +177,81 @@
     transform: none;
   }
 }
+
+// Estilos para el modal de confirmación
+:host ::ng-deep .confirm-dialog-content {
+  @include flex-column;
+  gap: $spacing-lg;
+  padding: $spacing-md 0;
+}
+
+.confirm-message {
+  font-size: $font-size-base;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: $spacing-md;
+  justify-content: flex-end;
+  padding-top: $spacing-md;
+  border-top: 1px solid var(--border-color);
+}
+
+.cancel-button {
+  @include button-base;
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.confirm-button {
+  @include button-base;
+  @include button-primary;
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  i {
+    font-size: $font-size-lg;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
