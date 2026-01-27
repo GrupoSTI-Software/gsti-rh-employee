@@ -1,0 +1,239 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+// Contenedor principal
+.notice-detail-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.notice-detail-wrapper {
+  width: 100%;
+  max-width: $container-max-width-md;
+  margin: 0 auto;
+  @include flex-column;
+  gap: $spacing-lg;
+}
+
+// Botón de regreso
+.back-button-section {
+  width: 100%;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background-color: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: $font-size-base;
+  cursor: pointer;
+  transition: color $transition-base;
+  border-radius: $radius-md;
+
+  &:hover {
+    color: var(--primary);
+    background-color: var(--surface-hover);
+  }
+
+  i {
+    font-size: $font-size-lg;
+  }
+}
+
+// Estados de carga y error
+.loading-container,
+.error-container {
+  @include flex-column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4xl;
+  gap: $spacing-lg;
+  color: var(--text-secondary);
+  text-align: center;
+
+  i {
+    font-size: $font-size-4xl;
+    color: var(--text-secondary);
+  }
+
+  p {
+    margin: 0;
+    font-size: $font-size-lg;
+  }
+}
+
+.error-container {
+  color: var(--danger);
+
+  i {
+    color: var(--danger);
+  }
+
+  .retry-button {
+    @include button-primary;
+    margin-top: $spacing-lg;
+  }
+}
+
+// Tarjeta de detalle
+.notice-detail-card {
+  @include card;
+  width: 100%;
+}
+
+.notice-header {
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+
+  .notice-title {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0 0 $spacing-md 0;
+    line-height: 1.3;
+  }
+
+  .notice-meta {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    color: var(--text-secondary);
+    font-size: $font-size-sm;
+
+    i {
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+// Contenido HTML del aviso
+.notice-content {
+  color: var(--text-primary);
+  font-size: $font-size-base;
+  line-height: 1.8;
+  word-wrap: break-word;
+
+  // Estilos para el contenido HTML renderizado
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    color: var(--text-primary);
+    font-weight: $font-weight-semibold;
+    margin-top: $spacing-2xl;
+    margin-bottom: $spacing-md;
+    line-height: 1.3;
+  }
+
+  :deep(h1) {
+    font-size: $font-size-2xl;
+  }
+
+  :deep(h2) {
+    font-size: $font-size-xl;
+  }
+
+  :deep(h3) {
+    font-size: $font-size-lg;
+  }
+
+  :deep(p) {
+    margin-bottom: $spacing-md;
+    color: var(--text-primary);
+  }
+
+  :deep(ul),
+  :deep(ol) {
+    margin-bottom: $spacing-md;
+    padding-left: $spacing-2xl;
+    color: var(--text-primary);
+  }
+
+  :deep(li) {
+    margin-bottom: $spacing-xs;
+  }
+
+  :deep(a) {
+    color: var(--primary);
+    text-decoration: underline;
+    transition: color $transition-base;
+
+    &:hover {
+      color: var(--primary-dark);
+    }
+  }
+
+  :deep(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: $radius-md;
+    margin: $spacing-lg 0;
+  }
+
+  :deep(blockquote) {
+    border-left: 4px solid var(--primary);
+    padding-left: $spacing-lg;
+    margin: $spacing-lg 0;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  :deep(code) {
+    background-color: var(--surface);
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    font-family: monospace;
+    font-size: $font-size-sm;
+    color: var(--text-primary);
+  }
+
+  :deep(pre) {
+    background-color: var(--surface);
+    padding: $spacing-lg;
+    border-radius: $radius-md;
+    overflow-x: auto;
+    margin: $spacing-lg 0;
+
+    code {
+      background-color: transparent;
+      padding: 0;
+    }
+  }
+
+  :deep(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: $spacing-lg 0;
+
+    th,
+    td {
+      padding: $spacing-md;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--surface);
+      font-weight: $font-weight-semibold;
+    }
+  }
+
+  :deep(strong),
+  :deep(b) {
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+  }
+
+  :deep(em),
+  :deep(i) {
+    font-style: italic;
+  }
+}

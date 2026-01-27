@@ -37,6 +37,11 @@ app.use((_req, res, next) => {
 
   // Content Security Policy - restringir fuentes de contenido
   // Nota: Ajustar según las necesidades de la aplicación
+  const isDevelopment = process.env['NODE_ENV'] !== 'production';
+  const connectSrc = isDevelopment
+    ? "'self' https: http: ws: wss: ws://127.0.0.1:* ws://localhost:*" // Permitir WebSockets en desarrollo
+    : "'self' https: http:"; // Solo HTTPS/HTTP en producción
+
   res.setHeader(
     'Content-Security-Policy',
     [
@@ -45,7 +50,7 @@ app.use((_req, res, next) => {
       "style-src 'self' 'unsafe-inline'", // Necesario para estilos dinámicos
       "img-src 'self' data: https: http: blob:", // Permitir imágenes de APIs externas
       "font-src 'self' data:", // Fuentes locales
-      "connect-src 'self' https: http:", // APIs externas vía HTTPS y HTTP
+      `connect-src ${connectSrc}`, // APIs externas y WebSockets en desarrollo
       "frame-ancestors 'none'", // Prevenir embedding
       "base-uri 'self'",
       "form-action 'self'",

@@ -1,0 +1,137 @@
+<div class="notices-container" [@fadeIn]>
+  <div class="notices-wrapper">
+    <!-- Título y subtítulo -->
+    <div class="notices-title-section">
+      <h1 class="page-title">{{ 'notices.title' | translate }}</h1>
+      <p class="page-subtitle">{{ 'notices.subtitle' | translate }}</p>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="filters-section" [@fadeInUp]>
+      <div class="search-input-wrapper">
+        <i class="pi pi-search search-icon"></i>
+        <input
+          #searchInput
+          type="text"
+          class="search-input"
+          [placeholder]="'notices.searchPlaceholder' | translate"
+          [value]="searchTerm()"
+        />
+        <button
+          type="button"
+          class="search-button"
+          (click)="onSearch(searchInput.value)"
+          [attr.aria-label]="'notices.searchPlaceholder' | translate"
+        >
+          <i class="pi pi-search"></i>
+        </button>
+      </div>
+
+      <!-- Filtro de estado de lectura -->
+      <div class="filter-buttons">
+        <button
+          type="button"
+          class="filter-button"
+          [class.active]="readStatusFilter() === 'all'"
+          (click)="onReadStatusChange('all')"
+        >
+          {{ 'notices.filterAll' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-button"
+          [class.active]="readStatusFilter() === 'unread'"
+          (click)="onReadStatusChange('unread')"
+        >
+          {{ 'notices.filterUnread' | translate }}
+        </button>
+        <button
+          type="button"
+          class="filter-button"
+          [class.active]="readStatusFilter() === 'read'"
+          (click)="onReadStatusChange('read')"
+        >
+          {{ 'notices.filterRead' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Estado de carga -->
+    @if (loading()) {
+      <div class="loading-container" [@fadeInUp]>
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        <p>{{ 'notices.loading' | translate }}</p>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error() && !loading()) {
+      <div class="error-container" [@fadeInUp]>
+        <i class="pi pi-exclamation-triangle"></i>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <!-- Lista vacía -->
+    @if (!loading() && !error() && !hasNotices()) {
+      <div class="empty-container" [@fadeInUp]>
+        <i class="pi pi-inbox"></i>
+        <p>{{ 'notices.empty' | translate }}</p>
+      </div>
+    }
+
+    <!-- Lista de avisos -->
+    @if (!loading() && !error() && hasNotices()) {
+      <div class="notices-list" [@fadeInUp]>
+        @for (notice of notices(); track notice.noticeId) {
+          <div
+            class="notice-card"
+            [class.unread]="!isNoticeRead(notice)"
+            (click)="goToNoticeDetail(notice.noticeId)"
+          >
+            <div class="notice-header">
+              <h3 class="notice-title">{{ notice.noticeSubject }}</h3>
+              @if (!isNoticeRead(notice)) {
+                <span class="unread-badge">{{ 'notices.unread' | translate }}</span>
+              }
+            </div>
+            <div class="notice-meta">
+              <span class="notice-date">
+                <i class="pi pi-calendar"></i>
+                {{ formatDate(notice.noticeCreatedAt) }}
+              </span>
+            </div>
+            <div class="notice-preview" [innerHTML]="getPreviewHtml(notice.noticeDescription)"></div>
+          </div>
+        }
+      </div>
+
+      <!-- Paginación -->
+      @if (pagination() && pagination()!.lastPage > 1) {
+        <div class="pagination-container" [@fadeInUp]>
+          <button
+            type="button"
+            class="pagination-button"
+            [disabled]="!hasPreviousPage()"
+            (click)="previousPage()"
+          >
+            <i class="pi pi-chevron-left"></i>
+            {{ 'notices.previous' | translate }}
+          </button>
+          <span class="pagination-info">
+            {{ pagination()!.currentPage }} / {{ pagination()!.lastPage }}
+          </span>
+          <button
+            type="button"
+            class="pagination-button"
+            [disabled]="!hasNextPage()"
+            (click)="nextPage()"
+          >
+            {{ 'notices.next' | translate }}
+            <i class="pi pi-chevron-right"></i>
+          </button>
+        </div>
+      }
+    }
+  </div>
+</div>

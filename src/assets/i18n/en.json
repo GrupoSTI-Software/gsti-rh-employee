@@ -3,6 +3,7 @@
     "title": "Menu",
     "attendance": "Attendance",
     "vacations": "Vacations",
+    "notices": "Notices",
     "profile": "Profile",
     "settings": "Settings",
     "biometrics": "Biometrics",
@@ -271,5 +272,20 @@
       "friday": "Fri",
       "saturday": "Sat"
     }
+  },
+  "notices": {
+    "title": "Notices",
+    "subtitle": "View important notices and communications",
+    "searchPlaceholder": "Search notices...",
+    "loading": "Loading notices...",
+    "empty": "No notices available",
+    "unread": "Unread",
+    "previous": "Previous",
+    "next": "Next",
+    "back": "Back",
+    "retry": "Retry",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "filterRead": "Read"
   }
 }
