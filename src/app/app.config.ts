@@ -18,6 +18,10 @@ import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 import { BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT } from '@modules/attendance/domain/employee-biometric-face-id.token';
 import { HttpEmployeeBiometricFaceIdAdapter } from '@modules/attendance/infrastructure/http-employee-biometric-face-id.adapter';
+import { FORGOT_PASSWORD_PORT } from '@modules/forgot-password/domain/forgot-password.token';
+import { HttpForgotPasswordAdapter } from '@modules/forgot-password/infrastructure/http-forgot-password.adapter';
+import { HttpResetPasswordAdapter } from '@modules/reset-password/infrastructure/http-reset-password.adapter';
+import { RESET_PASSWORD_PORT } from '@modules/reset-password/domain/reset-password.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -48,6 +52,14 @@ export const appConfig: ApplicationConfig = {
     {
       provide: AUTH_PORT,
       useClass: HttpAuthAdapter,
+    },
+    {
+      provide: FORGOT_PASSWORD_PORT,
+      useClass: HttpForgotPasswordAdapter,
+    },
+    {
+      provide: RESET_PASSWORD_PORT,
+      useClass: HttpResetPasswordAdapter,
     },
     {
       provide: SYSTEM_SETTINGS_PORT,

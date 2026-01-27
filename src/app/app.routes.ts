@@ -10,6 +10,22 @@ export const routes: Routes = [
     canActivate: [pwaGuard],
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('@modules/forgot-password/presentation/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+    canActivate: [pwaGuard],
+  },
+  {
+    path: 'new-password/:token',
+    loadComponent: () =>
+      import('@modules/reset-password/presentation/reset-password.component').then(
+        (m) => m.ResetPasswordComponent,
+      ),
+    canActivate: [pwaGuard],
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>

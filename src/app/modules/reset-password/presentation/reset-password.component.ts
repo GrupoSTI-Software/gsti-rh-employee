@@ -1,22 +1,22 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { LoginUseCase } from '../application/login.use-case';
 import { BrandingService } from '@core/services/branding.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import packageJson from '../../../../../package.json';
+import { ResetPasswordUseCase } from '../application/reset-password.use-case';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-reset-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './reset-password.component.html',
+  styleUrl: './reset-password.component.scss',
 })
-export class LoginComponent {
-  private readonly loginUseCase = inject(LoginUseCase);
+export class ResetPasswordComponent {
+  private readonly resetPasswordUseCase = inject(ResetPasswordUseCase);
   private readonly translateService = inject(TranslateService);
   readonly branding = inject(BrandingService);
   private readonly router = inject(Router);
@@ -28,10 +28,8 @@ export class LoginComponent {
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
-  readonly loginForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+  readonly resetPasswordForm: FormGroup = this.fb.group({
     password: ['', [Validators.required, Validators.minLength(6)]],
-    rememberMe: [false],
   });
 
   readonly loading = signal(false);
@@ -44,27 +42,32 @@ export class LoginComponent {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+    if (this.resetPasswordForm.invalid) {
+      this.resetPasswordForm.markAllAsTouched();
       return;
     }
 
     this.loading.set(true);
     this.error.set(null);
 
-    const { email, password } = this.loginForm.value;
+    const { password } = this.resetPasswordForm.value;
 
     try {
-      const result = await this.loginUseCase.execute(email, password);
-
+      const route = inject(ActivatedRoute);
+      const token = route.snapshot.paramMap.get('token');
+      if (!token) {
+        this.error.set('Token is required');
+        return;
+      }
+      const result = await this.resetPasswordUseCase.execute(token, password);
       if (result.success) {
         // Redirigir al dashboard
-        await this.router.navigate(['/dashboard/checkin']);
+        await this.router.navigate(['/login']);
       } else {
         const errorMessage =
           result.error !== undefined && result.error.length > 0
             ? result.error
-            : this.translateService.instant('auth.invalidCredentials');
+            : this.translateService.instant('auth.error');
         this.error.set(errorMessage);
       }
     } catch (_err) {
@@ -72,8 +75,5 @@ export class LoginComponent {
     } finally {
       this.loading.set(false);
     }
-  }
-  async forgotPassword(): Promise<void> {
-    await this.router.navigate(['/forgot-password']);
   }
 }
