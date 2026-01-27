@@ -392,26 +392,20 @@
   position: relative;
   user-select: none;
 
-  // Pantallas grandes - mantener altura adecuada para mostrar contenido
   @media (min-width: $breakpoint-lg) {
     min-height: 30px;
     padding: $spacing-sm $spacing-md;
     border-radius: $radius-sm;
-    aspect-ratio: 1;
   }
-
   @media (max-width: $breakpoint-md) {
     min-height: 30px;
     padding: $spacing-xs;
     border-radius: $radius-sm;
-    aspect-ratio: 1;
   }
-
   @media (max-width: $breakpoint-sm) {
-    min-height: 50px; // Reducir altura en móvil
-    padding: 3px 2px; // Reducir padding para que quepa todo
+    min-height: 50px;
+    padding: 3px 2px;
     border-radius: 2px;
-    aspect-ratio: 1;
   }
 
   &.current-month {
@@ -431,81 +425,44 @@
     background: var(--bg-secondary);
   }
 
+  %event-day {
+    position: relative;
+    &.current-month:hover { background: rgba(var(--primary-rgb), 0.25); }
+  }
   &.vacation-day {
+    @extend %event-day;
     background: rgba(var(--primary-rgb), 0.1);
     border-color: var(--primary);
-    position: relative;
-
     &.current-month {
       background: rgba(var(--primary-rgb), 0.15);
-
-      &:hover {
-        background: rgba(var(--primary-rgb), 0.25);
-        border-color: var(--primary-dark);
-      }
-    }
-
-    &.clickable {
-      cursor: pointer;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-
-      &:focus {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
-      }
+      &:hover { border-color: var(--primary-dark); }
     }
   }
-
   &.holiday-day {
+    @extend %event-day;
     background: rgba(var(--warning-rgb), 0.1);
     border-color: var(--warning);
-    position: relative;
-
     &.current-month {
       background: rgba(var(--warning-rgb), 0.15);
-
-      &:hover {
-        background: rgba(var(--warning-rgb), 0.25);
-        border-color: var(--warning);
-      }
+      &:hover { background: rgba(var(--warning-rgb), 0.25); }
     }
   }
-
   &.birthday-day {
+    @extend %event-day;
     background: rgba(var(--success-rgb), 0.1);
     border-color: var(--success);
-    position: relative;
-
     &.current-month {
       background: rgba(var(--success-rgb), 0.15);
-
-      &:hover {
-        background: rgba(var(--success-rgb), 0.25);
-        border-color: var(--success);
-      }
+      &:hover { background: rgba(var(--success-rgb), 0.25); }
     }
   }
-
   &.anniversary-day {
+    @extend %event-day;
     background: rgba(var(--secondary-rgb), 0.1);
     border-color: var(--secondary);
-    position: relative;
-
     &.current-month {
       background: rgba(var(--secondary-rgb), 0.15);
-
-      &:hover {
-        background: rgba(var(--secondary-rgb), 0.25);
-        border-color: var(--secondary);
-      }
+      &:hover { background: rgba(var(--secondary-rgb), 0.25); }
     }
   }
 
@@ -515,47 +472,22 @@
     font-weight: $font-weight-bold;
   }
 
-  // Cuando hay múltiples eventos, dividir visualmente el día
   &.has-multiple-events {
     border: 2px solid var(--border-color);
     background: var(--bg-primary);
-
     &.current-month {
       background: var(--bg-primary);
-    }
-
-    // Combinar colores de fondo cuando hay múltiples eventos
-    &.current-month {
-      // Si tiene vacaciones y otros eventos
       &:has(.vacation-section):has(.holiday-section),
       &:has(.vacation-section):has(.birthday-section),
       &:has(.vacation-section):has(.anniversary-section) {
-        background: linear-gradient(
-          135deg,
-          rgba(var(--primary-rgb), 0.1) 0%,
-          rgba(var(--primary-rgb), 0.05) 50%,
-          var(--bg-primary) 100%
-        );
+        background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.05) 50%, var(--bg-primary) 100%);
       }
-
-      // Si tiene festividades y otros eventos
       &:has(.holiday-section):has(.birthday-section),
       &:has(.holiday-section):has(.anniversary-section) {
-        background: linear-gradient(
-          135deg,
-          rgba(var(--warning-rgb), 0.1) 0%,
-          rgba(var(--warning-rgb), 0.05) 50%,
-          var(--bg-primary) 100%
-        );
+        background: linear-gradient(135deg, rgba(var(--warning-rgb), 0.1) 0%, rgba(var(--warning-rgb), 0.05) 50%, var(--bg-primary) 100%);
       }
-
-      // Si tiene cumpleaños y aniversario
       &:has(.birthday-section):has(.anniversary-section) {
-        background: linear-gradient(
-          135deg,
-          rgba(var(--success-rgb), 0.1) 0%,
-          rgba(var(--secondary-rgb), 0.1) 100%
-        );
+        background: linear-gradient(135deg, rgba(var(--success-rgb), 0.1) 0%, rgba(var(--secondary-rgb), 0.1) 100%);
       }
     }
   }
@@ -579,74 +511,37 @@
   }
 }
 
-// Secciones de eventos para dividir visualmente el día
 .event-section {
   width: 100%;
   margin-bottom: 2px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  &.vacation-section {
-    border-left: 3px solid var(--primary);
-    padding-left: $spacing-xs;
-  }
-
-  &.holiday-section {
-    border-left: 3px solid var(--warning);
-    padding-left: $spacing-xs;
-  }
-
-  &.birthday-section {
-    border-left: 3px solid var(--success);
-    padding-left: $spacing-xs;
-  }
-
-  &.anniversary-section {
-    border-left: 3px solid var(--secondary);
-    padding-left: $spacing-xs;
-  }
-
+  padding-left: $spacing-xs;
+  border-left: 3px solid;
+  &:last-child { margin-bottom: 0; }
+  &.vacation-section { border-left-color: var(--primary); }
+  &.holiday-section { border-left-color: var(--warning); }
+  &.birthday-section { border-left-color: var(--success); }
+  &.anniversary-section { border-left-color: var(--secondary); }
   @media (max-width: $breakpoint-sm) {
     border-left-width: 2px;
     padding-left: 2px;
   }
 }
 
-// Indicadores visuales en los bordes del día
 .event-indicators {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   pointer-events: none;
   border-radius: inherit;
   overflow: hidden;
 }
-
 .event-indicator {
   position: absolute;
   width: 3px;
   height: 100%;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 2px;
-  }
-
-  &.vacation-indicator {
-    left: 0;
-    background: var(--primary);
-    z-index: 1;
-  }
-
-  &.holiday-indicator {
-    right: 0;
-    background: var(--warning);
-    z-index: 1;
-  }
-
+  z-index: 1;
+  @media (max-width: $breakpoint-sm) { width: 2px; }
+  &.vacation-indicator { left: 0; background: var(--primary); }
+  &.holiday-indicator { right: 0; background: var(--warning); }
   &.birthday-indicator {
     top: 0;
     left: 50%;
@@ -654,13 +549,8 @@
     width: 100%;
     height: 3px;
     background: var(--success);
-    z-index: 1;
-
-    @media (max-width: $breakpoint-sm) {
-      height: 2px;
-    }
+    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-
   &.anniversary-indicator {
     bottom: 0;
     left: 50%;
@@ -668,25 +558,10 @@
     width: 100%;
     height: 3px;
     background: var(--secondary);
-    z-index: 1;
-
-    @media (max-width: $breakpoint-sm) {
-      height: 2px;
-    }
+    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-
-  // Cuando hay múltiples indicadores, ajustar posiciones
   .calendar-day.has-multiple-events & {
-    &.vacation-indicator {
-      left: 0;
-      width: 2px;
-    }
-
-    &.holiday-indicator {
-      right: 0;
-      width: 2px;
-    }
-
+    &.vacation-indicator, &.holiday-indicator { width: 2px; }
     &.birthday-indicator {
       top: 0;
       left: 0;
@@ -694,7 +569,6 @@
       height: 100%;
       transform: none;
     }
-
     &.anniversary-indicator {
       bottom: 0;
       right: 0;
@@ -711,14 +585,7 @@
   margin-bottom: $spacing-xs;
   width: 100%;
   gap: $spacing-xs;
-
-  // Pantallas grandes - más compacto
-  @media (min-width: $breakpoint-lg) {
-    margin-bottom: 0;
-    align-items: center;
-  }
-
-  @media (max-width: $breakpoint-sm) {
+  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-sm) {
     margin-bottom: 0;
     align-items: center;
   }
@@ -741,29 +608,22 @@
   font-size: $font-size-base;
   font-weight: $font-weight-medium;
   color: var(--text-primary);
-
-  // Pantallas grandes - mantener tamaño legible
   @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-base;
     font-weight: $font-weight-semibold;
   }
-
   @media (max-width: $breakpoint-md) {
     font-size: $font-size-sm;
   }
-
   @media (max-width: $breakpoint-sm) {
     font-size: 0.7rem;
     font-weight: $font-weight-semibold;
   }
 }
 
-.vacation-icon {
-  font-size: $font-size-sm;
-  color: var(--primary);
+%icon-base {
   flex-shrink: 0;
+  font-size: $font-size-sm;
 
-  // Pantallas grandes - aumentar tamaño
   @media (min-width: $breakpoint-lg) {
     font-size: $font-size-lg;
   }
@@ -771,6 +631,11 @@
   @media (max-width: $breakpoint-sm) {
     font-size: 0.6rem;
   }
+}
+
+.vacation-icon {
+  @extend %icon-base;
+  color: var(--primary);
 }
 
 .holiday-icon {
@@ -799,138 +664,63 @@
 }
 
 .birthday-icon {
-  font-size: $font-size-sm;
+  @extend %icon-base;
   color: var(--success);
-  flex-shrink: 0;
-
-  @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 0.6rem;
-  }
 }
 
 .anniversary-icon {
-  font-size: $font-size-sm;
+  @extend %icon-base;
   color: var(--secondary);
-  flex-shrink: 0;
-
-  @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: 0.6rem;
-  }
 }
 
 .day-content {
   margin-top: auto;
   @include flex-column;
   gap: $spacing-xs;
-
-  @media (min-width: $breakpoint-lg) {
-    display: flex; // Mostrar badges en pantallas grandes también
+  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
+    display: flex;
   }
-
-  @media (max-width: $breakpoint-md) {
-    display: flex; // Mostrar en tablets
-  }
-
   @media (max-width: $breakpoint-sm) {
-    display: none; // Ocultar en móviles para ahorrar espacio
+    display: none;
+  }
+}
+
+%badge-base {
+  display: inline-block;
+  padding: $spacing-xs $spacing-sm;
+  color: white;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-align: center;
+  width: 100%;
+  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
+    font-size: 0.65rem;
+    padding: 2px $spacing-xs;
   }
 }
 
 .vacation-badge {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
+  @extend %badge-base;
   background: var(--primary);
-  color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  text-align: center;
-  width: 100%;
+}
 
-  // Pantallas grandes - mantener tamaño legible
-  @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-xs;
-    padding: $spacing-xs $spacing-sm;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
+.holiday-badge,
+.birthday-badge,
+.anniversary-badge {
+  @extend %badge-base;
 }
 
 .holiday-badge {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
   background: var(--warning);
-  color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  text-align: center;
-  width: 100%;
-
-  @media (min-width: $breakpoint-lg) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
 }
 
 .birthday-badge {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
   background: var(--success);
-  color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  text-align: center;
-  width: 100%;
-
-  @media (min-width: $breakpoint-lg) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
 }
 
 .anniversary-badge {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
   background: var(--secondary);
-  color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  text-align: center;
-  width: 100%;
-
-  @media (min-width: $breakpoint-lg) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
-  }
 }
 
 // Leyenda

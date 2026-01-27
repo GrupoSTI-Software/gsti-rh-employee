@@ -190,7 +190,7 @@
         }
 
         <!-- Mensaje cuando no hay información -->
-        @if (!loadingAttendance && !vacation && holidays.length === 0 && !isBirthday && !isAnniversary && (!attendance || (!attendance?.shiftName && !attendance?.shiftTimeStart && (!attendance?.assistFlatList || (attendance?.assistFlatList?.length ?? 0) === 0)))) {
+        @if (!loadingAttendance && !vacation && holidays.length === 0 && !isBirthday && !isAnniversary && (!attendance || (attendance && !attendance.shiftName && !attendance.shiftTimeStart && (!attendance.assistFlatList || attendance.assistFlatList.length === 0)))) {
           <div class="no-vacation-data">
             <i class="pi pi-info-circle"></i>
             <p>{{ 'calendar.noInformation' | translate }}</p>
