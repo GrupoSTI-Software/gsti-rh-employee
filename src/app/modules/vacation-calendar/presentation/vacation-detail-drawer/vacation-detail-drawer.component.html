@@ -9,7 +9,7 @@
   ></div>
   <aside class="drawer" [@slideInOut]>
     <div class="drawer-header">
-        <h2 class="drawer-title">{{ 'vacationDetail.title' | translate }}</h2>
+        <h2 class="drawer-title">{{ 'calendar.dayDetail' | translate }}</h2>
       <button
         type="button"
         class="close-button"
@@ -22,13 +22,126 @@
 
     <div class="drawer-content">
       <div class="vacation-detail-content">
-        @if (vacation) {
-          <!-- Día seleccionado -->
+        <!-- Fecha seleccionada -->
+        @if (selectedDate) {
           <div class="detail-section">
-            <div class="detail-label">{{ 'vacationDetail.date' | translate }}</div>
-            <div class="detail-value">{{ formatDate(vacation.shiftExceptionsDate) }}</div>
+            <div class="detail-label">{{ 'calendar.date' | translate }}</div>
+            <div class="detail-value">{{ formatSelectedDate() }}</div>
           </div>
+        }
 
+        <!-- Indicador de carga para asistencia -->
+        @if (loadingAttendance) {
+          <div class="detail-section">
+            <div class="loading-attendance">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>{{ 'calendar.loadingAttendance' | translate }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- Festividades -->
+        @if (holidays.length > 0) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.holidays' | translate }}</div>
+            <div class="detail-value">
+              @for (holiday of holidays; track holiday.holidayId) {
+                <div class="holiday-item">
+                  <div class="holiday-icon-small" [innerHTML]="getHolidayIconHtml(holiday.holidayIcon)"></div>
+                  <span>{{ holiday.holidayName }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Cumpleaños -->
+        @if (isBirthday) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.birthday' | translate }}</div>
+            <div class="detail-value">
+              <i class="pi pi-birthday-cake"></i>
+              {{ 'calendar.birthdayMessage' | translate }}
+            </div>
+          </div>
+        }
+
+        <!-- Aniversario -->
+        @if (isAnniversary) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.anniversary' | translate }}</div>
+            <div class="detail-value">
+              <i class="pi pi-calendar"></i>
+              {{ 'calendar.anniversaryMessage' | translate }}
+            </div>
+          </div>
+        }
+
+        <!-- Información del turno -->
+        @if (!loadingAttendance && attendance && (attendance.shiftName || attendance.shiftTimeStart)) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.shift' | translate }}</div>
+            <div class="detail-value">
+              @if (attendance.shiftName) {
+                <div class="shift-name">{{ attendance.shiftName }}</div>
+              }
+              @if (attendance.shiftTimeStart && attendance.shiftTimeEnd) {
+                <div class="shift-time">
+                  {{ formatTime(attendance.shiftTimeStart) }} - {{ formatTime(attendance.shiftTimeEnd) }}
+                </div>
+              } @else if (attendance.shiftTimeStart) {
+                <div class="shift-time">{{ formatTime(attendance.shiftTimeStart) }}</div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Mensaje cuando no hay turno -->
+        @if (!loadingAttendance && attendance && !attendance.shiftName && !attendance.shiftTimeStart) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.shift' | translate }}</div>
+            <div class="detail-value">{{ 'calendar.noShift' | translate }}</div>
+          </div>
+        }
+
+        <!-- Asistencias del día -->
+        @if (!loadingAttendance && attendance && attendance.assistFlatList && attendance.assistFlatList.length > 0) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.attendanceRecords' | translate }}</div>
+            <div class="detail-value">
+              <div class="attendance-list">
+                @for (record of attendance.assistFlatList; track record.assistId) {
+                  <div class="attendance-item">
+                    <div class="attendance-time">{{ formatDateTime(record.assistPunchTime) }}</div>
+                    @if (record.assistTerminalAlias) {
+                      <div class="attendance-detail">
+                        <span class="detail-label-small">{{ 'attendance.terminal' | translate }}:</span>
+                        <span>{{ record.assistTerminalAlias }}</span>
+                      </div>
+                    }
+                    @if (record.assistAreaAlias) {
+                      <div class="attendance-detail">
+                        <span class="detail-label-small">{{ 'attendance.area' | translate }}:</span>
+                        <span>{{ record.assistAreaAlias }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Mensaje cuando no hay registros de asistencia -->
+        @if (!loadingAttendance && attendance && (!attendance.assistFlatList || attendance.assistFlatList.length === 0)) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.attendanceRecords' | translate }}</div>
+            <div class="detail-value">{{ 'calendar.noAttendanceRecords' | translate }}</div>
+          </div>
+        }
+
+        <!-- Información de vacaciones (si aplica) -->
+        @if (vacation) {
           <!-- Periodo -->
           @if (vacationSetting) {
             <div class="detail-section">
@@ -74,10 +187,13 @@
               </button>
             </div>
           }
-        } @else {
+        }
+
+        <!-- Mensaje cuando no hay información -->
+        @if (!loadingAttendance && !vacation && holidays.length === 0 && !isBirthday && !isAnniversary && (!attendance || (!attendance?.shiftName && !attendance?.shiftTimeStart && (!attendance?.assistFlatList || (attendance?.assistFlatList?.length ?? 0) === 0)))) {
           <div class="no-vacation-data">
             <i class="pi pi-info-circle"></i>
-            <p>{{ 'vacationDetail.noData' | translate }}</p>
+            <p>{{ 'calendar.noInformation' | translate }}</p>
           </div>
         }
       </div>

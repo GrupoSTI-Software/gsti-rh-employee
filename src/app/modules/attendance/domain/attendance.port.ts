@@ -7,3 +7,4 @@ export type { IEvidence } from './entities/evidence.interface';
 export type { IAttendanceApiResponse } from './entities/attendance-api-response.interface';
 export type { IEmployeeCalendarDay } from './entities/employee-calendar-day.interface';
 export type { IEmployeeAssist } from './entities/employee-assist.interface';
+export type { IWorkHoliday } from './entities/work-holiday.interface';

@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { Dialog } from 'primeng/dialog';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GetAttendanceUseCase } from '../application/get-attendance.use-case';
 import { StoreAssistUseCase } from '../application/store-assist.use-case';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
@@ -16,6 +17,7 @@ import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/c
 import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-checkin',
@@ -29,6 +31,7 @@ import { LoggerService } from '@core/services/logger.service';
     CheckOutIconComponent,
     EatInIconComponent,
     EatOutIconComponent,
+    TooltipModule,
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
@@ -55,6 +58,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
+  private readonly sanitizer = inject(DomSanitizer);
   private timeInterval?: ReturnType<typeof setInterval>;
 
   readonly attendance = signal<IAttendance | null>(null);
@@ -120,6 +124,17 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const selectedDate = new Date(selected);
     selectedDate.setHours(0, 0, 0, 0);
     return selectedDate < today;
+  });
+
+  /**
+   * Obtiene el HTML sanitizado del icono del día festivo trabajado
+   */
+  readonly holidayIconHtml = computed((): SafeHtml | null => {
+    const icon = this.attendance()?.workHoliday?.holidayIcon;
+    if (!icon) {
+      return null;
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(icon);
   });
 
   ngOnInit(): void {

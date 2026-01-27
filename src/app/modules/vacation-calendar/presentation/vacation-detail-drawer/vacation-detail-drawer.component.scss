@@ -192,3 +192,89 @@
     margin: 0;
   }
 }
+
+.holiday-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.holiday-icon-small {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ::ng-deep svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+
+.shift-name {
+  font-weight: $font-weight-semibold;
+  color: var(--primary);
+  margin-bottom: $spacing-xs;
+}
+
+.shift-time {
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+}
+
+.attendance-list {
+  @include flex-column;
+  gap: $spacing-md;
+}
+
+.attendance-item {
+  padding: $spacing-md;
+  background: var(--bg-secondary);
+  border-radius: $radius;
+  border-left: 3px solid var(--primary);
+}
+
+.attendance-time {
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+  font-family: 'Courier New', monospace;
+  margin-bottom: $spacing-xs;
+}
+
+.attendance-detail {
+  display: flex;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin-top: $spacing-xs;
+}
+
+.detail-label-small {
+  font-weight: $font-weight-medium;
+  color: var(--text-secondary);
+}
+
+.loading-attendance {
+  @include flex-center;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  color: var(--text-secondary);
+
+  i {
+    font-size: $font-size-lg;
+    color: var(--primary);
+  }
+
+  span {
+    font-size: $font-size-sm;
+  }
+}

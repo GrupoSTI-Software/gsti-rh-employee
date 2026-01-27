@@ -14,7 +14,10 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { IVacationUsed } from '../../domain/entities/vacation-used.interface';
 import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
+import { IHoliday } from '../../domain/vacation.port';
+import { IAttendance } from '@modules/attendance/domain/attendance.port';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 /**
  * Componente drawer para mostrar el detalle de un día de vacaciones
@@ -45,9 +48,16 @@ import { trigger, transition, style, animate } from '@angular/animations';
 export class VacationDetailDrawerComponent implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translateService = inject(TranslateService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   @Input() vacation: IVacationUsed | null = null;
   @Input() vacationSetting: IVacationSetting | null = null;
+  @Input() holidays: IHoliday[] = [];
+  @Input() isBirthday = false;
+  @Input() isAnniversary = false;
+  @Input() attendance: IAttendance | null = null;
+  @Input() selectedDate: Date | null = null;
+  @Input() loadingAttendance = false;
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() signRequested = new EventEmitter<IVacationUsed>();
@@ -101,19 +111,15 @@ export class VacationDetailDrawerComponent implements OnChanges {
   formatDate(dateString: string): string {
     // Normalizar la fecha para evitar problemas de zona horaria
     const date = this.parseDateString(dateString);
-    
+
     // Usar el idioma configurado en la aplicación en lugar de navigator.language
     const currentLang = this.translateService.currentLang || 'es';
     const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    
+
     // Convertir la fecha UTC a fecha local para mostrar correctamente
     // pero manteniendo los valores de día, mes y año correctos
-    const localDate = new Date(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate()
-    );
-    
+    const localDate = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+
     return localDate.toLocaleDateString(locale, {
       weekday: 'long',
       year: 'numeric',
@@ -139,5 +145,53 @@ export class VacationDetailDrawerComponent implements OnChanges {
     if (this.vacation) {
       this.signRequested.emit(this.vacation);
     }
+  }
+
+  /**
+   * Obtiene el HTML sanitizado del icono de una festividad
+   */
+  getHolidayIconHtml(icon: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(icon);
+  }
+
+  /**
+   * Formatea la fecha seleccionada
+   */
+  formatSelectedDate(): string {
+    if (!this.selectedDate) {
+      return '';
+    }
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    return this.selectedDate.toLocaleDateString(locale, {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
+  /**
+   * Formatea una hora para mostrar
+   */
+  formatTime(time: string | null): string {
+    if (!time) return '--:--';
+    return time;
+  }
+
+  /**
+   * Formatea una fecha y hora para mostrar
+   */
+  formatDateTime(dateString: string): string {
+    const date = new Date(dateString);
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    return date.toLocaleString(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 }

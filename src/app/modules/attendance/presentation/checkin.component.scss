@@ -9,6 +9,13 @@
   align-items: flex-start;
 }
 
+.holiday-icon-container {
+  position: absolute;
+  left: 8%;
+  width: 3rem;
+  height: 3rem;
+}
+
 .checkin-wrapper {
   width: 100%;
   max-width: $container-max-width-md;

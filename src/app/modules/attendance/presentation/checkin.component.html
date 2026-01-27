@@ -7,6 +7,10 @@
     </div>
 
     <div class="checkin-card" [@fadeInUp]>
+      <!-- Icono de día festivo trabajado -->
+      @if (holidayIconHtml()) {
+        <div  [pTooltip]="attendance()?.workHoliday?.holidayName ?? ''" class="holiday-icon-container" [innerHTML]="holidayIconHtml()"></div>
+      }
       <!-- Header -->
       <div class="checkin-header">
         <div class="header-actions">

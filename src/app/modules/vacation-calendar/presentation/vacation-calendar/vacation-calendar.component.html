@@ -84,30 +84,92 @@
             <div
               class="calendar-day"
               [class.current-month]="day.isCurrentMonth"
-              [class.vacation-day]="day.isVacation"
+              [class.has-multiple-events]="getEventCount(day) > 1"
               [class.today]="isToday(day.date) && day.isCurrentMonth"
-              [class.clickable]="day.isVacation && day.isCurrentMonth"
+              [class.clickable]="day.isCurrentMonth"
+              [pTooltip]="getDayTooltip(day)"
+              [tooltipPosition]="'top'"
+              [showDelay]="300"
               (click)="onDayClick($event, day)"
-              [attr.aria-label]="day.isVacation ? ('vacations.vacationDay' | translate) : ''"
-              [attr.role]="day.isVacation && day.isCurrentMonth ? 'button' : null"
-              [attr.tabindex]="day.isVacation && day.isCurrentMonth ? 0 : -1"
-              (keydown.enter)="day.isVacation && day.isCurrentMonth && onDayClick($event, day)"
-              (keydown.space)="day.isVacation && day.isCurrentMonth && onDayClick($event, day)"
+              [attr.aria-label]="getDayAriaLabel(day)"
+              [attr.role]="day.isCurrentMonth ? 'button' : null"
+              [attr.tabindex]="day.isCurrentMonth ? 0 : -1"
+              (keydown.enter)="day.isCurrentMonth && onDayClick($event, day)"
+              (keydown.space)="day.isCurrentMonth && onDayClick($event, day)"
             >
               <div class="day-header">
                 <span class="day-number">{{ day.dayNumber }}</span>
+                <div class="day-icons">
+                  @if (day.isVacation) {
+                    <i
+                      class="pi pi-suitcase vacation-icon"
+                      [attr.title]="'vacations.vacationDay' | translate"
+                    ></i>
+                  }
+                  @if (day.holidays.length > 0) {
+                    @for (holiday of day.holidays; track holiday.holidayId) {
+                      <div
+                        class="holiday-icon"
+                        [innerHTML]="getHolidayIconHtml(holiday.holidayIcon)"
+                        [attr.title]="holiday.holidayName"
+                      ></div>
+                    }
+                  }
+                  @if (day.isBirthday) {
+                    <i
+                      class="pi pi-birthday-cake birthday-icon"
+                      [attr.title]="'calendar.birthday' | translate"
+                    ></i>
+                  }
+                  @if (day.isAnniversary) {
+                    <i
+                      class="pi pi-calendar anniversary-icon"
+                      [attr.title]="'calendar.anniversary' | translate"
+                    ></i>
+                  }
+                </div>
+              </div>
+              <div class="day-content">
                 @if (day.isVacation) {
-                  <i
-                    class="pi pi-suitcase vacation-icon"
-                    [attr.title]="'vacations.vacationDay' | translate"
-                  ></i>
+                  <div class="event-section vacation-section">
+                    <div class="vacation-badge">{{ 'vacations.vacations' | translate }}</div>
+                  </div>
+                }
+                @if (day.holidays.length > 0) {
+                  @for (holiday of day.holidays; track holiday.holidayId) {
+                    <div class="event-section holiday-section">
+                      <div class="holiday-badge">
+                        {{ holiday.holidayName }}
+                      </div>
+                    </div>
+                  }
+                }
+                @if (day.isBirthday) {
+                  <div class="event-section birthday-section">
+                    <div class="birthday-badge">{{ 'calendar.birthday' | translate }}</div>
+                  </div>
+                }
+                @if (day.isAnniversary) {
+                  <div class="event-section anniversary-section">
+                    <div class="anniversary-badge">{{ 'calendar.anniversary' | translate }}</div>
+                  </div>
                 }
               </div>
-              @if (day.isVacation) {
-                <div class="day-content">
-                  <div class="vacation-badge">{{ 'vacations.vacations' | translate }}</div>
-                </div>
-              }
+              <!-- Indicadores visuales de múltiples eventos -->
+              <div class="event-indicators">
+                @if (day.isVacation) {
+                  <div class="event-indicator vacation-indicator"></div>
+                }
+                @if (day.holidays.length > 0) {
+                  <div class="event-indicator holiday-indicator"></div>
+                }
+                @if (day.isBirthday) {
+                  <div class="event-indicator birthday-indicator"></div>
+                }
+                @if (day.isAnniversary) {
+                  <div class="event-indicator anniversary-indicator"></div>
+                }
+              </div>
             </div>
           }
         </div>
@@ -121,6 +183,18 @@
         <span>{{ 'vacations.vacationDay' | translate }}</span>
       </div>
       <div class="legend-item">
+        <div class="legend-color holiday-day"></div>
+        <span>{{ 'calendar.holiday' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color birthday-day"></div>
+        <span>{{ 'calendar.birthday' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color anniversary-day"></div>
+        <span>{{ 'calendar.anniversary' | translate }}</span>
+      </div>
+      <div class="legend-item">
         <div class="legend-color today"></div>
         <span>{{ 'vacations.today' | translate }}</span>
       </div>
@@ -128,12 +202,18 @@
   </div>
 </div>
 
-<!-- Drawer de detalle de vacaciones -->
+<!-- Drawer de detalle del día -->
 <app-vacation-detail-drawer
   [vacation]="selectedVacation()"
   [vacationSetting]="selectedVacationSetting()"
+  [holidays]="selectedHolidays()"
+  [isBirthday]="selectedIsBirthday()"
+  [isAnniversary]="selectedIsAnniversary()"
+  [attendance]="selectedAttendance()"
+  [selectedDate]="selectedDate()"
+  [loadingAttendance]="loadingAttendance()"
   [visible]="showDetailDrawer()"
-  (visibleChange)="showDetailDrawer.set($event)"
+  (visibleChange)="onDetailDrawerClose()"
   (signRequested)="onSignRequested($event)"
 />
 

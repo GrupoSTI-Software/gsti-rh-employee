@@ -10,17 +10,33 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { GetYearsWorkedUseCase } from '../../application/get-years-worked.use-case';
 import { SignVacationUseCase } from '../../application/sign-vacation.use-case';
-import { IYearWorked, IVacationUsed } from '../../domain/vacation.port';
+import { GetHolidaysUseCase } from '../../application/get-holidays.use-case';
+import { IYearWorked, IVacationUsed, IHoliday } from '../../domain/vacation.port';
 import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
 import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
 import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
+import { TooltipModule } from 'primeng/tooltip';
+import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
+import { IAttendance } from '@modules/attendance/domain/attendance.port';
+
+/**
+ * Tipo de evento en el calendario
+ */
+export enum ECalendarEventType {
+  VACATION = 'vacation',
+  HOLIDAY = 'holiday',
+  BIRTHDAY = 'birthday',
+  ANNIVERSARY = 'anniversary',
+  SHIFT = 'shift',
+}
 
 /**
  * Interfaz para representar un día del calendario
@@ -31,6 +47,10 @@ interface ICalendarDay {
   isCurrentMonth: boolean;
   isVacation: boolean;
   vacationData?: IVacationUsed;
+  holidays: IHoliday[];
+  isBirthday: boolean;
+  isAnniversary: boolean;
+  shiftName: string | null;
 }
 
 /**
@@ -47,6 +67,7 @@ interface ICalendarDay {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    TooltipModule,
     VacationDetailDrawerComponent,
     VacationSignatureComponent,
   ],
@@ -57,9 +78,12 @@ interface ICalendarDay {
 export class VacationCalendarComponent implements OnInit {
   private readonly getYearsWorkedUseCase = inject(GetYearsWorkedUseCase);
   private readonly signVacationUseCase = inject(SignVacationUseCase);
+  private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
+  private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   // Inputs opcionales para hacer el componente reutilizable
   /**
@@ -99,10 +123,23 @@ export class VacationCalendarComponent implements OnInit {
   // Días de vacaciones como Set para búsqueda rápida (formato: YYYY-MM-DD)
   readonly vacationDaysSet = signal<Set<string>>(new Set());
 
+  // Festividades cargadas
+  readonly holidays = signal<IHoliday[]>([]);
+
+  // Fechas de cumpleaños y aniversarios del empleado
+  readonly employeeBirthday = signal<{ month: number; day: number } | null>(null);
+  readonly employeeAnniversary = signal<{ month: number; day: number } | null>(null);
+
   // Drawer de detalle
   readonly showDetailDrawer = signal(false);
   readonly selectedVacation = signal<IVacationUsed | null>(null);
   readonly selectedVacationSetting = signal<IVacationSetting | null>(null);
+  readonly selectedDate = signal<Date | null>(null);
+  readonly selectedHolidays = signal<IHoliday[]>([]);
+  readonly selectedIsBirthday = signal(false);
+  readonly selectedIsAnniversary = signal(false);
+  readonly selectedAttendance = signal<IAttendance | null>(null);
+  readonly loadingAttendance = signal(false);
 
   // Diálogo de firma
   readonly showSignatureDialog = signal(false);
@@ -146,6 +183,9 @@ export class VacationCalendarComponent implements OnInit {
     const year = this.selectedYear();
     const month = this.selectedMonth();
     const vacationDays = this.vacationDaysSet();
+    const holidaysList = this.holidays();
+    const birthday = this.employeeBirthday();
+    const anniversary = this.employeeAnniversary();
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -158,11 +198,19 @@ export class VacationCalendarComponent implements OnInit {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
+
       days.push({
         date,
         dayNumber: prevMonthLastDay - i,
         isCurrentMonth: false,
         isVacation: false,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null,
       });
     }
 
@@ -171,6 +219,9 @@ export class VacationCalendarComponent implements OnInit {
       const date = new Date(year, month, day);
       const dateKey = this.formatDateKey(date);
       const isVacation = vacationDays.has(dateKey);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
 
       // Buscar datos de vacación si existe
       let vacationData: IVacationUsed | undefined;
@@ -184,6 +235,10 @@ export class VacationCalendarComponent implements OnInit {
         isCurrentMonth: true,
         isVacation,
         vacationData,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null, // Se puede obtener del attendance si es necesario
       });
     }
 
@@ -191,11 +246,19 @@ export class VacationCalendarComponent implements OnInit {
     const remainingDays = 42 - days.length; // 6 semanas * 7 días
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
+
       days.push({
         date,
         dayNumber: day,
         isCurrentMonth: false,
         isVacation: false,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null,
       });
     }
 
@@ -230,6 +293,8 @@ export class VacationCalendarComponent implements OnInit {
     // Cargar todas las vacaciones sin filtrar por año al iniciar el componente
     if (this.autoLoad) {
       void this.loadYearsWorked(undefined);
+      void this.loadHolidays();
+      this.loadEmployeeDates();
     }
   }
 
@@ -374,12 +439,155 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Carga las festividades para el año seleccionado
+   */
+  private async loadHolidays(): Promise<void> {
+    try {
+      const year = this.selectedYear();
+      const firstDate = `${year}-01-01`;
+      const lastDate = `${year}-12-31`;
+
+      const holidaysList = await this.getHolidaysUseCase.execute(firstDate, lastDate, 1, 100);
+      this.holidays.set(holidaysList);
+    } catch (error) {
+      this.logger.error('Error al cargar festividades:', error);
+    }
+  }
+
+  /**
+   * Carga las fechas de cumpleaños y aniversario del empleado
+   */
+  private loadEmployeeDates(): void {
+    const user = this.authPort.getCurrentUser();
+    const person = user?.person;
+
+    // Obtener fecha de cumpleaños
+    if (person?.personBirthday) {
+      const birthDate = new Date(person.personBirthday);
+      this.employeeBirthday.set({
+        month: birthDate.getMonth(),
+        day: birthDate.getDate(),
+      });
+    }
+
+    // Obtener fecha de contratación (aniversario)
+    if (person?.employee?.employeeHireDate) {
+      const hireDate = new Date(person.employee.employeeHireDate);
+      this.employeeAnniversary.set({
+        month: hireDate.getMonth(),
+        day: hireDate.getDate(),
+      });
+    }
+  }
+
+  /**
+   * Obtiene las festividades para una fecha específica
+   */
+  private getHolidaysForDate(date: Date, holidaysList: IHoliday[]): IHoliday[] {
+    const dateKey = this.formatDateKey(date);
+    return holidaysList.filter((holiday) => {
+      const holidayDate = this.parseDateString(holiday.holidayDate);
+      return this.formatDateKey(holidayDate) === dateKey;
+    });
+  }
+
+  /**
+   * Verifica si una fecha es el cumpleaños del empleado
+   */
+  private isBirthday(date: Date, birthday: { month: number; day: number } | null): boolean {
+    if (!birthday) return false;
+    return date.getMonth() === birthday.month && date.getDate() === birthday.day;
+  }
+
+  /**
+   * Verifica si una fecha es el aniversario del empleado
+   */
+  private isAnniversary(date: Date, anniversary: { month: number; day: number } | null): boolean {
+    if (!anniversary) return false;
+    return date.getMonth() === anniversary.month && date.getDate() === anniversary.day;
+  }
+
+  /**
+   * Obtiene el HTML sanitizado del icono de una festividad
+   */
+  getHolidayIconHtml(icon: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(icon);
+  }
+
+  /**
+   * Obtiene el aria-label para un día del calendario
+   */
+  getDayAriaLabel(day: ICalendarDay): string {
+    const labels: string[] = [];
+    if (day.isVacation) {
+      labels.push(this.translateService.instant('vacations.vacationDay'));
+    }
+    if (day.holidays.length > 0) {
+      labels.push(
+        ...day.holidays.map(
+          (h) => `${this.translateService.instant('calendar.holiday')}: ${h.holidayName}`,
+        ),
+      );
+    }
+    if (day.isBirthday) {
+      labels.push(this.translateService.instant('calendar.birthday'));
+    }
+    if (day.isAnniversary) {
+      labels.push(this.translateService.instant('calendar.anniversary'));
+    }
+    return labels.length > 0 ? labels.join(', ') : '';
+  }
+
+  /**
+   * Obtiene el texto del tooltip para un día del calendario
+   * Prioriza festividades, luego cumpleaños, luego aniversario
+   */
+  getDayTooltip(day: ICalendarDay): string {
+    const labels: string[] = [];
+
+    // Prioridad 1: Festividades
+    if (day.holidays.length > 0) {
+      labels.push(...day.holidays.map((h) => h.holidayName));
+    }
+
+    // Prioridad 2: Cumpleaños
+    if (day.isBirthday) {
+      labels.push(this.translateService.instant('calendar.birthday'));
+    }
+
+    // Prioridad 3: Aniversario
+    if (day.isAnniversary) {
+      labels.push(this.translateService.instant('calendar.anniversary'));
+    }
+
+    // Prioridad 4: Vacaciones
+    if (day.isVacation) {
+      labels.push(this.translateService.instant('vacations.vacationDay'));
+    }
+
+    return labels.length > 0 ? labels.join(', ') : '';
+  }
+
+  /**
+   * Cuenta el número total de eventos en un día
+   */
+  getEventCount(day: ICalendarDay): number {
+    let count = 0;
+    if (day.isVacation) count++;
+    if (day.holidays.length > 0) count += day.holidays.length;
+    if (day.isBirthday) count++;
+    if (day.isAnniversary) count++;
+    return count;
+  }
+
+  /**
    * Cambia el año seleccionado
    */
   onYearChange(year: number): void {
     this.selectedYear.set(year);
     // Cuando el usuario cambia el año, cargar las vacaciones de ese año específico
     void this.loadYearsWorked(year);
+    void this.loadHolidays();
   }
 
   /**
@@ -436,30 +644,64 @@ export class VacationCalendarComponent implements OnInit {
   /**
    * Maneja el click en un día del calendario
    */
-  onDayClick(event: Event, day: ICalendarDay): void {
+  async onDayClick(event: Event, day: ICalendarDay): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
 
-    // Prevenir el click si no es un día de vacaciones del mes actual
-    if (!day.isVacation || !day.isCurrentMonth) {
+    // Permitir click en cualquier día del mes actual
+    if (!day.isCurrentMonth) {
       return;
     }
 
-    // Si es un día de vacaciones, intentar obtener los datos
-    // Si no hay vacationData, intentar buscarlo
-    const vacationData = day.vacationData ?? this.findVacationData(day.date);
+    // Establecer la fecha seleccionada
+    this.selectedDate.set(day.date);
 
+    // Obtener datos de vacación si existe
+    const vacationData = day.vacationData ?? this.findVacationData(day.date);
+    this.selectedVacation.set(vacationData ?? null);
+
+    // Buscar la configuración de vacaciones correspondiente
     if (vacationData) {
-      this.selectedVacation.set(vacationData);
-      // Buscar la configuración de vacaciones correspondiente
       const vacationSetting = this.findVacationSetting(vacationData.vacationSettingId);
       this.selectedVacationSetting.set(vacationSetting);
-      this.showDetailDrawer.set(true);
     } else {
-      this.logger.warn('No se encontraron datos de vacación para el día seleccionado', {
-        date: day.date,
-        dateKey: this.formatDateKey(day.date),
-      });
+      this.selectedVacationSetting.set(null);
+    }
+
+    // Establecer festividades, cumpleaños y aniversario
+    this.selectedHolidays.set(day.holidays);
+    this.selectedIsBirthday.set(day.isBirthday);
+    this.selectedIsAnniversary.set(day.isAnniversary);
+
+    // Cargar información de asistencia del día
+    await this.loadAttendanceForDate(day.date);
+
+    // Abrir el drawer
+    this.showDetailDrawer.set(true);
+  }
+
+  /**
+   * Carga la información de asistencia para una fecha específica
+   */
+  private async loadAttendanceForDate(date: Date): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      this.logger.error('No se encontró el ID del empleado');
+      this.selectedAttendance.set(null);
+      return;
+    }
+
+    this.loadingAttendance.set(true);
+
+    try {
+      const dateKey = this.formatDateKey(date);
+      const attendance = await this.getAttendanceUseCase.execute(dateKey, dateKey, user.employeeId);
+      this.selectedAttendance.set(attendance);
+    } catch (error) {
+      this.logger.error('Error al cargar asistencia para el día:', error);
+      this.selectedAttendance.set(null);
+    } finally {
+      this.loadingAttendance.set(false);
     }
   }
 
@@ -488,6 +730,11 @@ export class VacationCalendarComponent implements OnInit {
     this.showDetailDrawer.set(false);
     this.selectedVacation.set(null);
     this.selectedVacationSetting.set(null);
+    this.selectedDate.set(null);
+    this.selectedHolidays.set([]);
+    this.selectedIsBirthday.set(false);
+    this.selectedIsAnniversary.set(false);
+    this.selectedAttendance.set(null);
   }
 
   /**

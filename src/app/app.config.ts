@@ -16,6 +16,8 @@ import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-a
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
 import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/http-vacation.adapter';
 import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
+import { HttpCalendarAdapter } from '@modules/vacation-calendar/infrastructure/http-calendar.adapter';
+import { CALENDAR_PORT } from '@modules/vacation-calendar/domain/calendar.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 
@@ -60,6 +62,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: VACATION_PORT,
       useClass: HttpVacationAdapter,
+    },
+    {
+      provide: CALENDAR_PORT,
+      useClass: HttpCalendarAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({
