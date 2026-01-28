@@ -25,7 +25,7 @@ export class HttpVacationAdapter implements IVacationPort {
     try {
       let url = `${this.apiUrl}/employees/${employeeId}/get-years-worked`;
       if (year) {
-        url += `?year=${year}`;
+        url += ``;
       }
 
       const response = await firstValueFrom<IYearsWorkedApiResponse>(

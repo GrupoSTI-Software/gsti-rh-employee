@@ -477,17 +477,16 @@
     background: var(--bg-primary);
     &.current-month {
       background: var(--bg-primary);
-      &:has(.vacation-section):has(.holiday-section),
-      &:has(.vacation-section):has(.birthday-section),
-      &:has(.vacation-section):has(.anniversary-section) {
-        background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.05) 50%, var(--bg-primary) 100%);
-      }
-      &:has(.holiday-section):has(.birthday-section),
-      &:has(.holiday-section):has(.anniversary-section) {
-        background: linear-gradient(135deg, rgba(var(--warning-rgb), 0.1) 0%, rgba(var(--warning-rgb), 0.05) 50%, var(--bg-primary) 100%);
-      }
-      &:has(.birthday-section):has(.anniversary-section) {
-        background: linear-gradient(135deg, rgba(var(--success-rgb), 0.1) 0%, rgba(var(--secondary-rgb), 0.1) 100%);
+    }
+    // Cuando hay múltiples eventos, no aplicar colores de fondo individuales
+    &.vacation-day,
+    &.holiday-day,
+    &.birthday-day,
+    &.anniversary-day {
+      background: var(--bg-primary);
+      border-color: var(--border-color);
+      &.current-month {
+        background: var(--bg-primary);
       }
     }
   }
@@ -536,46 +535,42 @@
 }
 .event-indicator {
   position: absolute;
-  width: 3px;
-  height: 100%;
   z-index: 1;
-  @media (max-width: $breakpoint-sm) { width: 2px; }
-  &.vacation-indicator { left: 0; background: var(--primary); }
-  &.holiday-indicator { right: 0; background: var(--warning); }
+  // TOP: Verde (Cumpleaños)
   &.birthday-indicator {
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     width: 100%;
     height: 3px;
     background: var(--success);
     @media (max-width: $breakpoint-sm) { height: 2px; }
   }
+  // BOTTOM: Azul (Aniversario)
   &.anniversary-indicator {
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     width: 100%;
     height: 3px;
     background: var(--secondary);
     @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-  .calendar-day.has-multiple-events & {
-    &.vacation-indicator, &.holiday-indicator { width: 2px; }
-    &.birthday-indicator {
-      top: 0;
-      left: 0;
-      width: 2px;
-      height: 100%;
-      transform: none;
-    }
-    &.anniversary-indicator {
-      bottom: 0;
-      right: 0;
-      width: 2px;
-      height: 100%;
-      transform: none;
-    }
+  // LEFT: Azul oscuro (Vacaciones)
+  &.vacation-indicator {
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--primary);
+    @media (max-width: $breakpoint-sm) { width: 2px; }
+  }
+  // RIGHT: Naranja (Holiday)
+  &.holiday-indicator {
+    right: 0;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--warning);
+    @media (max-width: $breakpoint-sm) { width: 2px; }
   }
 }
 
