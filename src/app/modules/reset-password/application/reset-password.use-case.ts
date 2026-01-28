@@ -31,7 +31,7 @@ export class ResetPasswordUseCase {
     return this.resetPasswordPort.resetPassword(token, password);
   }
 
-  private isValidPassword(password: string) {
+  private isValidPassword(password: string): boolean {
     const hasLowercase = /[a-z]/.test(password);
     const hasUppercase = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);

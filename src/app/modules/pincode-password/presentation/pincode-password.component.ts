@@ -1,6 +1,13 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { BrandingService } from '@core/services/branding.service';
@@ -29,12 +36,44 @@ export class PincodePasswordComponent {
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
   readonly pincodePasswordForm: FormGroup = this.fb.group({
-    pinCode: ['', [Validators.required, Validators.minLength(6)]],
+    otpControls: this.fb.array(
+      Array.from({ length: 6 }, () => this.fb.control('', Validators.required)),
+    ),
   });
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly version = packageJson.version;
+
+  get otpControls(): FormArray<FormControl<string>> {
+    return this.pincodePasswordForm.get('otpControls') as FormArray<FormControl<string>>;
+  }
+
+  onInput(event: Event, index: number): void {
+    const input = event.target as HTMLInputElement;
+    input.value = input.value.replace(/\D/g, '');
+    this.otpControls.at(index).setValue(input.value);
+    if (input.value && index < this.otpControls.length - 1) {
+      const next = document.querySelectorAll<HTMLInputElement>('.otp-input')[index + 1];
+      next?.focus();
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent, index: number): void {
+    if (event.key === 'Backspace' && !this.otpControls.at(index).value && index > 0) {
+      const prev = document.querySelectorAll<HTMLInputElement>('.otp-input')[index - 1];
+      prev?.focus();
+    }
+  }
+
+  onPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const paste = event.clipboardData?.getData('text') ?? '';
+    if (!/^\d{6}$/.test(paste)) return;
+    paste.split('').forEach((digit, i) => {
+      this.otpControls.at(i).setValue(digit);
+    });
+  }
 
   async onSubmit(): Promise<void> {
     if (this.pincodePasswordForm.invalid) {
@@ -45,7 +84,7 @@ export class PincodePasswordComponent {
     this.loading.set(true);
     this.error.set(null);
 
-    const { pinCode } = this.pincodePasswordForm.value;
+    const pinCode = this.otpControls.value.join('');
 
     try {
       const result = await this.pincodePasswordUseCase.execute(pinCode);
