@@ -22,6 +22,8 @@ import { FORGOT_PASSWORD_PORT } from '@modules/forgot-password/domain/forgot-pas
 import { HttpForgotPasswordAdapter } from '@modules/forgot-password/infrastructure/http-forgot-password.adapter';
 import { HttpResetPasswordAdapter } from '@modules/reset-password/infrastructure/http-reset-password.adapter';
 import { RESET_PASSWORD_PORT } from '@modules/reset-password/domain/reset-password.token';
+import { HttpPincodePasswordAdapter } from '@modules/pincode-password/infrastructure/http-pincode-password.adapter';
+import { PINCODE_PASSWORD_PORT } from '@modules/pincode-password/domain/pincode-password.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -56,6 +58,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: FORGOT_PASSWORD_PORT,
       useClass: HttpForgotPasswordAdapter,
+    },
+    {
+      provide: PINCODE_PASSWORD_PORT,
+      useClass: HttpPincodePasswordAdapter,
     },
     {
       provide: RESET_PASSWORD_PORT,

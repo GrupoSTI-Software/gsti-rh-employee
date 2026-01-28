@@ -28,14 +28,25 @@ export class ResetPasswordComponent {
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
-  readonly resetPasswordForm: FormGroup = this.fb.group({
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
+  readonly resetPasswordForm: FormGroup = this.fb.group(
+    {
+      password: [
+        '',
+        [Validators.required, Validators.minLength(6)],
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
+      ],
+      confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
+    },
+    {
+      validators: [this.passwordMatchValidator],
+    },
+  );
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly version = packageJson.version;
+  private readonly route = inject(ActivatedRoute);
 
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
@@ -53,15 +64,23 @@ export class ResetPasswordComponent {
     const { password } = this.resetPasswordForm.value;
 
     try {
-      const route = inject(ActivatedRoute);
-      const token = route.snapshot.paramMap.get('token');
+      const token = this.route.snapshot.paramMap.get('token');
       if (!token) {
-        this.error.set('Token is required');
+        this.error.set(this.translateService.instant('auth.tokenRequired'));
+        return;
+      }
+      // validar que la contraseña tenga al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial
+      if (!this.isValidPassword(password)) {
+        this.error.set(this.translateService.instant('auth.passwordPattern'));
+        return;
+      }
+      // validar que la contraseña y la confirmación de contraseña sean iguales
+      if (password !== this.resetPasswordForm.get('confirmPassword')?.value) {
+        this.error.set(this.translateService.instant('auth.passwordMismatch'));
         return;
       }
       const result = await this.resetPasswordUseCase.execute(token, password);
       if (result.success) {
-        // Redirigir al dashboard
         await this.router.navigate(['/login']);
       } else {
         const errorMessage =
@@ -74,6 +93,25 @@ export class ResetPasswordComponent {
       this.error.set(this.translateService.instant('auth.error'));
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  private passwordMatchValidator(formGroup: FormGroup) {
+    const password = formGroup.get('password')?.value;
+    const confirmPassword = formGroup.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { passwordMismatch: true };
+  }
+
+  private isValidPassword(password: string) {
+    const hasLowercase = /[a-z]/.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialCharacter = /[!@#$%^&*()_+\[\]{}|;:,.<>?]/.test(password);
+    const isValidLength = password.length >= 8;
+    if (hasLowercase && hasUppercase && hasNumber && hasSpecialCharacter && isValidLength) {
+      return true;
+    } else {
+      return false;
     }
   }
 }

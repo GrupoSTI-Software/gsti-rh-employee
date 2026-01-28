@@ -6,17 +6,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { BrandingService } from '@core/services/branding.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import packageJson from '../../../../../package.json';
-import { ForgotPasswordUseCase } from '../application/forgot-password.use-case';
+import { PincodePasswordUseCase } from '../application/pincode-password.use-case';
 
 @Component({
-  selector: 'app-forgot-password',
+  selector: 'app-pincode-password',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
-  templateUrl: './forgot-password.component.html',
-  styleUrl: './forgot-password.component.scss',
+  templateUrl: './pincode-password.component.html',
+  styleUrl: './pincode-password.component.scss',
 })
-export class ForgotPasswordComponent {
-  private readonly forgotPasswordUseCase = inject(ForgotPasswordUseCase);
+export class PincodePasswordComponent {
+  private readonly pincodePasswordUseCase = inject(PincodePasswordUseCase);
   private readonly translateService = inject(TranslateService);
   readonly branding = inject(BrandingService);
   private readonly router = inject(Router);
@@ -28,8 +28,8 @@ export class ForgotPasswordComponent {
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
-  readonly forgotPasswordForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
+  readonly pincodePasswordForm: FormGroup = this.fb.group({
+    pinCode: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   readonly loading = signal(false);
@@ -37,21 +37,21 @@ export class ForgotPasswordComponent {
   readonly version = packageJson.version;
 
   async onSubmit(): Promise<void> {
-    if (this.forgotPasswordForm.invalid) {
-      this.forgotPasswordForm.markAllAsTouched();
+    if (this.pincodePasswordForm.invalid) {
+      this.pincodePasswordForm.markAllAsTouched();
       return;
     }
 
     this.loading.set(true);
     this.error.set(null);
 
-    const { email } = this.forgotPasswordForm.value;
+    const { pinCode } = this.pincodePasswordForm.value;
 
     try {
-      const result = await this.forgotPasswordUseCase.execute(email);
+      const result = await this.pincodePasswordUseCase.execute(pinCode);
       if (result.success) {
         // Redirigir al dashboard
-        await this.router.navigate(['/pincode-password']);
+        await this.router.navigate(['/new-password', result.token ?? '']);
       } else {
         const errorMessage =
           result.error !== undefined && result.error.length > 0

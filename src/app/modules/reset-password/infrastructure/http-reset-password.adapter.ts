@@ -38,10 +38,10 @@ export class HttpResetPasswordAdapter implements IResetPasswordPort {
     try {
       const payload: {
         token: string;
-        password: string;
+        userPassword: string;
       } = {
         token: token,
-        password: password,
+        userPassword: password,
       };
 
       const resetPasswordResponse = await firstValueFrom(

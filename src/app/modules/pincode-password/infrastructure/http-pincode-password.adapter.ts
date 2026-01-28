@@ -1,70 +1,66 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IForgotPasswordPort, IForgotPasswordResult } from '../domain/forgot-password.port';
+import { IPincodePasswordPort, IPincodePasswordResult } from '../domain/pincode-password.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
 
 /**
  * Interfaces para las respuestas de la API (específicas de esta implementación)
  */
-interface IForgotPasswordUserData {
+interface IPincodePasswordUserData {
   userId?: number;
   userEmail?: string;
 }
-interface IForgotPasswordResponse {
+interface IPincodePasswordResponse {
   type: string;
   title: string;
   message: string;
   data: {
-    user: IForgotPasswordUserData;
-    code: string;
+    user: IPincodePasswordUserData;
+    token: string;
   };
 }
 
 /**
- * Adaptador HTTP para recuperación de contraseña
- * Implementa el puerto ForgotPasswordPort usando HTTP
+ * Adaptador HTTP para verificación de código de verificación
+ * Implementa el puerto PincodePasswordPort usando HTTP
  */
 @Injectable({
   providedIn: 'root',
 })
-export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
+export class HttpPincodePasswordAdapter implements IPincodePasswordPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
   private readonly apiUrl = environment.API_URL;
 
-  async forgotPassword(email: string): Promise<IForgotPasswordResult> {
+  async verifyPincode(pinCode: string): Promise<IPincodePasswordResult> {
     try {
-      const payload: {
-        userEmail: string;
-        isApp: boolean;
-      } = {
-        userEmail: email,
-        isApp: true,
-      };
-
-      const forgotPasswordResponse = await firstValueFrom(
-        this.http.post<IForgotPasswordResponse>(`${this.apiUrl}/auth/recovery`, payload),
+      const pincodePasswordResponse = await firstValueFrom(
+        this.http.post<IPincodePasswordResponse>(
+          `${this.apiUrl}/auth/request/code-verify/${pinCode}`,
+          {},
+        ),
       );
 
       // Verificar que la respuesta sea exitosa
       if (
-        forgotPasswordResponse?.type === 'success' &&
-        forgotPasswordResponse?.data?.user !== undefined
+        pincodePasswordResponse?.type === 'success' &&
+        pincodePasswordResponse?.data?.user !== undefined
       ) {
         return {
           success: true,
+          token: pincodePasswordResponse?.data?.token,
         };
       }
 
       // Si la respuesta no es exitosa, devolver error
       return {
         success: false,
-        error: forgotPasswordResponse?.message ?? 'Error al recuperar contraseña',
+        error: pincodePasswordResponse?.message ?? 'Error al verificar código de verificación',
       };
     } catch (error: unknown) {
-      this.logger.error('Error al recuperar contraseña');
+      this.logger.error('Error al verificar código de verificación');
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
@@ -86,7 +82,7 @@ export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
 
       return {
         success: false,
-        error: 'Error al recuperar contraseña. Intenta nuevamente.',
+        error: 'Error al verificar código de verificación. Intenta nuevamente.',
       };
     }
   }
