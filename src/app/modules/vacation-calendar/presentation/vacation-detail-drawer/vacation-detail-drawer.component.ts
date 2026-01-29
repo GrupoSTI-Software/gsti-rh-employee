@@ -194,4 +194,62 @@ export class VacationDetailDrawerComponent implements OnChanges {
       minute: '2-digit',
     });
   }
+
+  /**
+   * Verifica si el día tiene una excepción de tipo incapacidad
+   */
+  hasDisabilityException(): boolean {
+    if (!this.attendance?.exceptions || this.attendance.exceptions.length === 0) {
+      return false;
+    }
+
+    return this.attendance.exceptions.some(
+      (exception) =>
+        exception.exceptionType?.exceptionTypeTypeName === 'Incapacidad' ||
+        exception.exceptionType?.exceptionTypeTypeName === 'Disability',
+    );
+  }
+
+  /**
+   * Obtiene el nombre del tipo de excepción de incapacidad
+   */
+  getDisabilityExceptionTypeName(): string {
+    if (!this.attendance?.exceptions || this.attendance.exceptions.length === 0) {
+      return '';
+    }
+
+    const disabilityException = this.attendance.exceptions.find(
+      (exception) =>
+        exception.exceptionType?.exceptionTypeTypeName === 'Incapacidad' ||
+        exception.exceptionType?.exceptionTypeTypeName === 'Disability',
+    );
+
+    if (!disabilityException?.exceptionType) {
+      return '';
+    }
+
+    // Retornar el nombre traducido según el idioma actual
+    const currentLang = this.translateService.currentLang || 'es';
+    if (currentLang === 'en') {
+      return 'Disability';
+    }
+    return 'Incapacidad';
+  }
+
+  /**
+   * Obtiene la descripción de la excepción de incapacidad
+   */
+  getDisabilityDescription(): string {
+    if (!this.attendance?.exceptions || this.attendance.exceptions.length === 0) {
+      return '';
+    }
+
+    const disabilityException = this.attendance.exceptions.find(
+      (exception) =>
+        exception.exceptionType?.exceptionTypeTypeName === 'Incapacidad' ||
+        exception.exceptionType?.exceptionTypeTypeName === 'Disability',
+    );
+
+    return disabilityException?.shiftExceptionsDescription ?? '';
+  }
 }

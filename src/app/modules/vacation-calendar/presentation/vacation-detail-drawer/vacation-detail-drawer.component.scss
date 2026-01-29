@@ -1,6 +1,14 @@
 @use '../../../../../styles/variables' as *;
 @use '../../../../../styles/mixins' as *;
 
+
+.shift-name-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary) !important;
+  margin-bottom: $spacing-xs;
+}
+
 .drawer-overlay {
   position: fixed;
   top: 0;
@@ -217,6 +225,29 @@
     height: 100%;
     display: block;
   }
+}
+
+.disability-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.disability-icon {
+  font-size: $font-size-lg;
+  color: var(--danger);
+  flex-shrink: 0;
+}
+
+.disability-description {
+  margin-top: $spacing-xs;
+  padding: $spacing-sm;
+  background: var(--bg-secondary);
+  border-radius: $radius-sm;
+  border-left: 3px solid var(--danger);
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
 }
 
 .shift-name {

@@ -252,7 +252,8 @@
     "attendanceRecords": "Attendance Records",
     "noAttendanceRecords": "No attendance records",
     "loadingAttendance": "Loading attendance information...",
-    "noInformation": "No information available for this day"
+    "noInformation": "No information available for this day",
+    "disability": "Disability"
   },
   "vacations": {
     "title": "General Calendar",

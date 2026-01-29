@@ -26,6 +26,7 @@ import { VacationSignatureComponent } from '../vacation-signature/vacation-signa
 import { TooltipModule } from 'primeng/tooltip';
 import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
 import { IAttendance } from '@modules/attendance/domain/attendance.port';
+import { GetWorkDisabilitiesUseCase } from '../../application/get-work-disabilities.use-case';
 
 /**
  * Tipo de evento en el calendario
@@ -51,6 +52,7 @@ interface ICalendarDay {
   isBirthday: boolean;
   isAnniversary: boolean;
   shiftName: string | null;
+  hasDisability: boolean;
 }
 
 /**
@@ -80,6 +82,7 @@ export class VacationCalendarComponent implements OnInit {
   private readonly signVacationUseCase = inject(SignVacationUseCase);
   private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
+  private readonly getWorkDisabilitiesUseCase = inject(GetWorkDisabilitiesUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
@@ -141,6 +144,9 @@ export class VacationCalendarComponent implements OnInit {
   readonly selectedAttendance = signal<IAttendance | null>(null);
   readonly loadingAttendance = signal(false);
 
+  // Mapa de incapacidades por fecha (formato: YYYY-MM-DD -> boolean)
+  readonly disabilityMap = signal<Map<string, boolean>>(new Map());
+
   // Diálogo de firma
   readonly showSignatureDialog = signal(false);
 
@@ -186,6 +192,7 @@ export class VacationCalendarComponent implements OnInit {
     const holidaysList = this.holidays();
     const birthday = this.employeeBirthday();
     const anniversary = this.employeeAnniversary();
+    const disabilityMap = this.disabilityMap();
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -198,9 +205,11 @@ export class VacationCalendarComponent implements OnInit {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
+      const dateKey = this.formatDateKey(date);
       const dayHolidays = this.getHolidaysForDate(date, holidaysList);
       const isBday = this.isBirthday(date, birthday);
       const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
 
       days.push({
         date,
@@ -211,6 +220,7 @@ export class VacationCalendarComponent implements OnInit {
         isBirthday: isBday,
         isAnniversary: isAnniv,
         shiftName: null,
+        hasDisability,
       });
     }
 
@@ -222,6 +232,7 @@ export class VacationCalendarComponent implements OnInit {
       const dayHolidays = this.getHolidaysForDate(date, holidaysList);
       const isBday = this.isBirthday(date, birthday);
       const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
 
       // Buscar datos de vacación si existe
       let vacationData: IVacationUsed | undefined;
@@ -239,6 +250,7 @@ export class VacationCalendarComponent implements OnInit {
         isBirthday: isBday,
         isAnniversary: isAnniv,
         shiftName: null, // Se puede obtener del attendance si es necesario
+        hasDisability,
       });
     }
 
@@ -246,9 +258,11 @@ export class VacationCalendarComponent implements OnInit {
     const remainingDays = 42 - days.length; // 6 semanas * 7 días
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
+      const dateKey = this.formatDateKey(date);
       const dayHolidays = this.getHolidaysForDate(date, holidaysList);
       const isBday = this.isBirthday(date, birthday);
       const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
 
       days.push({
         date,
@@ -259,6 +273,7 @@ export class VacationCalendarComponent implements OnInit {
         isBirthday: isBday,
         isAnniversary: isAnniv,
         shiftName: null,
+        hasDisability,
       });
     }
 
@@ -295,6 +310,7 @@ export class VacationCalendarComponent implements OnInit {
       void this.loadYearsWorked(undefined);
       void this.loadHolidays();
       this.loadEmployeeDates();
+      void this.loadDisabilitiesForMonth();
     }
   }
 
@@ -416,8 +432,8 @@ export class VacationCalendarComponent implements OnInit {
       this.selectedMonth.set(month - 1);
     }
 
-    // Al cambiar de mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar de mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -434,8 +450,8 @@ export class VacationCalendarComponent implements OnInit {
       this.selectedMonth.set(month + 1);
     }
 
-    // Al cambiar de mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar de mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -535,6 +551,9 @@ export class VacationCalendarComponent implements OnInit {
     if (day.isAnniversary) {
       labels.push(this.translateService.instant('calendar.anniversary'));
     }
+    if (day.hasDisability) {
+      labels.push(this.translateService.instant('calendar.disability'));
+    }
     return labels.length > 0 ? labels.join(', ') : '';
   }
 
@@ -565,6 +584,11 @@ export class VacationCalendarComponent implements OnInit {
       labels.push(this.translateService.instant('vacations.vacationDay'));
     }
 
+    // Prioridad 5: Incapacidad
+    if (day.hasDisability) {
+      labels.push(this.translateService.instant('calendar.disability'));
+    }
+
     return labels.length > 0 ? labels.join(', ') : '';
   }
 
@@ -577,6 +601,7 @@ export class VacationCalendarComponent implements OnInit {
     if (day.holidays.length > 0) count += day.holidays.length;
     if (day.isBirthday) count++;
     if (day.isAnniversary) count++;
+    if (day.hasDisability) count++;
     return count;
   }
 
@@ -588,6 +613,7 @@ export class VacationCalendarComponent implements OnInit {
     // Cuando el usuario cambia el año, cargar las vacaciones de ese año específico
     void this.loadYearsWorked(year);
     void this.loadHolidays();
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -595,8 +621,8 @@ export class VacationCalendarComponent implements OnInit {
    */
   onMonthChange(month: number): void {
     this.selectedMonth.set(month);
-    // Al cambiar el mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar el mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -702,6 +728,61 @@ export class VacationCalendarComponent implements OnInit {
       this.selectedAttendance.set(null);
     } finally {
       this.loadingAttendance.set(false);
+    }
+  }
+
+  /**
+   * Carga las incapacidades para todos los días del mes actual
+   */
+  private async loadDisabilitiesForMonth(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const workDisabilities = await this.getWorkDisabilitiesUseCase.execute(user.employeeId);
+      const currentMap = new Map<string, boolean>(this.disabilityMap());
+      const year = this.selectedYear();
+      const month = this.selectedMonth();
+
+      // Limpiar incapacidades del mes actual del mapa
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const monthStart = this.formatDateKey(firstDay);
+      const monthEnd = this.formatDateKey(lastDay);
+
+      for (const [dateKey] of currentMap.entries()) {
+        if (dateKey >= monthStart && dateKey <= monthEnd) {
+          currentMap.delete(dateKey);
+        }
+      }
+
+      // Procesar períodos de incapacidad y marcar los días correspondientes
+      for (const workDisability of workDisabilities) {
+        for (const period of workDisability.workDisabilityPeriods) {
+          const startDate = this.parseDateString(period.workDisabilityPeriodStartDate);
+          const endDate = this.parseDateString(period.workDisabilityPeriodEndDate);
+
+          // Iterar sobre todos los días del período
+          const currentDate = new Date(startDate);
+          while (currentDate <= endDate) {
+            const dateKey = this.formatDateKey(currentDate);
+
+            // Solo marcar días que estén en el mes actual
+            if (dateKey >= monthStart && dateKey <= monthEnd) {
+              currentMap.set(dateKey, true);
+            }
+
+            // Avanzar al siguiente día
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+          }
+        }
+      }
+
+      this.disabilityMap.set(currentMap);
+    } catch (error) {
+      this.logger.error('Error al cargar incapacidades del mes:', error);
     }
   }
 

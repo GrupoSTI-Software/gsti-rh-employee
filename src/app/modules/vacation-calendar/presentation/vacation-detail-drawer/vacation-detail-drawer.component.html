@@ -83,7 +83,7 @@
             <div class="detail-label">{{ 'calendar.shift' | translate }}</div>
             <div class="detail-value">
               @if (attendance.shiftName) {
-                <div class="shift-name">{{ attendance.shiftName }}</div>
+                <div class="shift-name shift-name-title">{{ attendance.shiftName }}</div>
               }
               @if (attendance.shiftTimeStart && attendance.shiftTimeEnd) {
                 <div class="shift-time">
@@ -137,6 +137,24 @@
           <div class="detail-section">
             <div class="detail-label">{{ 'calendar.attendanceRecords' | translate }}</div>
             <div class="detail-value">{{ 'calendar.noAttendanceRecords' | translate }}</div>
+          </div>
+        }
+
+        <!-- Información de incapacidad -->
+        @if (!loadingAttendance && attendance && hasDisabilityException()) {
+          <div class="detail-section">
+            <div class="detail-label">{{ 'calendar.disability' | translate }}</div>
+            <div class="detail-value">
+              <div class="disability-item">
+                <i class="pi pi-plus-circle disability-icon"></i>
+                <span>{{ getDisabilityExceptionTypeName() }}</span>
+              </div>
+              @if (getDisabilityDescription()) {
+                <div class="disability-description">
+                  {{ getDisabilityDescription() }}
+                </div>
+              }
+            </div>
           </div>
         }
 

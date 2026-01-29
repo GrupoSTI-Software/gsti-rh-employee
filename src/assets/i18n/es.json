@@ -252,7 +252,8 @@
     "attendanceRecords": "Registros de Asistencia",
     "noAttendanceRecords": "No hay registros de asistencia",
     "loadingAttendance": "Cargando información de asistencia...",
-    "noInformation": "No hay información disponible para este día"
+    "noInformation": "No hay información disponible para este día",
+    "disability": "Incapacidad"
   },
   "vacations": {
     "title": "Calendario General",

@@ -668,6 +668,11 @@
   color: var(--secondary);
 }
 
+.disability-icon {
+  @extend %icon-base;
+  color: var(--danger);
+}
+
 .day-content {
   margin-top: auto;
   @include flex-column;

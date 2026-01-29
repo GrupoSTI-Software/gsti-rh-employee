@@ -18,6 +18,8 @@ import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/h
 import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
 import { HttpCalendarAdapter } from '@modules/vacation-calendar/infrastructure/http-calendar.adapter';
 import { CALENDAR_PORT } from '@modules/vacation-calendar/domain/calendar.token';
+import { HttpWorkDisabilityAdapter } from '@modules/vacation-calendar/infrastructure/http-work-disability.adapter';
+import { WORK_DISABILITY_PORT } from '@modules/vacation-calendar/domain/work-disability.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 
@@ -66,6 +68,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: CALENDAR_PORT,
       useClass: HttpCalendarAdapter,
+    },
+    {
+      provide: WORK_DISABILITY_PORT,
+      useClass: HttpWorkDisabilityAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({

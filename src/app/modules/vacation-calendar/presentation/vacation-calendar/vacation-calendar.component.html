@@ -127,6 +127,12 @@
                       [attr.title]="'calendar.anniversary' | translate"
                     ></i>
                   }
+                  @if (day.hasDisability) {
+                    <i
+                      class="pi pi-plus-circle disability-icon"
+                      [attr.title]="'calendar.disability' | translate"
+                    ></i>
+                  }
                 </div>
               </div>
               <div class="day-content">
