@@ -16,10 +16,12 @@ import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/c
 import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
+import { PushNotificationsService } from '@core/services/push-notifications.service';
 
 @Component({
   selector: 'app-checkin',
   standalone: true,
+  providers: [PushNotificationsService],
   imports: [
     CommonModule,
     FormsModule,
@@ -48,6 +50,7 @@ import { LoggerService } from '@core/services/logger.service';
   ],
 })
 export class CheckinComponent implements OnInit, OnDestroy {
+  private readonly pushService = inject(PushNotificationsService);
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly storeAssistUseCase = inject(StoreAssistUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
@@ -123,6 +126,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // this.pushService.requestPermission();
+    // this.pushService.listen();
     // Inicializar la hora inmediatamente
     this.updateCurrentTime();
 
