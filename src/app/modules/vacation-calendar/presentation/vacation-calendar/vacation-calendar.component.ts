@@ -23,6 +23,7 @@ import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
 import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
 import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
+import { ExceptionRequestDrawerComponent } from '../exception-request-drawer/exception-request-drawer.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
 import { IAttendance } from '@modules/attendance/domain/attendance.port';
@@ -72,6 +73,7 @@ interface ICalendarDay {
     TooltipModule,
     VacationDetailDrawerComponent,
     VacationSignatureComponent,
+    ExceptionRequestDrawerComponent,
   ],
   templateUrl: './vacation-calendar.component.html',
   styleUrl: './vacation-calendar.component.scss',
@@ -149,6 +151,11 @@ export class VacationCalendarComponent implements OnInit {
 
   // Diálogo de firma
   readonly showSignatureDialog = signal(false);
+
+  // Drawer de solicitud de excepciones
+  readonly showExceptionRequestDrawer = signal(false);
+  readonly selectionMode = signal(false);
+  readonly selectedDaysForException = signal<Date[]>([]);
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -679,6 +686,12 @@ export class VacationCalendarComponent implements OnInit {
       return;
     }
 
+    // Si está en modo selección, alternar la selección del día
+    if (this.selectionMode()) {
+      this.toggleDaySelection(day.date);
+      return;
+    }
+
     // Establecer la fecha seleccionada
     this.selectedDate.set(day.date);
 
@@ -856,5 +869,71 @@ export class VacationCalendarComponent implements OnInit {
     } else {
       this.logger.error('Error al firmar la vacación');
     }
+  }
+
+  /**
+   * Alterna la selección de un día para solicitudes de excepción
+   */
+  toggleDaySelection(date: Date): void {
+    const selectedDays = [...this.selectedDaysForException()];
+    const dateKey = this.formatDateKey(date);
+    const index = selectedDays.findIndex((d) => this.formatDateKey(d) === dateKey);
+
+    if (index === -1) {
+      selectedDays.push(date);
+    } else {
+      selectedDays.splice(index, 1);
+    }
+
+    this.selectedDaysForException.set(selectedDays);
+  }
+
+  /**
+   * Verifica si un día está seleccionado
+   */
+  isDaySelected(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.selectedDaysForException().some((d) => this.formatDateKey(d) === dateKey);
+  }
+
+  /**
+   * Alterna el modo de selección de días
+   */
+  toggleSelectionMode(): void {
+    this.selectionMode.set(!this.selectionMode());
+    // Si se desactiva el modo selección, no limpiar los días seleccionados
+  }
+
+  /**
+   * Cancela el modo de selección y limpia los días seleccionados
+   */
+  cancelSelectionMode(): void {
+    this.selectionMode.set(false);
+    this.selectedDaysForException.set([]);
+  }
+
+  /**
+   * Abre el drawer de solicitud de excepciones
+   */
+  openExceptionRequestDrawer(): void {
+    // Abrir el drawer con los días seleccionados (si hay)
+    this.showExceptionRequestDrawer.set(true);
+  }
+
+  /**
+   * Cierra el drawer de solicitud de excepciones
+   */
+  closeExceptionRequestDrawer(): void {
+    this.showExceptionRequestDrawer.set(false);
+    // No desactivar el modo selección automáticamente
+  }
+
+  /**
+   * Maneja cuando se crea una solicitud de excepción
+   */
+  onExceptionRequestCreated(): void {
+    this.selectedDaysForException.set([]);
+    this.selectionMode.set(false);
+    // Recargar datos si es necesario
   }
 }

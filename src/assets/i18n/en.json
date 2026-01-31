@@ -327,5 +327,36 @@
     "submit": "Submit",
     "confirmTitle": "Confirm signature submission",
     "confirmMessage": "Are you sure you want to submit this signature? This action cannot be undone."
+  },
+  "exceptionRequest": {
+    "title": "Exception Request",
+    "tabRequest": "New Request",
+    "tabPending": "Pending",
+    "exceptionType": "Exception Type",
+    "description": "Description",
+    "checkInTime": "Check In Time",
+    "checkOutTime": "Check Out Time",
+    "daysToApply": "Days to Apply",
+    "hoursToApply": "Hours to Apply",
+    "selectedDates": "Selected Dates",
+    "selectDays": "Select Days",
+    "addDate": "Add Date",
+    "removeDate": "Remove Date",
+    "noDatesSelected": "No dates selected. Add at least one date.",
+    "selectExceptionType": "Select an exception type",
+    "loadingTypes": "Loading exception types...",
+    "loadingRequests": "Loading requests...",
+    "noPendingRequests": "No pending requests",
+    "createdAt": "Created on",
+    "submit": "Submit Request",
+    "success": "Request submitted successfully",
+    "error": "Error submitting request",
+    "status": {
+      "requested": "Requested",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "refused": "Refused"
+    },
+    "dateHasPendingRequest": "This date already has a pending request"
   }
 }

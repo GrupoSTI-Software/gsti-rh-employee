@@ -1,0 +1,329 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+    [@fadeIn]
+  ></div>
+  <aside class="drawer" [@slideInOut]>
+    <div class="drawer-header">
+      <h2 class="drawer-title">{{ 'exceptionRequest.title' | translate }}</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          type="button"
+          class="tab-button"
+          [class.active]="activeTab() === 'request'"
+          (click)="setActiveTab('request')"
+        >
+          {{ 'exceptionRequest.tabRequest' | translate }}
+        </button>
+        <button
+          type="button"
+          class="tab-button"
+          [class.active]="activeTab() === 'pending'"
+          (click)="setActiveTab('pending')"
+        >
+          {{ 'exceptionRequest.tabPending' | translate }}
+        </button>
+      </div>
+
+      <!-- Tab: Solicitud de excepción -->
+      @if (activeTab() === 'request') {
+        <form [formGroup]="form" (ngSubmit)="submit()">
+        <!-- Tipo de excepción -->
+        <div class="form-group">
+          <label for="exceptionTypeId" class="form-label">
+            {{ 'exceptionRequest.exceptionType' | translate }}
+            <span class="required">*</span>
+          </label>
+          @if (loadingTypes()) {
+            <div class="loading-types">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>{{ 'exceptionRequest.loadingTypes' | translate }}</span>
+            </div>
+          } @else {
+            <select
+              id="exceptionTypeId"
+              formControlName="exceptionTypeId"
+              class="form-select"
+              [class.invalid]="form.get('exceptionTypeId')?.invalid && form.get('exceptionTypeId')?.touched"
+            >
+              <option [ngValue]="null">{{ 'exceptionRequest.selectExceptionType' | translate }}</option>
+              @for (type of exceptionTypes(); track type.exceptionTypeId) {
+                <option [ngValue]="type.exceptionTypeId">{{ type.exceptionTypeTypeName }}</option>
+              }
+            </select>
+            @if (form.get('exceptionTypeId')?.invalid && form.get('exceptionTypeId')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          }
+        </div>
+
+        <!-- Descripción (si es requerida) -->
+        @if (needsReason()) {
+          <div class="form-group">
+            <label for="exceptionRequestDescription" class="form-label">
+              {{ 'exceptionRequest.description' | translate }}
+              <span class="required">*</span>
+            </label>
+            <textarea
+              id="exceptionRequestDescription"
+              formControlName="exceptionRequestDescription"
+              class="form-textarea"
+              rows="3"
+              [class.invalid]="form.get('exceptionRequestDescription')?.invalid && form.get('exceptionRequestDescription')?.touched"
+              [maxlength]="255"
+            ></textarea>
+            @if (form.get('exceptionRequestDescription')?.invalid && form.get('exceptionRequestDescription')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          </div>
+        }
+
+        <!-- Hora de entrada (si es requerida) -->
+        @if (needsCheckInTime()) {
+          <div class="form-group">
+            <label for="exceptionRequestCheckInTime" class="form-label">
+              {{ 'exceptionRequest.checkInTime' | translate }}
+              <span class="required">*</span>
+            </label>
+            <input
+              type="time"
+              id="exceptionRequestCheckInTime"
+              formControlName="exceptionRequestCheckInTime"
+              class="form-input"
+              [class.invalid]="form.get('exceptionRequestCheckInTime')?.invalid && form.get('exceptionRequestCheckInTime')?.touched"
+            />
+            @if (form.get('exceptionRequestCheckInTime')?.invalid && form.get('exceptionRequestCheckInTime')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          </div>
+        }
+
+        <!-- Hora de salida (si es requerida) -->
+        @if (needsCheckOutTime()) {
+          <div class="form-group">
+            <label for="exceptionRequestCheckOutTime" class="form-label">
+              {{ 'exceptionRequest.checkOutTime' | translate }}
+              <span class="required">*</span>
+            </label>
+            <input
+              type="time"
+              id="exceptionRequestCheckOutTime"
+              formControlName="exceptionRequestCheckOutTime"
+              class="form-input"
+              [class.invalid]="form.get('exceptionRequestCheckOutTime')?.invalid && form.get('exceptionRequestCheckOutTime')?.touched"
+            />
+            @if (form.get('exceptionRequestCheckOutTime')?.invalid && form.get('exceptionRequestCheckOutTime')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          </div>
+        }
+
+        <!-- Días a aplicar (si es requerido) -->
+        @if (needsPeriodInDays()) {
+          <div class="form-group">
+            <label for="daysToApply" class="form-label">
+              {{ 'exceptionRequest.daysToApply' | translate }}
+              <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="daysToApply"
+              formControlName="daysToApply"
+              class="form-input"
+              min="0"
+              [class.invalid]="form.get('daysToApply')?.invalid && form.get('daysToApply')?.touched"
+            />
+            @if (form.get('daysToApply')?.invalid && form.get('daysToApply')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          </div>
+        }
+
+        <!-- Horas a aplicar (si es requerido) -->
+        @if (needsPeriodInHours()) {
+          <div class="form-group">
+            <label for="hoursToApply" class="form-label">
+              {{ 'exceptionRequest.hoursToApply' | translate }}
+              <span class="required">*</span>
+            </label>
+            <input
+              type="number"
+              id="hoursToApply"
+              formControlName="hoursToApply"
+              class="form-input"
+              min="0"
+              step="0.5"
+              [class.invalid]="form.get('hoursToApply')?.invalid && form.get('hoursToApply')?.touched"
+            />
+            @if (form.get('hoursToApply')?.invalid && form.get('hoursToApply')?.touched) {
+              <span class="error-message">{{ 'validation.required' | translate }}</span>
+            }
+          </div>
+        }
+
+        <!-- Fechas seleccionadas -->
+        <div class="form-group">
+          <div class="dates-header">
+            <label for="selectedDates" class="form-label">
+              {{ 'exceptionRequest.selectedDates' | translate }}
+              <span class="required">*</span>
+            </label>
+            <button
+              type="button"
+              class="add-date-button"
+              (click)="addDate()"
+              [attr.aria-label]="'exceptionRequest.addDate' | translate"
+            >
+              <i class="pi pi-plus"></i>
+              {{ 'exceptionRequest.addDate' | translate }}
+            </button>
+          </div>
+
+          @if (selectedDatesList().length === 0) {
+            <div class="no-dates-message">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ 'exceptionRequest.noDatesSelected' | translate }}</span>
+            </div>
+          } @else {
+            <div class="dates-list">
+              @for (date of selectedDatesList(); track $index) {
+                <div class="date-item">
+                  <div class="date-input-wrapper">
+                    <input
+                      type="date"
+                      [value]="formatDateForInput(date)"
+                      (change)="updateDate($index, $event)"
+                      class="date-input"
+                      [class.invalid]="dateErrors().has($index)"
+                    />
+                    @if (dateErrors().has($index)) {
+                      <span class="date-error-message">
+                        {{ dateErrors().get($index) ?? '' | translate }}
+                      </span>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="remove-date-button"
+                    (click)="removeDate($index)"
+                    [attr.aria-label]="'exceptionRequest.removeDate' | translate"
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="form-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            (click)="close()"
+            [disabled]="loading()"
+          >
+            {{ 'menu.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            class="submit-button"
+            [disabled]="loading() || form.invalid || selectedDatesList().length === 0"
+          >
+            @if (loading()) {
+              <i class="pi pi-spin pi-spinner"></i>
+            } @else {
+              <i class="pi pi-send"></i>
+            }
+            {{ 'exceptionRequest.submit' | translate }}
+          </button>
+        </div>
+      </form>
+      }
+
+      <!-- Tab: Excepciones pendientes -->
+      @if (activeTab() === 'pending') {
+        <div class="pending-requests-container">
+          @if (loadingRequests()) {
+            <div class="loading-requests">
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>{{ 'exceptionRequest.loadingRequests' | translate }}</span>
+            </div>
+          } @else if (pendingRequests().length === 0) {
+            <div class="no-requests-message">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ 'exceptionRequest.noPendingRequests' | translate }}</span>
+            </div>
+          } @else {
+            <div class="requests-list">
+              @for (request of pendingRequests(); track request.exceptionRequestId) {
+                <div class="request-item">
+                  <div class="request-header">
+                    <div class="request-type">
+                      <span class="request-type-name">{{ request.exceptionType.exceptionTypeTypeName }}</span>
+                      <span class="request-status" [class]="'status-' + request.exceptionRequestStatus">
+                        {{ getStatusText(request.exceptionRequestStatus) | translate }}
+                      </span>
+                    </div>
+                    <div class="request-date">
+                      {{ formatRequestDate(request.requestedDate) }}
+                    </div>
+                  </div>
+
+                  @if (request.exceptionRequestDescription) {
+                    <div class="request-description">
+                      <strong>{{ 'exceptionRequest.description' | translate }}:</strong>
+                      <p>{{ request.exceptionRequestDescription }}</p>
+                    </div>
+                  }
+
+                  @if (request.exceptionRequestCheckInTime || request.exceptionRequestCheckOutTime) {
+                    <div class="request-times">
+                      @if (request.exceptionRequestCheckInTime) {
+                        <div class="time-item">
+                          <strong>{{ 'exceptionRequest.checkInTime' | translate }}:</strong>
+                          <span>{{ formatTime(request.exceptionRequestCheckInTime) }}</span>
+                        </div>
+                      }
+                      @if (request.exceptionRequestCheckOutTime) {
+                        <div class="time-item">
+                          <strong>{{ 'exceptionRequest.checkOutTime' | translate }}:</strong>
+                          <span>{{ formatTime(request.exceptionRequestCheckOutTime) }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="request-footer">
+                    <div class="request-created">
+                      <i class="pi pi-calendar"></i>
+                      <span>{{ 'exceptionRequest.createdAt' | translate }}: {{ formatRequestDate(request.exceptionRequestCreatedAt) }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </aside>
+}
+

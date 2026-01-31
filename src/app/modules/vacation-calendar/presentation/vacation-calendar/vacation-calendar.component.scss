@@ -170,6 +170,61 @@
   }
 }
 
+.select-days-button {
+  @include button-base;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+  white-space: nowrap;
+
+  &.active {
+    background: var(--primary);
+    color: var(--bg-primary);
+    border-color: var(--primary);
+
+    &:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+  }
+
+  &:hover:not(.active) {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+  }
+}
+
+.exception-request-button {
+  @include button-base;
+  @include button-primary;
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+  white-space: nowrap;
+}
+
+.cancel-selection-button {
+  @include button-base;
+  background: var(--danger);
+  color: var(--bg-primary);
+  @include flex-center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+  border: 1px solid var(--danger);
+
+  &:hover {
+    background: var(--danger-dark);
+    border-color: var(--danger-dark);
+  }
+}
+
 // Navegación del calendario
 .calendar-navigation {
   @include flex-between;
@@ -506,6 +561,40 @@
     &:focus {
       outline: 2px solid var(--primary);
       outline-offset: 2px;
+    }
+  }
+
+  &.selection-mode {
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+      background: rgba(var(--primary-rgb), 0.1);
+      border-color: var(--primary);
+    }
+
+    &.selected {
+      background: rgba(var(--primary-rgb), 0.2);
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+
+      &::after {
+        content: '✓';
+        position: absolute;
+        top: $spacing-xs;
+        right: $spacing-xs;
+        width: 20px;
+        height: 20px;
+        background: var(--primary);
+        color: var(--bg-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-bold;
+        z-index: 10;
+      }
     }
   }
 }
