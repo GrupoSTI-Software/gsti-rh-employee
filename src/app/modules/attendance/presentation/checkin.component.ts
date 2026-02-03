@@ -651,10 +651,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
       faceFrame.style.top = 'calc(50% - 30px)';
       faceFrame.style.left = '50%';
       faceFrame.style.transform = 'translate(-50%, -50%)';
-      faceFrame.style.width = '260px';
-      faceFrame.style.height = '340px';
-      faceFrame.style.border = '3px solid rgba(255, 255, 255, 0.8)';
-      faceFrame.style.borderRadius = '16px';
+      faceFrame.style.width = '85%';
+      faceFrame.style.height = '60%';
+      faceFrame.style.border = '3px dashed rgba(255, 255, 255, 0.8)';
+      faceFrame.style.borderRadius = '100%';
       faceFrame.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1)';
       faceFrame.style.pointerEvents = 'none';
       faceFrame.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
