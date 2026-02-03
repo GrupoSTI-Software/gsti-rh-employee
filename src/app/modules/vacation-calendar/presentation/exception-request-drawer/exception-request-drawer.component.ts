@@ -159,45 +159,47 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       return;
     }
 
-    exceptionTypeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
-      // Actualizar el signal primero
-      this.selectedExceptionTypeId.set(value);
-      
-      // Buscar el tipo directamente en la lista para evitar problemas de timing con el computed
-      const selectedType = value
-        ? this.exceptionTypes().find((type) => type.exceptionTypeId === value) ?? null
-        : null;
-      
-      // Limpiar valores de campos que ya no son necesarios
-      if (!selectedType) {
-        this.form.patchValue(
-          {
-            exceptionRequestCheckInTime: null,
-            exceptionRequestCheckOutTime: null,
-            hoursToApply: 0,
-          },
-          { emitEvent: false },
-        );
-      } else {
-        // Limpiar campos que no son necesarios para el nuevo tipo
-        if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
-          this.form.patchValue({ exceptionRequestCheckInTime: null }, { emitEvent: false });
+    exceptionTypeControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        // Actualizar el signal primero
+        this.selectedExceptionTypeId.set(value);
+
+        // Buscar el tipo directamente en la lista para evitar problemas de timing con el computed
+        const selectedType = value
+          ? (this.exceptionTypes().find((type) => type.exceptionTypeId === value) ?? null)
+          : null;
+
+        // Limpiar valores de campos que ya no son necesarios
+        if (!selectedType) {
+          this.form.patchValue(
+            {
+              exceptionRequestCheckInTime: null,
+              exceptionRequestCheckOutTime: null,
+              hoursToApply: 0,
+            },
+            { emitEvent: false },
+          );
+        } else {
+          // Limpiar campos que no son necesarios para el nuevo tipo
+          if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
+            this.form.patchValue({ exceptionRequestCheckInTime: null }, { emitEvent: false });
+          }
+          if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
+            this.form.patchValue({ exceptionRequestCheckOutTime: null }, { emitEvent: false });
+          }
+          if (selectedType.exceptionTypeNeedPeriodInHours !== 1) {
+            this.form.patchValue({ hoursToApply: 0 }, { emitEvent: false });
+          }
         }
-        if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
-          this.form.patchValue({ exceptionRequestCheckOutTime: null }, { emitEvent: false });
-        }
-        if (selectedType.exceptionTypeNeedPeriodInHours !== 1) {
-          this.form.patchValue({ hoursToApply: 0 }, { emitEvent: false });
-        }
-      }
-      
-      // Actualizar validadores
-      this.updateFormValidators();
-      
-      // Forzar detección de cambios para que aparezcan los campos dinámicos
-      // Usar detectChanges() para forzar la actualización inmediata del template
-      this.cdr.detectChanges();
-    });
+
+        // Actualizar validadores
+        this.updateFormValidators();
+
+        // Forzar detección de cambios para que aparezcan los campos dinámicos
+        // Usar detectChanges() para forzar la actualización inmediata del template
+        this.cdr.detectChanges();
+      });
   }
 
   /**
