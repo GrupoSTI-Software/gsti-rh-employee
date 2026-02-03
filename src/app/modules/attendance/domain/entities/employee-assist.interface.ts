@@ -1,5 +1,6 @@
 import { IException } from './exception.interface';
 import { IAssistance } from './assistance.interface';
+import { IWorkHoliday } from './work-holiday.interface';
 
 /**
  * Interfaz para el turno (interfaz anidada dentro de EmployeeAssist)
@@ -49,6 +50,7 @@ export interface IEmployeeAssist {
   isHoliday: boolean;
   isBirthday: boolean;
   holiday: unknown | null;
+  workHoliday: IWorkHoliday | null;
   hasExceptions: boolean;
   exceptions: IException[];
   assitFlatList: IAssistance[];
