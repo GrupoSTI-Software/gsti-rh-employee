@@ -2,7 +2,16 @@
   <div class="pwa-required-card">
     <div class="header-actions">
       <app-language-selector></app-language-selector>
-      <button type="button" (click)="toggleTheme()" class="theme-button" [title]="theme.theme() === 'light' ? ('pwa.required.darkMode' | translate) : ('pwa.required.lightMode' | translate)">
+      <button
+        type="button"
+        (click)="toggleTheme()"
+        class="theme-button"
+        [title]="
+          theme.theme() === 'light'
+            ? ('pwa.required.darkMode' | translate)
+            : ('pwa.required.lightMode' | translate)
+        "
+      >
         @if (theme.theme() === 'light') {
           <i class="pi pi-moon"></i>
         } @else {
@@ -56,9 +65,11 @@
 
     @if (getPwaInfo().displayMode !== 'standalone') {
       <div class="debug-info">
-        <p><strong>{{ 'pwa.required.debug.mode' | translate }}:</strong> {{ getPwaInfo().displayMode }}</p>
+        <p>
+          <strong>{{ 'pwa.required.debug.mode' | translate }}:</strong>
+          {{ getPwaInfo().displayMode }}
+        </p>
       </div>
     }
   </div>
 </div>
-

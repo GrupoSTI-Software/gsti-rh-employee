@@ -2,6 +2,7 @@
   "menu": {
     "title": "Menu",
     "attendance": "Attendance",
+    "vacations": "Vacations",
     "profile": "Profile",
     "settings": "Settings",
     "biometrics": "Biometrics",
@@ -236,5 +237,40 @@
     "close": "Close",
     "back": "Go back",
     "forward": "Go forward"
+  },
+  "vacations": {
+    "title": "Vacation Calendar",
+    "subtitle": "Check your assigned vacation days",
+    "year": "Year",
+    "month": "Month",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "loading": "Loading vacations...",
+    "vacationDay": "Vacation day",
+    "vacations": "Vacations",
+    "today": "Today",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "daysOfWeek": {
+      "sunday": "Sun",
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat"
+    }
   }
 }

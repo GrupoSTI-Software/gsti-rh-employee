@@ -14,6 +14,8 @@ import { HttpSystemSettingsAdapter } from '@modules/system-settings/infrastructu
 import { SYSTEM_SETTINGS_PORT } from '@modules/system-settings/domain/system-settings.token';
 import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-attendance.adapter';
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
+import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/http-vacation.adapter';
+import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 import { BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT } from '@modules/attendance/domain/employee-biometric-face-id.token';
@@ -60,6 +62,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT,
       useClass: HttpEmployeeBiometricFaceIdAdapter,
+    },
+    {
+      provide: VACATION_PORT,
+      useClass: HttpVacationAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({
