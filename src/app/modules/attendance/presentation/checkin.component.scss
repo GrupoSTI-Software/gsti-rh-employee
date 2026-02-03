@@ -265,6 +265,10 @@
   margin-top: $spacing-lg;
 }
 
+.success-message {
+  @include success-alert;
+  margin-top: $spacing-lg;
+}
 .loading-overlay {
   position: absolute;
   inset: 0;

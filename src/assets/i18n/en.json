@@ -97,6 +97,7 @@
     "checkEatIn": "Lunch In",
     "checkEatOut": "Lunch Out",
     "loading": "Loading attendance...",
+    "starting": "Starting...",
     "error": "Error loading attendance",
     "checkInSuccess": "Check-in registered successfully",
     "checkOutSuccess": "Check-out registered successfully",

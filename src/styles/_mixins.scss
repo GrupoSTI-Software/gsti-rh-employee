@@ -115,6 +115,16 @@
   text-align: center;
 }
 
+// Success alert
+@mixin success-alert {
+  padding: $spacing-md;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+  border-radius: $radius;
+  color: var(--success);
+  font-size: $font-size-sm;
+  text-align: center;
+}
 // Glassmorphism effect
 @mixin glass-effect {
   background: rgba(255, 255, 255, 0.1);

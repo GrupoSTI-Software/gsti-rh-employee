@@ -18,6 +18,30 @@ import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
 import { TooltipModule } from 'primeng/tooltip';
+import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
+import { SecureStorageService } from '@core/services/secure-storage.service';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
+import * as faceapi from 'face-api.js';
+import { environment } from '../../../../environments/environment';
+
+/**
+ * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
+ * face-api.js no tiene tipos TypeScript oficiales
+ */
+interface IFaceDetectionWithLandmarks {
+  detection: {
+    box: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  };
+  landmarks: {
+    positions: { x: number; y: number }[];
+  };
+}
 
 @Component({
   selector: 'app-checkin',
@@ -52,6 +76,7 @@ import { TooltipModule } from 'primeng/tooltip';
 })
 export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
+  private readonly getEmployeeBiometricFaceIdUseCase = inject(GetEmployeeBiometricFaceIdUseCase);
   private readonly storeAssistUseCase = inject(StoreAssistUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly router = inject(Router);
@@ -59,15 +84,35 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly secureStorage = inject(SecureStorageService);
   private timeInterval?: ReturnType<typeof setInterval>;
+
+  // Clave para almacenar la foto del rostro del empleado en base64
+  private readonly EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY = 'employee_biometric_face_id_photo_base64';
+
+  // Estado de carga de modelos de face-api.js
+  private faceApiModelsLoaded = false;
+  // En desarrollo: modelos desde GitHub, en producción: modelos locales
+  private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
+  private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
+  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
+  private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
+  readonly starting = signal(false);
   readonly error = signal<string | null>(null);
+  readonly success = signal<string | null>(null);
   readonly currentDate = signal<Date>(new Date());
   readonly selectedDate = signal<Date>(new Date());
-
   readonly currentTime = signal<string>('');
+
+  private livenessVideo?: HTMLVideoElement;
+  private livenessUI?: HTMLDivElement;
+  private livenessStream?: MediaStream;
+  private frameCaptureInterval?: ReturnType<typeof setInterval>;
+  private livenessCheckInterval?: ReturnType<typeof setInterval>;
+  private livenessPromiseReject?: (reason?: unknown) => void;
 
   // Datepicker
   showDatePicker = false;
@@ -105,8 +150,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   readonly canCheckIn = computed(() => {
-    const att = this.attendance();
-    return att?.checkInTime === null && !this.loading();
+    return !this.loading() && !this.starting();
   });
 
   readonly canCheckOut = computed(() => {
@@ -300,6 +344,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Maneja el registro de check-in con cámara
    */
   async handleRegisterCheckIn(): Promise<void> {
+    this.success.set(null);
+    this.error.set(null);
     if (!this.canCheckIn()) return;
 
     const user = this.authPort.getCurrentUser();
@@ -312,6 +358,27 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+    this.starting.set(true);
+    const employeeBiometricFaceId = await this.getEmployeeBiometricFaceIdUseCase.execute(
+      user.employeeId,
+    );
+    if (!employeeBiometricFaceId) {
+      this.error.set('No se encontró la fotografía del rostro del empleado');
+      this.starting.set(false);
+      return;
+    }
+    const employeeBiometricFaceIdPhotoUrl = employeeBiometricFaceId.employeeBiometricFaceIdPhotoUrl;
+
+    // Guardar la foto en base64 de forma segura
+    if (employeeBiometricFaceIdPhotoUrl) {
+      try {
+        await this.savePhotoAsBase64(employeeBiometricFaceIdPhotoUrl);
+      } catch (error) {
+        this.starting.set(false);
+        this.logger.warn('Error al guardar la foto en base64:', error);
+        // Continuar con el proceso aunque falle el guardado
+      }
+    }
 
     this.loading.set(true);
     this.error.set(null);
@@ -320,9 +387,65 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Verificar y solicitar permisos antes de continuar
       await this.ensurePermissions();
 
-      // Abrir cámara y capturar foto
-      await this.capturePhoto();
+      // Cargar modelos de face-api.js si no están cargados
+      try {
+        await this.loadFaceApiModels();
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Error desconocido al cargar modelos';
+        if (errorMessage.includes('reconocimiento facial')) {
+          this.error.set(
+            'Error al cargar los modelos de reconocimiento facial. Por favor, verifica que los modelos estén descargados correctamente.',
+          );
+        } else {
+          this.error.set(`Error: ${errorMessage}`);
+        }
+        this.loading.set(false);
+        return;
+      }
 
+      // Abrir cámara y capturar foto con verificación de liveness
+      let capturedPhotoBase64: string;
+      try {
+        capturedPhotoBase64 = await this.capturePhotoWithLiveness();
+      } catch (livenessError) {
+        const livenessErrorMessage =
+          livenessError instanceof Error ? livenessError.message : 'Error desconocido';
+        this.logger.error('Error en verificación de liveness:', livenessError);
+
+        // Si el error es de liveness (movimiento insuficiente), mostrar mensaje específico
+        if (
+          livenessErrorMessage.includes('movimiento') ||
+          livenessErrorMessage.includes('liveness') ||
+          livenessErrorMessage.includes('persona real')
+        ) {
+          this.error.set(livenessErrorMessage);
+        } else if (
+          livenessErrorMessage.includes('cámara') ||
+          livenessErrorMessage.includes('camera')
+        ) {
+          this.error.set('Se necesita permiso de cámara para registrar asistencia');
+        } else if (livenessErrorMessage.includes('Captura cancelada')) {
+          this.error.set('Captura cancelada por el usuario');
+        } else {
+          this.error.set(`Error al capturar la fotografía: ${livenessErrorMessage}`);
+        }
+        this.loading.set(false);
+        return;
+      }
+      const storedPhotoBase64 = this.getStoredPhotoBase64();
+      if (!storedPhotoBase64) {
+        this.error.set('No se encontró la fotografía del empleado guardada');
+        this.loading.set(false);
+        return;
+      }
+      // Comparar las fotografías usando face-api.js
+      const isMatch = await this.compareFaces(storedPhotoBase64, capturedPhotoBase64);
+      if (!isMatch) {
+        this.error.set('La fotografía capturada no coincide con la del empleado registrado');
+        this.loading.set(false);
+        return;
+      }
       // Obtener ubicación
       const location = await this.getCurrentLocation();
 
@@ -336,20 +459,25 @@ export class CheckinComponent implements OnInit, OnDestroy {
       if (success) {
         // Recargar asistencia
         await this.loadAttendance();
+        this.success.set('Asistencia registrada correctamente');
       } else {
         this.error.set('Error al registrar el check-in');
       }
     } catch (err: unknown) {
       const error = err as { message?: string };
       const errorMessage = error.message ?? '';
-      if (errorMessage.includes('ubicación')) {
-        this.error.set('Se necesita permiso de ubicación para registrar asistencia');
-      } else if (errorMessage.includes('cámara')) {
-        this.error.set('Se necesita permiso de cámara para registrar asistencia');
-      } else {
-        this.error.set('Error al obtener la ubicación o registrar check-in');
-      }
       this.logger.error('Error en handleRegisterCheckIn:', err);
+
+      if (errorMessage.includes('ubicación') || errorMessage.includes('ubicacion')) {
+        this.error.set('Se necesita permiso de ubicación para registrar asistencia');
+      } else if (errorMessage.includes('cámara') || errorMessage.includes('camera')) {
+        this.error.set('Se necesita permiso de cámara para registrar asistencia');
+      } else if (errorMessage.includes('movimiento') || errorMessage.includes('liveness')) {
+        // Error de liveness ya fue manejado arriba, pero por si acaso
+        this.error.set(errorMessage);
+      } else {
+        this.error.set(`Error al registrar check-in: ${errorMessage || 'Error desconocido'}`);
+      }
     } finally {
       this.loading.set(false);
     }
@@ -460,55 +588,415 @@ export class CheckinComponent implements OnInit, OnDestroy {
     }
   }
 
-  async handleCheckIn(): Promise<void> {
-    if (!this.canCheckIn()) return;
-
-    const user = this.authPort.getCurrentUser();
-    if (typeof user?.employeeId !== 'number') {
-      this.error.set('No se encontró el ID del empleado');
-      return;
+  /**
+   * Captura una foto usando la cámara del dispositivo con verificación continua de liveness
+   * La cámara permanece abierta y verifica continuamente si es una persona real
+   * El usuario decide cuándo cerrar la cámara
+   * @returns Promesa con la imagen capturada en formato base64
+   * @throws Error si el usuario cancela o hay problemas con la cámara
+   */
+  private async capturePhotoWithLiveness(): Promise<string> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('La captura de foto solo está disponible en el navegador');
     }
 
-    this.loading.set(true);
-    this.error.set(null);
-
     try {
-      // Obtener ubicación
-      const location = await this.getCurrentLocation();
-
-      const success = await this.storeAssistUseCase.execute(
-        user.employeeId,
-        location.coords.latitude,
-        location.coords.longitude,
-        location.coords.accuracy ?? 0,
-      );
-
-      if (success) {
-        // Recargar asistencia
-        await this.loadAttendance();
-      } else {
-        this.error.set('Error al registrar el check-in');
+      if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
+        throw new Error('La cámara no está disponible en este navegador');
       }
-    } catch (err) {
-      this.error.set('Error al obtener la ubicación o registrar check-in');
-      this.logger.error('Error en handleCheckIn:', err);
-    } finally {
-      this.loading.set(false);
+
+      // Obtener acceso a la cámara
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user', // Cámara frontal
+        },
+      });
+
+      // Crear un elemento de video temporal para mostrar la cámara
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.style.position = 'fixed';
+      video.style.top = '0';
+      video.style.left = '0';
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.style.zIndex = '9999';
+      video.style.backgroundColor = '#000';
+      document.body.appendChild(video);
+
+      // Esperar a que el video esté listo
+      await new Promise<void>((resolve) => {
+        video.onloadedmetadata = (): void => {
+          resolve();
+        };
+      });
+
+      // Crear contenedor para la UI de la cámara
+      const uiContainer = document.createElement('div');
+      uiContainer.style.position = 'fixed';
+      uiContainer.style.top = '0';
+      uiContainer.style.left = '0';
+      uiContainer.style.width = '100%';
+      uiContainer.style.height = '100%';
+      uiContainer.style.zIndex = '10000';
+      uiContainer.style.pointerEvents = 'none';
+      document.body.appendChild(uiContainer);
+
+      // Crear recuadro delimitador para el rostro (rectángulo)
+      const faceFrame = document.createElement('div');
+      faceFrame.style.position = 'fixed';
+      faceFrame.style.top = 'calc(50% - 30px)';
+      faceFrame.style.left = '50%';
+      faceFrame.style.transform = 'translate(-50%, -50%)';
+      faceFrame.style.width = '260px';
+      faceFrame.style.height = '340px';
+      faceFrame.style.border = '3px solid rgba(255, 255, 255, 0.8)';
+      faceFrame.style.borderRadius = '16px';
+      faceFrame.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1)';
+      faceFrame.style.pointerEvents = 'none';
+      faceFrame.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+      faceFrame.id = 'face-frame';
+      uiContainer.appendChild(faceFrame);
+
+      // Crear indicador de estado de liveness
+      const statusIndicator = document.createElement('div');
+      statusIndicator.style.position = 'fixed';
+      statusIndicator.style.top = '20px';
+      statusIndicator.style.left = '50%';
+      statusIndicator.style.transform = 'translateX(-50%)';
+      statusIndicator.style.padding = '12px 24px';
+      statusIndicator.style.borderRadius = '25px';
+      statusIndicator.style.fontSize = '14px';
+      statusIndicator.style.fontWeight = 'bold';
+      statusIndicator.style.textAlign = 'center';
+      statusIndicator.style.transition = 'all 0.3s ease';
+      statusIndicator.style.pointerEvents = 'none';
+      statusIndicator.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      this.updateLivenessStatusIndicator(statusIndicator, 'checking');
+      uiContainer.appendChild(statusIndicator);
+
+      // Crear mensaje de instrucción
+      const instructionMessage = document.createElement('div');
+      instructionMessage.textContent =
+        'Mueve ligeramente la cabeza o parpadea para verificar que eres una persona real';
+      instructionMessage.style.position = 'fixed';
+      instructionMessage.style.bottom = '120px';
+      instructionMessage.style.left = '50%';
+      instructionMessage.style.transform = 'translateX(-50%)';
+      instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+      instructionMessage.style.color = 'white';
+      instructionMessage.style.padding = '10px 20px';
+      instructionMessage.style.borderRadius = '8px';
+      instructionMessage.style.fontSize = '13px';
+      instructionMessage.style.textAlign = 'center';
+      instructionMessage.style.maxWidth = '90%';
+      instructionMessage.style.pointerEvents = 'none';
+      uiContainer.appendChild(instructionMessage);
+
+      // Crear botón para capturar la foto (inicialmente deshabilitado)
+      const captureButton = document.createElement('button');
+      captureButton.textContent = 'Verificando...';
+      captureButton.disabled = true;
+      captureButton.style.position = 'fixed';
+      captureButton.style.bottom = '30px';
+      captureButton.style.left = '50%';
+      captureButton.style.transform = 'translateX(-50%)';
+      captureButton.style.padding = '14px 32px';
+      captureButton.style.backgroundColor = '#6c757d';
+      captureButton.style.color = 'white';
+      captureButton.style.border = 'none';
+      captureButton.style.borderRadius = '25px';
+      captureButton.style.fontSize = '16px';
+      captureButton.style.fontWeight = 'bold';
+      captureButton.style.cursor = 'not-allowed';
+      captureButton.style.transition = 'all 0.3s ease';
+      captureButton.style.pointerEvents = 'auto';
+      captureButton.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      uiContainer.appendChild(captureButton);
+
+      // Crear botón para cancelar/cerrar
+      const cancelButton = document.createElement('button');
+      cancelButton.textContent = '✕';
+      cancelButton.style.position = 'fixed';
+      cancelButton.style.top = '20px';
+      cancelButton.style.right = '20px';
+      cancelButton.style.width = '44px';
+      cancelButton.style.height = '44px';
+      cancelButton.style.padding = '0';
+      cancelButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      cancelButton.style.color = '#333';
+      cancelButton.style.border = 'none';
+      cancelButton.style.borderRadius = '50%';
+      cancelButton.style.fontSize = '20px';
+      cancelButton.style.fontWeight = 'bold';
+      cancelButton.style.cursor = 'pointer';
+      cancelButton.style.pointerEvents = 'auto';
+      cancelButton.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+      cancelButton.style.transition = 'all 0.2s ease';
+      uiContainer.appendChild(cancelButton);
+
+      // Estado de la verificación continua
+      let isLive = false;
+      let livenessCheckInterval: ReturnType<typeof setInterval> | null = null;
+      let isCapturing = false;
+      const frameBuffer: string[] = [];
+      const MAX_FRAME_BUFFER = 4;
+      const FRAME_CAPTURE_INTERVAL = 400; // Capturar frame cada 400ms
+      const LIVENESS_CHECK_INTERVAL = 800; // Verificar liveness cada 800ms
+      /**
+       * Captura un frame del video y lo agrega al buffer circular
+       */
+      const captureFrame = (): void => {
+        if (isCapturing) return;
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0);
+          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          frameBuffer.push(base64);
+          // Mantener solo los últimos MAX_FRAME_BUFFER frames
+          if (frameBuffer.length > MAX_FRAME_BUFFER) {
+            frameBuffer.shift();
+          }
+        }
+      };
+
+      /**
+       * Actualiza el color del recuadro del rostro según el estado
+       */
+      const updateFaceFrameColor = (status: 'checking' | 'verified' | 'failed'): void => {
+        const frameColors = {
+          checking: {
+            border: 'rgba(255, 193, 7, 0.9)',
+            shadow: '0 0 0 4px rgba(255, 193, 7, 0.3), inset 0 0 30px rgba(255, 193, 7, 0.1)',
+          },
+          verified: {
+            border: 'rgba(40, 167, 69, 0.9)',
+            shadow: '0 0 0 4px rgba(40, 167, 69, 0.3), inset 0 0 30px rgba(40, 167, 69, 0.1)',
+          },
+          failed: {
+            border: 'rgba(220, 53, 69, 0.9)',
+            shadow: '0 0 0 4px rgba(220, 53, 69, 0.3), inset 0 0 30px rgba(220, 53, 69, 0.1)',
+          },
+        };
+
+        const colors = frameColors[status];
+        faceFrame.style.borderColor = colors.border;
+        faceFrame.style.boxShadow = colors.shadow;
+      };
+
+      // Inicializar el color del recuadro como "verificando"
+      updateFaceFrameColor('checking');
+
+      return new Promise<string>((resolve, reject) => {
+        const captureFinalPhoto = (): void => {
+          if (isCapturing) return;
+          isCapturing = true;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            this.closeLivenessFromOutside();
+            reject(new Error('No se pudo obtener el contexto del canvas'));
+            return;
+          }
+          ctx.drawImage(video, 0, 0);
+          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          this.closeLivenessFromOutside();
+          resolve(base64);
+        };
+
+        /**
+         * Verifica liveness usando los frames del buffer
+         */
+        const checkLiveness = async (): Promise<void> => {
+          if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
+            return;
+          }
+
+          try {
+            // Crear copia del buffer para análisis
+            const framesToAnalyze = [...frameBuffer];
+            const result = await this.detectLivenessFromFrames(framesToAnalyze);
+
+            isLive = result;
+
+            // Actualizar UI según resultado
+            if (isLive) {
+              this.updateLivenessStatusIndicator(statusIndicator, 'verified');
+              updateFaceFrameColor('verified');
+              captureButton.textContent = 'Capturar';
+              captureButton.disabled = false;
+              captureButton.style.backgroundColor = 'var(--primary, #007bff)';
+              captureButton.style.cursor = 'pointer';
+              instructionMessage.textContent = 'Persona verificada - Puedes capturar la foto';
+              instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
+              this.loading.set(false);
+              setTimeout(captureFinalPhoto, 300);
+              return;
+            } else {
+              this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+              updateFaceFrameColor('failed');
+              captureButton.textContent = 'Verificando...';
+              captureButton.disabled = true;
+              captureButton.style.backgroundColor = '#6c757d';
+              captureButton.style.cursor = 'not-allowed';
+              instructionMessage.textContent =
+                'Mueve ligeramente la cabeza o parpadea para verificar';
+              instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+            }
+          } catch (error) {
+            this.logger.warn('Error en verificación de liveness:', error);
+            isLive = false;
+            updateFaceFrameColor('failed');
+          }
+        };
+
+        // Iniciar captura continua de frames
+        const frameCaptureInterval = setInterval(captureFrame, FRAME_CAPTURE_INTERVAL);
+
+        // Iniciar verificación continua de liveness
+        livenessCheckInterval = setInterval(() => {
+          void checkLiveness();
+        }, LIVENESS_CHECK_INTERVAL);
+
+        // Esperar un momento inicial para llenar el buffer
+        //await new Promise<void>((resolve) => setTimeout(resolve, 1500));
+
+        // Esperar a que el usuario cancele
+        this.livenessVideo = video;
+        this.livenessUI = uiContainer;
+        this.livenessStream = stream;
+        this.frameCaptureInterval = frameCaptureInterval;
+        this.livenessCheckInterval = livenessCheckInterval ?? undefined;
+        cancelButton.onclick = (): void => {
+          this.closeLivenessFromOutside();
+          reject(new Error('Captura cancelada'));
+        };
+      });
+    } catch (error: unknown) {
+      const err = error as { name?: string; message?: string };
+      if (err.name === 'NotAllowedError') {
+        this.logger.warn('Permiso de cámara denegado');
+        throw new Error('Se necesita permiso de cámara para registrar asistencia');
+      } else if (err.name === 'NotFoundError') {
+        this.logger.warn('Cámara no encontrada');
+        throw new Error('No se encontró ninguna cámara');
+      } else if (err.message?.includes('Captura cancelada')) {
+        throw error;
+      } else {
+        this.logger.error('Error al acceder a la cámara:', error);
+        throw error;
+      }
+    }
+  }
+
+  private closeLivenessCamera(options: {
+    video?: HTMLVideoElement;
+    uiContainer?: HTMLDivElement;
+    stream?: MediaStream;
+    frameCaptureInterval?: ReturnType<typeof setInterval> | null;
+    livenessCheckInterval?: ReturnType<typeof setInterval> | null;
+  }): void {
+    const { video, uiContainer, stream, frameCaptureInterval, livenessCheckInterval } = options;
+
+    // Detener intervalos
+    if (frameCaptureInterval) {
+      clearInterval(frameCaptureInterval);
+    }
+
+    if (livenessCheckInterval) {
+      clearInterval(livenessCheckInterval);
+    }
+
+    // Detener cámara
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    // Remover elementos del DOM
+    if (video && document.body.contains(video)) {
+      document.body.removeChild(video);
+    }
+
+    if (uiContainer && document.body.contains(uiContainer)) {
+      document.body.removeChild(uiContainer);
+    }
+  }
+
+  public closeLivenessFromOutside(): void {
+    this.closeLivenessCamera({
+      video: this.livenessVideo,
+      uiContainer: this.livenessUI,
+      stream: this.livenessStream,
+      frameCaptureInterval: this.frameCaptureInterval ?? null,
+      livenessCheckInterval: this.livenessCheckInterval ?? null,
+    });
+    // Rechazar la promesa si estaba activa
+    if (this.livenessPromiseReject) {
+      this.livenessPromiseReject(new Error('Captura cancelada externamente'));
+      this.livenessPromiseReject = undefined;
+    }
+    // Limpiar referencias
+    this.loading.set(false);
+    this.starting.set(false);
+    this.error.set(null);
+    this.success.set(null);
+    this.livenessVideo = undefined;
+    this.livenessUI = undefined;
+    this.livenessStream = undefined;
+    this.frameCaptureInterval = undefined;
+    this.livenessCheckInterval = undefined;
+  }
+
+  /**
+   * Actualiza el indicador visual del estado de liveness
+   * @param indicator - Elemento HTML del indicador
+   * @param status - Estado actual: 'checking', 'verified', 'failed'
+   */
+  private updateLivenessStatusIndicator(
+    indicator: HTMLDivElement,
+    status: 'checking' | 'verified' | 'failed',
+  ): void {
+    switch (status) {
+      case 'checking':
+        indicator.textContent = '🔄 Verificando...';
+        indicator.style.backgroundColor = 'rgba(255, 193, 7, 0.95)';
+        indicator.style.color = '#000';
+        break;
+      case 'verified':
+        indicator.textContent = '✓ Persona verificada';
+        indicator.style.backgroundColor = 'rgba(40, 167, 69, 0.95)';
+        indicator.style.color = 'white';
+        break;
+      case 'failed':
+        indicator.textContent = '⚠ Muévete para verificar';
+        indicator.style.backgroundColor = 'rgba(220, 53, 69, 0.95)';
+        indicator.style.color = 'white';
+        break;
     }
   }
 
   /**
    * Captura una foto usando la cámara del dispositivo
+   * @returns Promesa con la imagen capturada en formato base64
    */
-  private async capturePhoto(): Promise<void> {
+  private async capturePhoto(): Promise<string> {
     if (!isPlatformBrowser(this.platformId)) {
-      return;
+      throw new Error('La captura de foto solo está disponible en el navegador');
     }
 
     try {
       if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
-        this.logger.warn('La cámara no está disponible');
-        return;
+        throw new Error('La cámara no está disponible en este navegador');
       }
 
       // Obtener acceso a la cámara
@@ -568,13 +1056,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
       document.body.appendChild(cancelButton);
 
       // Esperar a que el usuario capture o cancele
-      return new Promise<void>((resolve, reject) => {
-        const cleanup = (): void => {
-          stream.getTracks().forEach((track) => track.stop());
-          document.body.removeChild(video);
-          document.body.removeChild(captureButton);
-          document.body.removeChild(cancelButton);
-        };
+      return new Promise<string>((resolve, reject) => {
+        this.livenessPromiseReject = reject;
 
         captureButton.onclick = (): void => {
           // Crear canvas para capturar la foto
@@ -584,22 +1067,18 @@ export class CheckinComponent implements OnInit, OnDestroy {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(video, 0, 0);
-            // Aquí podrías enviar la foto al servidor si es necesario
-            // Por ahora solo la capturamos
-            canvas.toBlob(
-              (_blob) => {
-                // Aquí podrías guardar o enviar la foto
-              },
-              'image/jpeg',
-              0.9,
-            );
+            // Convertir canvas a base64
+            const base64 = canvas.toDataURL('image/jpeg', 0.9);
+            this.closeLivenessFromOutside();
+            resolve(base64);
+          } else {
+            this.closeLivenessFromOutside();
+            reject(new Error('No se pudo obtener el contexto del canvas'));
           }
-          cleanup();
-          resolve();
         };
 
         cancelButton.onclick = (): void => {
-          cleanup();
+          this.closeLivenessFromOutside();
           reject(new Error('Captura cancelada'));
         };
       });
@@ -938,5 +1417,499 @@ export class CheckinComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       second: '2-digit',
     });
+  }
+
+  /**
+   * Convierte una URL de imagen a base64 y la guarda de forma segura
+   * @param imageUrl - URL de la imagen a convertir
+   * @returns Promesa que se resuelve cuando la imagen se ha guardado
+   */
+  private async savePhotoAsBase64(imageUrl: string): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      // Convertir la URL a base64
+      const base64Image = await this.urlToBase64(imageUrl);
+
+      // Guardar en almacenamiento seguro
+      this.secureStorage.setEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY, base64Image);
+    } catch (error) {
+      this.logger.error('Error al convertir y guardar la imagen en base64:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Convierte una URL de imagen a base64 usando fetch
+   * Intenta cargar la imagen directamente sin proxy para evitar restricciones de dominio
+   * @param url - URL de la imagen
+   * @returns Promesa con la imagen en formato base64
+   */
+  private async urlToBase64(url: string): Promise<string> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('No disponible en este entorno');
+    }
+
+    try {
+      // Intentar cargar la imagen directamente usando fetch
+      const response = await fetch(url, {
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al cargar la imagen: ${response.status} ${response.statusText}`);
+      }
+
+      // Convertir la respuesta a blob
+      const blob = await response.blob();
+
+      // Convertir blob a base64
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = (): void => {
+          const base64String = reader.result as string;
+          resolve(base64String);
+        };
+        reader.onerror = (): void => {
+          reject(new Error('Error al convertir la imagen a base64'));
+        };
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      this.logger.error('Error al cargar imagen con fetch, intentando método alternativo:', error);
+      // Si falla con fetch (por ejemplo, por CORS), intentar con Image + canvas
+      return this.urlToBase64WithImage(url);
+    }
+  }
+
+  /**
+   * Método alternativo: Convierte una URL de imagen a base64 usando Image y canvas
+   * Se usa como fallback si fetch falla por problemas de CORS
+   * @param url - URL de la imagen
+   * @returns Promesa con la imagen en formato base64
+   */
+  private urlToBase64WithImage(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      img.onload = (): void => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('No se pudo obtener el contexto del canvas'));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0);
+          const base64 = canvas.toDataURL('image/jpeg', 0.9);
+          resolve(base64);
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      img.onerror = (): void => {
+        reject(new Error('Error al cargar la imagen con el método alternativo'));
+      };
+
+      img.src = url;
+    });
+  }
+
+  /**
+   * Obtiene la foto del rostro del empleado guardada en base64
+   * @returns La imagen en formato base64 o null si no existe
+   */
+  getStoredPhotoBase64(): string | null {
+    return this.secureStorage.getEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY);
+  }
+
+  /**
+   * Elimina la foto del rostro del empleado guardada
+   */
+  removeStoredPhoto(): void {
+    this.secureStorage.removeEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY);
+  }
+
+  /**
+   * Carga los modelos de face-api.js necesarios para el reconocimiento facial
+   * Los modelos deben estar en la carpeta public/assets/face-api-models/
+   */
+  private async loadFaceApiModels(): Promise<void> {
+    if (this.faceApiModelsLoaded) {
+      return;
+    }
+
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('Los modelos de face-api.js solo están disponibles en el navegador');
+    }
+
+    try {
+      // Cargar los modelos uno por uno para identificar cuál falla
+      this.logger.info(`Cargando modelos de face-api.js desde: ${this.FACE_API_MODELS_URL}`);
+
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo tinyFaceDetector cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar tinyFaceDetector:', error);
+        throw new Error(
+          `Error al cargar el modelo tinyFaceDetector. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      try {
+        await faceapi.nets.faceLandmark68Net.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo faceLandmark68Net cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar faceLandmark68Net:', error);
+        throw new Error(
+          `Error al cargar el modelo faceLandmark68Net. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      try {
+        await faceapi.nets.faceRecognitionNet.loadFromUri(this.FACE_API_MODELS_URL);
+        this.logger.info('Modelo faceRecognitionNet cargado correctamente');
+      } catch (error) {
+        this.logger.error('Error al cargar faceRecognitionNet:', error);
+        throw new Error(
+          `Error al cargar el modelo faceRecognitionNet. Verifica que los archivos estén en ${this.FACE_API_MODELS_URL}`,
+        );
+      }
+
+      this.faceApiModelsLoaded = true;
+      this.logger.info('Todos los modelos de face-api.js cargados correctamente');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido al cargar los modelos';
+      this.logger.error('Error al cargar los modelos de face-api.js:', error);
+      throw new Error(
+        `Error al cargar los modelos de reconocimiento facial: ${errorMessage}. Asegúrate de que los modelos estén descargados en ${this.FACE_API_MODELS_URL}`,
+      );
+    }
+  }
+
+  /**
+   * Compara dos imágenes para verificar si contienen el mismo rostro
+   * @param storedPhotoBase64 - Foto guardada del empleado en base64
+   * @param capturedPhotoBase64 - Foto capturada en base64
+   * @returns true si las fotos coinciden, false en caso contrario
+   */
+  private async compareFaces(
+    storedPhotoBase64: string,
+    capturedPhotoBase64: string,
+  ): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) {
+      throw new Error('La comparación facial solo está disponible en el navegador');
+    }
+
+    try {
+      // Crear elementos de imagen para ambas fotos
+      const storedImg = await this.base64ToImage(storedPhotoBase64);
+      const capturedImg = await this.base64ToImage(capturedPhotoBase64);
+
+      // Detectar y obtener descriptores faciales de ambas imágenes
+      const storedDescriptor = await this.getFaceDescriptor(storedImg);
+      const capturedDescriptor = await this.getFaceDescriptor(capturedImg);
+
+      // Si no se detectó un rostro en alguna de las imágenes, retornar false
+      if (!storedDescriptor || !capturedDescriptor) {
+        this.logger.warn('No se detectó un rostro en una o ambas imágenes');
+        return false;
+      }
+
+      // Calcular la distancia euclidiana entre los descriptores
+      const distance = faceapi.euclideanDistance(storedDescriptor, capturedDescriptor);
+
+      // Comparar con el umbral (distancia menor = más similar)
+      // Convertir distancia a similitud (0-1, donde 1 es idéntico)
+      const similarity = 1 - Math.min(distance, 1);
+      const isMatch = similarity >= this.FACE_MATCH_THRESHOLD;
+
+      this.logger.info(
+        `Comparación facial: distancia=${distance.toFixed(3)}, similitud=${similarity.toFixed(3)}, coincide=${isMatch}`,
+      );
+
+      return isMatch;
+    } catch (error) {
+      this.logger.error('Error al comparar las fotografías:', error);
+      throw new Error('Error al comparar las fotografías faciales');
+    }
+  }
+
+  /**
+   * Convierte una imagen en base64 a un elemento HTMLImageElement
+   * @param base64 - Imagen en formato base64
+   * @returns Promesa con el elemento de imagen
+   */
+  private base64ToImage(base64: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = (): void => {
+        resolve(img);
+      };
+      img.onerror = (): void => {
+        reject(new Error('Error al cargar la imagen desde base64'));
+      };
+      img.src = base64;
+    });
+  }
+
+  /**
+   * Obtiene el descriptor facial de una imagen usando face-api.js
+   * @param img - Elemento de imagen HTML
+   * @returns Promesa con el descriptor facial o null si no se detecta un rostro
+   */
+  private async getFaceDescriptor(img: HTMLImageElement): Promise<Float32Array | null> {
+    try {
+      // Detectar el rostro con landmarks
+      const detection = await faceapi
+        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        return null;
+      }
+
+      return detection.descriptor;
+    } catch (error) {
+      this.logger.error('Error al obtener el descriptor facial:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Detecta liveness analizando movimiento entre múltiples frames del video
+   * Esta es la forma más efectiva de detectar si es una persona real vs una foto/pantalla
+   *
+   * @param frames - Array de frames capturados en base64
+   * @returns true si se detecta movimiento suficiente (persona real), false si parece ser estático (foto/pantalla)
+   */
+  private async detectLivenessFromFrames(frames: string[]): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return true; // En SSR, asumir que es válido
+    }
+
+    if (frames.length < 2) {
+      this.logger.warn('No hay suficientes frames para analizar liveness');
+      return false;
+    }
+
+    try {
+      // Convertir todos los frames a imágenes
+      const images = await Promise.all(frames.map((frame) => this.base64ToImage(frame)));
+
+      // Verificar que todos los frames tengan un rostro detectado
+      const faceDetections: (IFaceDetectionWithLandmarks | undefined)[] = await Promise.all(
+        images.map((img) =>
+          faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(),
+        ),
+      );
+
+      // Si algún frame no tiene rostro, rechazar
+      if (faceDetections.some((detection: IFaceDetectionWithLandmarks | undefined) => !detection)) {
+        this.logger.warn('No se detectó rostro en todos los frames');
+        return false;
+      }
+
+      // Analizar movimiento comparando la posición del rostro entre frames
+      const facePositions: { x: number; y: number; width: number; height: number }[] = [];
+      for (const detection of faceDetections) {
+        if (detection) {
+          const box = detection.detection.box;
+          facePositions.push({
+            x: box.x,
+            y: box.y,
+            width: box.width,
+            height: box.height,
+          });
+        }
+      }
+
+      // Calcular variación en la posición del rostro entre frames
+      const movements: number[] = [];
+      const movementDirections: { dx: number; dy: number }[] = [];
+
+      for (let i = 1; i < facePositions.length; i++) {
+        const prev = facePositions[i - 1];
+        const curr = facePositions[i];
+
+        // Calcular distancia euclidiana entre centros del rostro
+        const centerX1 = prev.x + prev.width / 2;
+        const centerY1 = prev.y + prev.height / 2;
+        const centerX2 = curr.x + curr.width / 2;
+        const centerY2 = curr.y + curr.height / 2;
+
+        const dx = centerX2 - centerX1;
+        const dy = centerY2 - centerY1;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Normalizar por el tamaño promedio del rostro
+        const avgFaceSize = (prev.width + curr.width) / 2;
+        const normalizedMovement = distance / avgFaceSize;
+        movements.push(normalizedMovement);
+        movementDirections.push({ dx, dy });
+      }
+
+      const averageMovement = movements.reduce((a, b) => a + b, 0) / movements.length;
+
+      // Analizar consistencia del movimiento (movimiento real tiene dirección, ruido es aleatorio)
+      let consistentDirection = 0;
+      if (movementDirections.length >= 2) {
+        // Calcular si los movimientos tienen dirección similar
+        for (let i = 1; i < movementDirections.length; i++) {
+          const prev = movementDirections[i - 1];
+          const curr = movementDirections[i];
+
+          // Calcular producto punto normalizado (coseno del ángulo)
+          const prevMagnitude = Math.sqrt(prev.dx * prev.dx + prev.dy * prev.dy);
+          const currMagnitude = Math.sqrt(curr.dx * curr.dx + curr.dy * curr.dy);
+
+          if (prevMagnitude > 0 && currMagnitude > 0) {
+            const dotProduct =
+              (prev.dx * curr.dx + prev.dy * curr.dy) / (prevMagnitude * currMagnitude);
+            // Si el coseno es > 0.5, los movimientos van en dirección similar
+            if (dotProduct > 0.5) {
+              consistentDirection++;
+            }
+          }
+        }
+      }
+
+      const consistencyRatio =
+        movementDirections.length > 1 ? consistentDirection / (movementDirections.length - 1) : 0;
+
+      // Analizar variación en landmarks (expresiones faciales, parpadeos)
+      // Y detectar si el movimiento es rígido (foto) vs independiente (persona real)
+      let landmarkVariation = 0;
+      let rigidityScore = 0; // Mide qué tan "rígido" es el movimiento (foto = rígido, persona = flexible)
+
+      if (faceDetections.every((d) => d?.landmarks)) {
+        const landmarkMovementVariances: number[] = [];
+
+        for (let i = 1; i < faceDetections.length; i++) {
+          const prev = faceDetections[i - 1];
+          const curr = faceDetections[i];
+
+          if (prev && curr && prev.landmarks && curr.landmarks) {
+            const prevPositions = prev.landmarks.positions;
+            const currPositions = curr.landmarks.positions;
+
+            if (prevPositions.length === currPositions.length) {
+              const landmarkDistances: number[] = [];
+              let totalLandmarkDistance = 0;
+
+              for (let j = 0; j < prevPositions.length; j++) {
+                const dx = currPositions[j].x - prevPositions[j].x;
+                const dy = currPositions[j].y - prevPositions[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                landmarkDistances.push(dist);
+                totalLandmarkDistance += dist;
+              }
+
+              const avgLandmarkDistance = totalLandmarkDistance / prevPositions.length;
+
+              // Calcular varianza de las distancias de landmarks
+              // En una foto, todos los landmarks se mueven igual (varianza baja)
+              // En una persona real, hay micro-expresiones (varianza alta)
+              const landmarkDistanceVariance =
+                landmarkDistances.reduce(
+                  (sum, dist) => sum + Math.pow(dist - avgLandmarkDistance, 2),
+                  0,
+                ) / landmarkDistances.length;
+              const landmarkDistanceStdDev = Math.sqrt(landmarkDistanceVariance);
+
+              // Coeficiente de variación de landmarks (stdDev / mean)
+              // Valores bajos = movimiento rígido (foto), valores altos = movimiento flexible (persona)
+              if (avgLandmarkDistance > 0) {
+                landmarkMovementVariances.push(landmarkDistanceStdDev / avgLandmarkDistance);
+              }
+
+              // Normalizar por el tamaño del rostro
+              const box = prev.detection.box;
+              const faceSize = Math.sqrt(box.width * box.height);
+              landmarkVariation += avgLandmarkDistance / faceSize;
+            }
+          }
+        }
+        landmarkVariation = landmarkVariation / (faceDetections.length - 1);
+
+        // Calcular rigidez promedio
+        // Una foto movida tiene coeficiente de variación bajo (< 0.3) porque todos los puntos se mueven igual
+        // Una persona real tiene coeficiente alto (> 0.5) porque hay micro-expresiones
+        if (landmarkMovementVariances.length > 0) {
+          const avgLandmarkVariance =
+            landmarkMovementVariances.reduce((a, b) => a + b, 0) / landmarkMovementVariances.length;
+          rigidityScore = avgLandmarkVariance;
+        }
+      }
+
+      // También analizar variación en el tamaño del rostro (zoom in/out, acercarse/alejarse)
+      let sizeVariation = 0;
+      for (let i = 1; i < facePositions.length; i++) {
+        const prev = facePositions[i - 1];
+        const curr = facePositions[i];
+        const prevArea = prev.width * prev.height;
+        const currArea = curr.width * curr.height;
+        const areaDiff = Math.abs(currArea - prevArea) / prevArea;
+        sizeVariation += areaDiff;
+      }
+
+      const averageSizeVariation = sizeVariation / (facePositions.length - 1);
+
+      // Verificar que la variación de landmarks no sea demasiado alta
+      // Fotos movidas pueden tener variación muy alta en landmarks (> 20%)
+      // Personas reales tienen variación más moderada (0.3% - 18%)
+      const hasNaturalLandmarkVariation = landmarkVariation > 0.003 && landmarkVariation < 0.18;
+
+      // Verificar que el movimiento no sea excesivo (fotos movidas suelen tener movimientos muy grandes > 20%)
+      // Movimiento natural de cabeza/parpadeos es moderado (1% - 15%)
+      const hasReasonableMovement = averageMovement > 0.01 && averageMovement < 0.15;
+
+      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 20%)
+      const hasReasonableSizeVariation = averageSizeVariation < 0.2;
+
+      // CLAVE: Verificar que el movimiento NO sea rígido (detectar fotos movidas)
+      // Una foto movida tiene rigidityScore bajo (< 0.25) porque todos los landmarks se mueven igual
+      // Una persona real tiene rigidityScore alto (> 0.25) porque hay micro-expresiones independientes
+      const hasFlexibleMovement = rigidityScore > 0.25;
+
+      // Criterios de liveness balanceados:
+      // 1. El movimiento debe ser razonable (no muy poco, no excesivo)
+      // 2. El movimiento debe ser flexible (no rígido como una foto)
+      // 3. Los landmarks deben tener variación natural
+
+      const hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
+      const hasNaturalMovement =
+        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.9;
+
+      const hasMovement = hasSignificantMovement && hasNaturalMovement;
+
+      this.logger.info(
+        `Liveness check: averageMovement=${averageMovement.toFixed(4)}, averageSizeVariation=${averageSizeVariation.toFixed(4)}, consistencyRatio=${consistencyRatio.toFixed(4)}, landmarkVariation=${landmarkVariation.toFixed(4)}, rigidityScore=${rigidityScore.toFixed(4)}, isLive=${hasMovement}`,
+      );
+
+      if (!hasMovement) {
+        this.logger.warn(
+          `Liveness falló: hasSignificantMovement=${hasSignificantMovement}, hasNaturalMovement=${hasNaturalMovement}, rigidityScore=${rigidityScore.toFixed(4)}, hasFlexibleMovement=${hasFlexibleMovement}. ${rigidityScore < 0.4 ? 'Movimiento rígido detectado (posible foto).' : 'Movimiento insuficiente o no natural.'}`,
+        );
+      }
+
+      return hasMovement;
+    } catch (error) {
+      this.logger.error('Error en detección de liveness desde frames:', error);
+      // En caso de error, ser permisivo para no bloquear usuarios legítimos
+      return true;
+    }
   }
 }

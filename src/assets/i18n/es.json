@@ -97,6 +97,7 @@
     "checkEatIn": "Entrada a Comer",
     "checkEatOut": "Salida a Comer",
     "loading": "Cargando asistencia...",
+    "starting": "Inicializando…",
     "error": "Error al cargar la asistencia",
     "checkInSuccess": "Check-in registrado exitosamente",
     "checkOutSuccess": "Check-out registrado exitosamente",

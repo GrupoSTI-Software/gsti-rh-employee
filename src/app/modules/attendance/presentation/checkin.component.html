@@ -217,23 +217,37 @@
         </div>
       </div>
 
-      <!-- Botones de acción -->
-
-      <!-- Mensaje de error -->
-      @if (error()) {
-        <div class="error-message" [@fadeInUp]>
-          {{ error() }}
-        </div>
-      }
-
-      <!-- Loading -->
-      @if (loading()) {
-        <div class="loading-overlay">
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>{{ 'attendance.loading' | translate }}</span>
-        </div>
-      }
     </div>
+
+    <!-- Mensaje de error -->
+    @if (error()) {
+      <div class="error-message" [@fadeInUp]>
+        {{ error() }}
+      </div>
+    }
+
+    <!-- Mensaje de éxito -->
+    @if (success()) {
+      <div class="success-message" [@fadeInUp]>
+        {{ success() }}
+      </div>
+    }
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'attendance.loading' | translate }}</span>
+      </div>
+    }
+
+    <!-- Starting -->
+    @if (starting()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'attendance.starting' | translate }}</span>
+      </div>
+    }
   </div>
 </div>
 
