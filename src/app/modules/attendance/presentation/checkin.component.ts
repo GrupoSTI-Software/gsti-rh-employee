@@ -23,6 +23,24 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 
+/**
+ * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
+ * face-api.js no tiene tipos TypeScript oficiales
+ */
+interface IFaceDetectionWithLandmarks {
+  detection: {
+    box: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  };
+  landmarks: {
+    positions: { x: number; y: number }[];
+  };
+}
+
 @Component({
   selector: 'app-checkin',
   standalone: true,
@@ -1677,14 +1695,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
       const images = await Promise.all(frames.map((frame) => this.base64ToImage(frame)));
 
       // Verificar que todos los frames tengan un rostro detectado
-      const faceDetections = await Promise.all(
+      const faceDetections: (IFaceDetectionWithLandmarks | undefined)[] = await Promise.all(
         images.map((img) =>
           faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(),
         ),
       );
 
       // Si algún frame no tiene rostro, rechazar
-      if (faceDetections.some((detection) => !detection)) {
+      if (faceDetections.some((detection: IFaceDetectionWithLandmarks | undefined) => !detection)) {
         this.logger.warn('No se detectó rostro en todos los frames');
         return false;
       }
@@ -1761,7 +1779,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       let landmarkVariation = 0;
       let rigidityScore = 0; // Mide qué tan "rígido" es el movimiento (foto = rígido, persona = flexible)
 
-      if (faceDetections.every((d) => d && d.landmarks)) {
+      if (faceDetections.every((d) => d?.landmarks)) {
         const landmarkMovementVariances: number[] = [];
 
         for (let i = 1; i < faceDetections.length; i++) {
