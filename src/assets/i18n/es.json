@@ -10,7 +10,8 @@
     "apiConfig": "Configuración de API",
     "menu": "Menú",
     "close": "Cerrar",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "cancel": "Cancelar"
   },
   "auth": {
     "loginTitle": "Iniciar Sesión",

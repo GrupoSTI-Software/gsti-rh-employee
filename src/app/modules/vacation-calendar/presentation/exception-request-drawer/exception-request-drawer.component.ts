@@ -11,7 +11,9 @@ import {
   SimpleChanges,
   signal,
   computed,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -56,6 +58,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly translateService = inject(TranslateService);
   private readonly getExceptionTypesUseCase = inject(GetExceptionTypesUseCase);
   private readonly createExceptionRequestUseCase = inject(CreateExceptionRequestUseCase);
@@ -78,50 +81,123 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
   readonly pendingRequests = signal<IExceptionRequestDetail[]>([]);
   readonly activeTab = signal<'request' | 'pending'>('request');
   readonly dateErrors = signal<Map<number, string>>(new Map());
+  readonly errorMessage = signal<string | null>(null);
 
   readonly form: FormGroup = this.fb.group({
     exceptionTypeId: [null, [Validators.required]],
     exceptionRequestDescription: ['', [Validators.maxLength(255)]],
     exceptionRequestCheckInTime: [null],
     exceptionRequestCheckOutTime: [null],
-    daysToApply: [0],
     hoursToApply: [0],
     enjoymentOfSalary: [false],
   });
 
+  // Signal para el ID del tipo de excepción seleccionado
+  private readonly selectedExceptionTypeId = signal<number | null>(null);
+
   readonly selectedExceptionType = computed(() => {
-    const typeId = this.form.get('exceptionTypeId')?.value;
+    const typeId = this.selectedExceptionTypeId();
     if (!typeId) return null;
     return this.exceptionTypes().find((type) => type.exceptionTypeId === typeId) ?? null;
   });
 
+  // Computed signals que leen directamente del signal para mejor reactividad
   readonly needsCheckInTime = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedCheckInTime === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedCheckInTime === 1;
   });
 
   readonly needsCheckOutTime = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedCheckOutTime === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedCheckOutTime === 1;
   });
 
   readonly needsReason = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedReason === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedReason === 1;
   });
 
   readonly needsEnjoymentOfSalary = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedEnjoymentOfSalary === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedEnjoymentOfSalary === 1;
   });
 
   readonly needsPeriodInDays = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedPeriodInDays === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedPeriodInDays === 1;
   });
 
   readonly needsPeriodInHours = computed(() => {
-    return this.selectedExceptionType()?.exceptionTypeNeedPeriodInHours === 1;
+    const typeId = this.selectedExceptionTypeId();
+    if (!typeId) return false;
+    const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
+    return type?.exceptionTypeNeedPeriodInHours === 1;
   });
 
   ngOnInit(): void {
     void this.loadExceptionTypes();
     this.setupFormValidators();
+    this.setupExceptionTypeWatcher();
+  }
+
+  /**
+   * Configura un watcher para actualizar el signal cuando cambie el tipo de excepción
+   */
+  private setupExceptionTypeWatcher(): void {
+    const exceptionTypeControl = this.form.get('exceptionTypeId');
+    if (!exceptionTypeControl) {
+      return;
+    }
+
+    exceptionTypeControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => {
+      // Actualizar el signal primero
+      this.selectedExceptionTypeId.set(value);
+      
+      // Buscar el tipo directamente en la lista para evitar problemas de timing con el computed
+      const selectedType = value
+        ? this.exceptionTypes().find((type) => type.exceptionTypeId === value) ?? null
+        : null;
+      
+      // Limpiar valores de campos que ya no son necesarios
+      if (!selectedType) {
+        this.form.patchValue(
+          {
+            exceptionRequestCheckInTime: null,
+            exceptionRequestCheckOutTime: null,
+            hoursToApply: 0,
+          },
+          { emitEvent: false },
+        );
+      } else {
+        // Limpiar campos que no son necesarios para el nuevo tipo
+        if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
+          this.form.patchValue({ exceptionRequestCheckInTime: null }, { emitEvent: false });
+        }
+        if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
+          this.form.patchValue({ exceptionRequestCheckOutTime: null }, { emitEvent: false });
+        }
+        if (selectedType.exceptionTypeNeedPeriodInHours !== 1) {
+          this.form.patchValue({ hoursToApply: 0 }, { emitEvent: false });
+        }
+      }
+      
+      // Actualizar validadores
+      this.updateFormValidators();
+      
+      // Forzar detección de cambios para que aparezcan los campos dinámicos
+      // Usar detectChanges() para forzar la actualización inmediata del template
+      this.cdr.detectChanges();
+    });
   }
 
   /**
@@ -194,37 +270,11 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
 
   /**
    * Configura los validadores del formulario según el tipo de excepción seleccionado
+   * Nota: La lógica de actualización se maneja en setupExceptionTypeWatcher()
    */
   private setupFormValidators(): void {
-    this.form.get('exceptionTypeId')?.valueChanges.subscribe(() => {
-      // Limpiar valores de campos que ya no son necesarios
-      const selectedType = this.selectedExceptionType();
-      if (!selectedType) {
-        this.form.patchValue({
-          exceptionRequestCheckInTime: null,
-          exceptionRequestCheckOutTime: null,
-          daysToApply: 0,
-          hoursToApply: 0,
-        });
-      } else {
-        // Limpiar campos que no son necesarios para el nuevo tipo
-        if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
-          this.form.patchValue({ exceptionRequestCheckInTime: null });
-        }
-        if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
-          this.form.patchValue({ exceptionRequestCheckOutTime: null });
-        }
-        if (selectedType.exceptionTypeNeedPeriodInDays !== 1) {
-          this.form.patchValue({ daysToApply: 0 });
-        }
-        if (selectedType.exceptionTypeNeedPeriodInHours !== 1) {
-          this.form.patchValue({ hoursToApply: 0 });
-        }
-      }
-      this.updateFormValidators();
-      // Forzar detección de cambios para que aparezcan los campos dinámicos
-      this.cdr.detectChanges();
-    });
+    // Los validadores se actualizan automáticamente cuando cambia el tipo de excepción
+    // a través del watcher configurado en setupExceptionTypeWatcher()
   }
 
   /**
@@ -234,14 +284,12 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const descriptionControl = this.form.get('exceptionRequestDescription');
     const checkInTimeControl = this.form.get('exceptionRequestCheckInTime');
     const checkOutTimeControl = this.form.get('exceptionRequestCheckOutTime');
-    const daysToApplyControl = this.form.get('daysToApply');
     const hoursToApplyControl = this.form.get('hoursToApply');
 
     // Limpiar validadores previos
     descriptionControl?.clearValidators();
     checkInTimeControl?.clearValidators();
     checkOutTimeControl?.clearValidators();
-    daysToApplyControl?.clearValidators();
     hoursToApplyControl?.clearValidators();
 
     // Aplicar validadores según el tipo de excepción
@@ -259,10 +307,6 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       checkOutTimeControl?.setValidators([Validators.required]);
     }
 
-    if (this.needsPeriodInDays()) {
-      daysToApplyControl?.setValidators([Validators.required, Validators.min(0)]);
-    }
-
     if (this.needsPeriodInHours()) {
       hoursToApplyControl?.setValidators([Validators.required, Validators.min(0)]);
     }
@@ -271,7 +315,6 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     descriptionControl?.updateValueAndValidity();
     checkInTimeControl?.updateValueAndValidity();
     checkOutTimeControl?.updateValueAndValidity();
-    daysToApplyControl?.updateValueAndValidity();
     hoursToApplyControl?.updateValueAndValidity();
 
     // Forzar detección de cambios para que aparezcan los campos dinámicos
@@ -323,6 +366,8 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     void this.loadPendingRequests();
     // Resetear el formulario y forzar actualización de validadores
     this.form.reset();
+    this.selectedExceptionTypeId.set(null);
+    this.errorMessage.set(null);
     this.updateFormValidators();
     this.cdr.markForCheck();
   }
@@ -334,6 +379,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     this.visible = false;
     this.visibleChange.emit(false);
     this.form.reset();
+    this.selectedExceptionTypeId.set(null);
     this.selectedDatesList.set([]);
     this.activeTab.set('request');
     this.dateErrors.set(new Map());
@@ -374,14 +420,9 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
    */
   addDate(): void {
     const newDate = new Date();
-    // Validar que la fecha no tenga solicitud pendiente
-    if (this.hasPendingRequestForDate(newDate)) {
-      this.logger.warn('Esta fecha ya tiene una solicitud pendiente');
-      return;
-    }
     const dates = [...this.selectedDatesList(), newDate];
     this.selectedDatesList.set(dates);
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   /**
@@ -407,7 +448,12 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     });
     this.dateErrors.set(newErrors);
 
-    this.cdr.markForCheck();
+    // Limpiar mensaje de error si no hay fechas seleccionadas
+    if (dates.length === 0) {
+      this.errorMessage.set(null);
+    }
+
+    this.cdr.detectChanges();
   }
 
   /**
@@ -440,17 +486,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const input = event.target as HTMLInputElement;
     const newDate = new Date(input.value);
 
-    // Validar que la fecha no tenga solicitud pendiente
-    if (this.hasPendingRequestForDate(newDate)) {
-      const errors = new Map(this.dateErrors());
-      errors.set(index, 'exceptionRequest.dateHasPendingRequest');
-      this.dateErrors.set(errors);
-      // No actualizar la fecha si tiene solicitud pendiente
-      this.cdr.markForCheck();
-      return;
-    }
-
-    // Limpiar error si la fecha es válida
+    // Limpiar error si existe
     const errors = new Map(this.dateErrors());
     errors.delete(index);
     this.dateErrors.set(errors);
@@ -458,7 +494,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const dates = [...this.selectedDatesList()];
     dates[index] = newDate;
     this.selectedDatesList.set(dates);
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   /**
@@ -495,20 +531,6 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       return;
     }
 
-    // Filtrar fechas que ya tienen solicitudes pendientes
-    const validDates = dates.filter((date) => !this.hasPendingRequestForDate(date));
-
-    if (validDates.length === 0) {
-      this.logger.warn('Todas las fechas seleccionadas ya tienen solicitudes pendientes');
-      return;
-    }
-
-    if (validDates.length < dates.length) {
-      this.logger.warn(
-        `Se omitieron ${dates.length - validDates.length} fecha(s) que ya tienen solicitudes pendientes`,
-      );
-    }
-
     const user = this.authPort.getCurrentUser();
     if (typeof user?.employeeId !== 'number') {
       this.logger.error('No se encontró el ID del empleado');
@@ -521,7 +543,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       const formValue = this.form.value;
       const requests: IExceptionRequest[] = [];
 
-      for (const date of validDates) {
+      for (const date of dates) {
         const request: IExceptionRequest = {
           employeeId: user.employeeId,
           exceptionTypeId: formValue.exceptionTypeId,
@@ -534,7 +556,6 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
           exceptionRequestCheckOutTime: formValue.exceptionRequestCheckOutTime
             ? this.parseTimeFromInput(formValue.exceptionRequestCheckOutTime)
             : null,
-          daysToApply: formValue.daysToApply ?? 0,
         };
 
         requests.push(request);

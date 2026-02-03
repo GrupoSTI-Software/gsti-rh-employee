@@ -10,7 +10,8 @@
     "apiConfig": "API Configuration",
     "menu": "Menu",
     "close": "Close",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "cancel": "Cancel"
   },
   "auth": {
     "loginTitle": "Sign In",
