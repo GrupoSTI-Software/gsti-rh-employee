@@ -1,0 +1,232 @@
+<div class="vacation-calendar-container">
+  <div class="vacation-calendar-wrapper">
+    <!-- Título y subtítulo -->
+    <div class="vacation-calendar-title-section">
+      <h1 class="page-title">{{ title || ('vacations.title' | translate) }}</h1>
+      <p class="page-subtitle">{{ subtitle || ('vacations.subtitle' | translate) }}</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="calendar-filters">
+      <div class="filter-group">
+        <label for="year-select" class="filter-label">{{ 'vacations.year' | translate }}:</label>
+        <select
+          id="year-select"
+          [ngModel]="selectedYear()"
+          (ngModelChange)="onYearChange($event)"
+          class="filter-select"
+        >
+          @for (year of availableYears(); track year) {
+            <option [ngValue]="year">{{ year }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="month-select" class="filter-label">{{ 'vacations.month' | translate }}:</label>
+        <select
+          id="month-select"
+          [ngModel]="selectedMonth()"
+          (ngModelChange)="onMonthChange($event)"
+          class="filter-select"
+        >
+          @for (month of months(); track month.value) {
+            <option [ngValue]="month.value">{{ month.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Navegación del calendario -->
+    <div class="calendar-navigation">
+      <button
+        type="button"
+        class="nav-button"
+        (click)="previousMonth()"
+        [attr.aria-label]="'vacations.previousMonth' | translate"
+      >
+        <i class="pi pi-chevron-left"></i>
+      </button>
+      <h2 class="calendar-title">{{ monthYearLabel() }}</h2>
+      <button
+        type="button"
+        class="nav-button"
+        (click)="nextMonth()"
+        [attr.aria-label]="'vacations.nextMonth' | translate"
+      >
+        <i class="pi pi-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    @if (loading()) {
+      <div class="loading-overlay">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'vacations.loading' | translate }}</span>
+      </div>
+    }
+
+    <!-- Calendario en contenedor tipo card -->
+    <div class="calendar-card">
+      <div class="calendar-wrapper">
+        <!-- Encabezados de días de la semana -->
+        <div class="calendar-header">
+          @for (dayIndex of [0, 1, 2, 3, 4, 5, 6]; track dayIndex) {
+            <div class="calendar-header-day">
+              {{ getDayName(dayIndex) }}
+            </div>
+          }
+        </div>
+
+        <!-- Días del calendario -->
+        <div class="calendar-grid">
+          @for (day of calendarDays(); track day.date.getTime()) {
+            <div
+              class="calendar-day"
+              [class.current-month]="day.isCurrentMonth"
+              [class.has-multiple-events]="getEventCount(day) > 1"
+              [class.today]="isToday(day.date) && day.isCurrentMonth"
+              [class.clickable]="day.isCurrentMonth"
+              [pTooltip]="getDayTooltip(day)"
+              [tooltipPosition]="'top'"
+              [showDelay]="300"
+              (click)="onDayClick($event, day)"
+              [attr.aria-label]="getDayAriaLabel(day)"
+              [attr.role]="day.isCurrentMonth ? 'button' : null"
+              [attr.tabindex]="day.isCurrentMonth ? 0 : -1"
+              (keydown.enter)="day.isCurrentMonth && onDayClick($event, day)"
+              (keydown.space)="day.isCurrentMonth && onDayClick($event, day)"
+            >
+              <div class="day-header">
+                <span class="day-number">{{ day.dayNumber }}</span>
+                <div class="day-icons">
+                  @if (day.isVacation) {
+                    <i
+                      class="pi pi-suitcase vacation-icon"
+                      [attr.title]="'vacations.vacationDay' | translate"
+                    ></i>
+                  }
+                  @if (day.holidays.length > 0) {
+                    @for (holiday of day.holidays; track holiday.holidayId) {
+                      <div
+                        class="holiday-icon"
+                        [innerHTML]="getHolidayIconHtml(holiday.holidayIcon)"
+                        [attr.title]="holiday.holidayName"
+                      ></div>
+                    }
+                  }
+                  @if (day.isBirthday) {
+                    <i
+                      class="pi pi-birthday-cake birthday-icon"
+                      [attr.title]="'calendar.birthday' | translate"
+                    ></i>
+                  }
+                  @if (day.isAnniversary) {
+                    <i
+                      class="pi pi-calendar anniversary-icon"
+                      [attr.title]="'calendar.anniversary' | translate"
+                    ></i>
+                  }
+                  @if (day.hasDisability) {
+                    <i
+                      class="pi pi-plus-circle disability-icon"
+                      [attr.title]="'calendar.disability' | translate"
+                    ></i>
+                  }
+                </div>
+              </div>
+              <div class="day-content">
+                @if (day.isVacation) {
+                  <div class="event-section vacation-section">
+                    <div class="vacation-badge">{{ 'vacations.vacations' | translate }}</div>
+                  </div>
+                }
+                @if (day.holidays.length > 0) {
+                  @for (holiday of day.holidays; track holiday.holidayId) {
+                    <div class="event-section holiday-section">
+                      <div class="holiday-badge">
+                        {{ holiday.holidayName }}
+                      </div>
+                    </div>
+                  }
+                }
+                @if (day.isBirthday) {
+                  <div class="event-section birthday-section">
+                    <div class="birthday-badge">{{ 'calendar.birthday' | translate }}</div>
+                  </div>
+                }
+                @if (day.isAnniversary) {
+                  <div class="event-section anniversary-section">
+                    <div class="anniversary-badge">{{ 'calendar.anniversary' | translate }}</div>
+                  </div>
+                }
+              </div>
+              <!-- Indicadores visuales de múltiples eventos -->
+              <div class="event-indicators">
+                @if (day.isVacation) {
+                  <div class="event-indicator vacation-indicator"></div>
+                }
+                @if (day.holidays.length > 0) {
+                  <div class="event-indicator holiday-indicator"></div>
+                }
+                @if (day.isBirthday) {
+                  <div class="event-indicator birthday-indicator"></div>
+                }
+                @if (day.isAnniversary) {
+                  <div class="event-indicator anniversary-indicator"></div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="calendar-legend">
+      <div class="legend-item">
+        <div class="legend-color vacation-day"></div>
+        <span>{{ 'vacations.vacationDay' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color holiday-day"></div>
+        <span>{{ 'calendar.holiday' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color birthday-day"></div>
+        <span>{{ 'calendar.birthday' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color anniversary-day"></div>
+        <span>{{ 'calendar.anniversary' | translate }}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color today"></div>
+        <span>{{ 'vacations.today' | translate }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Drawer de detalle del día -->
+<app-vacation-detail-drawer
+  [vacation]="selectedVacation()"
+  [vacationSetting]="selectedVacationSetting()"
+  [holidays]="selectedHolidays()"
+  [isBirthday]="selectedIsBirthday()"
+  [isAnniversary]="selectedIsAnniversary()"
+  [attendance]="selectedAttendance()"
+  [selectedDate]="selectedDate()"
+  [loadingAttendance]="loadingAttendance()"
+  [visible]="showDetailDrawer()"
+  (visibleChange)="onDetailDrawerClose()"
+  (signRequested)="onSignRequested($event)"
+/>
+
+<!-- Diálogo de firma -->
+<app-vacation-signature
+  [vacation]="selectedVacation()"
+  [visible]="showSignatureDialog()"
+  (visibleChange)="showSignatureDialog.set($event)"
+  (signatureSubmitted)="onSignatureSubmitted($event)"
+/>

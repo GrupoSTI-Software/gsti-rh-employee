@@ -51,6 +51,17 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'vacations',
+        data: {
+          breadcrumb: 'vacations',
+          label: 'Calendario de Vacaciones',
+        },
+        loadComponent: () =>
+          import('@modules/vacation-calendar/presentation/vacation-calendar/vacation-calendar.component').then(
+            (m) => m.VacationCalendarComponent,
+          ),
+      },
+      {
         path: 'settings',
         data: {
           breadcrumb: 'settings',

@@ -127,6 +127,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
         isWorkDisabilityDate: assist.isWorkDisabilityDate,
         isVacationDate: assist.isVacationDate,
         isHoliday: assist.isHoliday,
+        workHoliday: assist.workHoliday ?? null,
         assistFlatList: assist.assitFlatList ?? [],
         exceptions: (assist.exceptions ?? []).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

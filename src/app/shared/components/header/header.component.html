@@ -1,28 +1,35 @@
 <header class="header">
   <div class="header-left">
-    <button type="button" class="menu-button" (click)="toggleSidebar()" [attr.aria-label]="'header.menu' | translate">
+    <button
+      type="button"
+      class="menu-button"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="'header.menu' | translate"
+    >
       <i class="pi pi-bars"></i>
     </button>
 
     <div class="navigation-buttons">
-      <button 
-        type="button" 
-        class="nav-button" 
+      <button
+        type="button"
+        class="nav-button"
         [class.disabled]="!canGoBack()"
         [disabled]="!canGoBack()"
-        (click)="goBack()" 
+        (click)="goBack()"
         [attr.aria-label]="'header.back' | translate"
-        [attr.title]="'header.back' | translate">
+        [attr.title]="'header.back' | translate"
+      >
         <i class="pi pi-arrow-left"></i>
       </button>
-      <button 
-        type="button" 
-        class="nav-button" 
+      <button
+        type="button"
+        class="nav-button"
         [class.disabled]="!canGoForward()"
         [disabled]="!canGoForward()"
-        (click)="goForward()" 
+        (click)="goForward()"
         [attr.aria-label]="'header.forward' | translate"
-        [attr.title]="'header.forward' | translate">
+        [attr.title]="'header.forward' | translate"
+      >
         <i class="pi pi-arrow-right"></i>
       </button>
     </div>
@@ -41,9 +48,13 @@
   <div class="user-info">
     <app-avatar size="small" />
     <span class="user-name">{{ userName() }}</span>
-    <button type="button" class="logout-button" (click)="logout()" [attr.aria-label]="'header.logout' | translate">
+    <button
+      type="button"
+      class="logout-button"
+      (click)="logout()"
+      [attr.aria-label]="'header.logout' | translate"
+    >
       <i class="pi pi-sign-out"></i>
     </button>
   </div>
 </header>
-

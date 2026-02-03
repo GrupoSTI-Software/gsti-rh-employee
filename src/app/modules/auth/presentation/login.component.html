@@ -1,12 +1,7 @@
 <div class="login-container">
   <div class="login-header">
     @if (showLogo()) {
-      <img
-        [src]="logoUrl()"
-        [alt]="'auth.login' | translate"
-        class="login-logo"
-        id="app-logo"
-      />
+      <img [src]="logoUrl()" [alt]="'auth.login' | translate" class="login-logo" id="app-logo" />
     } @else {
       <div class="login-logo-placeholder">
         <i class="pi pi-spin pi-spinner"></i>
@@ -22,7 +17,7 @@
           type="email"
           formControlName="email"
           [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-        >
+        />
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <span class="error-message">
             @if (loginForm.get('email')?.hasError('required')) {
@@ -42,12 +37,14 @@
             [type]="showPassword() ? 'text' : 'password'"
             formControlName="password"
             [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          >
+          />
           <button
             type="button"
             class="password-toggle-button"
             (click)="togglePasswordVisibility()"
-            [attr.aria-label]="showPassword() ? ('auth.hidePassword' | translate) : ('auth.showPassword' | translate)"
+            [attr.aria-label]="
+              showPassword() ? ('auth.hidePassword' | translate) : ('auth.showPassword' | translate)
+            "
             tabindex="-1"
           >
             <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
@@ -63,14 +60,14 @@
           </span>
         }
       </div>
-      @if(false) {
-      <div class="form-group checkbox-group">
-        <label>
-          <input type="checkbox" formControlName="rememberMe" />
-          <span>{{ 'auth.rememberMe' | translate }}</span>
-        </label>
-        <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
-      </div>
+      @if (false) {
+        <div class="form-group checkbox-group">
+          <label>
+            <input type="checkbox" formControlName="rememberMe" />
+            <span>{{ 'auth.rememberMe' | translate }}</span>
+          </label>
+          <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
+        </div>
       }
 
       @if (error()) {
@@ -79,11 +76,7 @@
         </div>
       }
 
-      <button
-        type="submit"
-        class="btn primary"
-        [disabled]="loading() || loginForm.invalid"
-      >
+      <button type="submit" class="btn primary" [disabled]="loading() || loginForm.invalid">
         @if (loading()) {
           {{ 'auth.loading' | translate }}
         } @else {
@@ -91,9 +84,10 @@
         }
       </button>
 
-     
 
-     
+
+
+      <div class="version-info">v{{ version }}</div>
     </form>
     <div class="forgot-password-container">
       <button
@@ -105,10 +99,9 @@
         {{ 'auth.forgotPassword' | translate }}
     </button>
     </div>
-    
+
   <div class="version-info">
     v{{ version }}
   </div>
   </div>
 </div>
-

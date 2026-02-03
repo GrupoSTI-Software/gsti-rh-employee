@@ -1,12 +1,18 @@
 @use '../../../../styles/variables' as *;
 @use '../../../../styles/mixins' as *;
 
-// Contenedor principal
 .checkin-container {
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+
+.holiday-icon-container {
+  position: absolute;
+  left: 8%;
+  width: 3rem;
+  height: 3rem;
 }
 
 .checkin-wrapper {
@@ -296,7 +302,6 @@
   }
 }
 
-// Listas de diálogos
 .exceptions-list, .records-list {
   @include flex-column;
   gap: $spacing-md;
@@ -304,7 +309,6 @@
   overflow-y: auto;
   padding: $spacing-sm;
 }
-
 .no-exceptions, .no-records {
   @include flex-center;
   flex-direction: column;
@@ -312,52 +316,42 @@
   padding: $spacing-2xl;
   color: var(--text-secondary);
   text-align: center;
-
   i { font-size: 3rem; color: var(--text-tertiary); }
   p { margin: 0; }
 }
-
 .exception-item, .record-item {
   padding: $spacing-md;
   background: var(--bg-secondary);
   border-radius: $radius;
   border-left: 3px solid var(--warning);
 }
-
 .record-item { border-left-color: var(--primary); }
-
 .exception-header, .record-header {
   @include flex-between;
   margin-bottom: $spacing-sm;
 }
-
 .exception-type, .record-time {
   display: flex;
   align-items: center;
   gap: $spacing-sm;
 }
-
 .exception-type i { color: var(--warning); }
 .record-time i { color: var(--primary); }
 .exception-type-name { font-weight: $font-weight-semibold; color: var(--text-primary); }
-
 .record-time .time-value {
   font-weight: $font-weight-semibold;
   color: var(--text-primary);
   font-size: $font-size-lg;
   font-family: 'Courier New', monospace;
 }
-
 .exception-date, .record-date { font-size: $font-size-sm; color: var(--text-secondary); }
 .record-date { font-size: $font-size-xs; }
-
 .exception-description {
   margin-bottom: $spacing-sm;
   color: var(--text-secondary);
   font-size: $font-size-sm;
   line-height: 1.5;
 }
-
 .exception-times, .record-details { @include flex-column; gap: $spacing-xs; }
 .exception-time, .record-detail-item { display: flex; gap: $spacing-sm; font-size: $font-size-sm; }
 .time-label, .detail-label { color: var(--text-secondary); font-weight: $font-weight-medium; }
