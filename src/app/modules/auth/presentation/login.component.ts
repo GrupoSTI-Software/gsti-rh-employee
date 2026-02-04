@@ -80,4 +80,7 @@ export class LoginComponent {
       this.loading.set(false);
     }
   }
+  async forgotPassword(): Promise<void> {
+    await this.router.navigate(['/forgot-password']);
+  }
 }

@@ -6,13 +6,12 @@ import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { BrandingService } from '@core/services/branding.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
-import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, TranslatePipe, AvatarComponent],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
