@@ -225,7 +225,11 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     this.loadingRequests.set(true);
     try {
       const requests = await this.getExceptionRequestsUseCase.execute(user.employeeId);
-      this.pendingRequests.set(requests);
+      // Solo mostrar solicitudes que no estén rechazadas
+      const visibleRequests = requests.filter(
+        (request) => request.exceptionRequestStatus !== 'refused',
+      );
+      this.pendingRequests.set(visibleRequests);
     } catch (error) {
       this.logger.error('Error al cargar solicitudes pendientes:', error);
     } finally {
