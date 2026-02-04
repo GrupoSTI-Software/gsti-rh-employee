@@ -8,12 +8,15 @@ import { BrandingService } from '@core/services/branding.service';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import packageJson from '../../../../../package.json';
 
+import { PushNotificationsService } from '@core/services/push-notifications.service';
+
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
+  providers: [PushNotificationsService],
 })
 export class LoginComponent {
   private readonly loginUseCase = inject(LoginUseCase);
@@ -21,7 +24,6 @@ export class LoginComponent {
   readonly branding = inject(BrandingService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
-
   // Logo del branding o logo por defecto
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
 
@@ -38,6 +40,10 @@ export class LoginComponent {
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
   readonly version = packageJson.version;
+  readonly pushService = inject(PushNotificationsService);
+  ngOnInit(): void {
+    void this.pushService.requestPermission();
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
@@ -59,6 +65,7 @@ export class LoginComponent {
 
       if (result.success) {
         // Redirigir al dashboard
+        void this.pushService.listen();
         await this.router.navigate(['/dashboard/checkin']);
       } else {
         const errorMessage =

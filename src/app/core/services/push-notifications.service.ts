@@ -1,9 +1,11 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { initializeApp } from 'firebase/app';
+import { SecureStorageService } from './secure-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationsService {
+  private readonly secureStorage = inject(SecureStorageService);
   private firebaseApp = initializeApp({
     apiKey: '',
     authDomain: '',
@@ -23,12 +25,13 @@ export class PushNotificationsService {
       vapidKey: '',
       serviceWorkerRegistration: registration,
     });
-    console.log(token);
+    // Guardar el token en el secure storage
+    this.secureStorage.setItem('fcmToken', token);
   }
 
   listen() {
     onMessage(this.messaging, (payload) => {
-      console.log('Mensaje foreground', payload);
+      console.log('message received', payload);
     });
   }
 }
