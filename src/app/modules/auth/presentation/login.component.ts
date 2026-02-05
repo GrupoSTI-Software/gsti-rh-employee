@@ -31,8 +31,8 @@ export class LoginComponent {
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
   readonly loginForm: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    email: ['jsoto@siler-mx.com', [Validators.required, Validators.email]],
+    password: ['Lupe.-,1', [Validators.required, Validators.minLength(6)]],
     rememberMe: [false],
   });
 
@@ -41,15 +41,13 @@ export class LoginComponent {
   readonly showPassword = signal(false);
   readonly version = packageJson.version;
   readonly pushService = inject(PushNotificationsService);
-  ngOnInit(): void {
-    void this.pushService.requestPermission();
-  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
   }
 
   async onSubmit(): Promise<void> {
+    await this.pushService.requestPermission();
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
