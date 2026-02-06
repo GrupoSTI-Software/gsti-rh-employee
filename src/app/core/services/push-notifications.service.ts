@@ -2,19 +2,19 @@ import { inject, Injectable } from '@angular/core';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { initializeApp } from 'firebase/app';
 import { SecureStorageService } from './secure-storage.service';
-import { environment } from '@env/environment';
+//import { environment } from '@env/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PushNotificationsService {
   private readonly secureStorage = inject(SecureStorageService);
-  private readonly firebaseConfig = environment.FIREBASE_CONFIG;
+  //private readonly firebaseConfig = environment.FIREBASE_CONFIG;
   private firebaseApp = initializeApp({
-    apiKey: this.firebaseConfig.apiKey,
-    authDomain: this.firebaseConfig.authDomain,
-    projectId: this.firebaseConfig.projectId,
-    storageBucket: this.firebaseConfig.storageBucket,
-    messagingSenderId: this.firebaseConfig.messagingSenderId,
-    appId: this.firebaseConfig.appId,
+    apiKey: '',
+    authDomain: '',
+    projectId: '',
+    storageBucket: '',
+    messagingSenderId: '',
+    appId: '',
   });
 
   private messaging = getMessaging(this.firebaseApp);
