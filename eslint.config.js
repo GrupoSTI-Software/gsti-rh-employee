@@ -13,7 +13,8 @@ export default tseslint.config(
       '.angular/**',
       '**/*.spec.ts',
       'src/environments/**',
-      'scripts/**'
+      'scripts/**',
+      'src/assets/firebase-messaging-sw.js'
     ]
   },
   // Configuración base de JavaScript - solo para archivos .js
