@@ -25,9 +25,12 @@ import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacatio
 import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
 import { ExceptionRequestDrawerComponent } from '../exception-request-drawer/exception-request-drawer.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
 import { IAttendance } from '@modules/attendance/domain/attendance.port';
 import { GetWorkDisabilitiesUseCase } from '../../application/get-work-disabilities.use-case';
+import { GetExceptionRequestsUseCase } from '../../application/get-exception-requests.use-case';
 
 /**
  * Tipo de evento en el calendario
@@ -71,6 +74,7 @@ interface ICalendarDay {
     FormsModule,
     TranslatePipe,
     TooltipModule,
+    ToastModule,
     VacationDetailDrawerComponent,
     VacationSignatureComponent,
     ExceptionRequestDrawerComponent,
@@ -85,10 +89,12 @@ export class VacationCalendarComponent implements OnInit {
   private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly getWorkDisabilitiesUseCase = inject(GetWorkDisabilitiesUseCase);
+  private readonly getExceptionRequestsUseCase = inject(GetExceptionRequestsUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly messageService = inject(MessageService);
 
   // Inputs opcionales para hacer el componente reutilizable
   /**
@@ -156,6 +162,8 @@ export class VacationCalendarComponent implements OnInit {
   readonly showExceptionRequestDrawer = signal(false);
   readonly selectionMode = signal(false);
   readonly selectedDaysForException = signal<Date[]>([]);
+  // Fechas con excepciones (cualquier estado) - formato: YYYY-MM-DD
+  readonly exceptionDatesSet = signal<Set<string>>(new Set());
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -688,6 +696,7 @@ export class VacationCalendarComponent implements OnInit {
 
     // Si está en modo selección, alternar la selección del día
     if (this.selectionMode()) {
+      // toggleDaySelection ya maneja la validación y muestra el mensaje
       this.toggleDaySelection(day.date);
       return;
     }
@@ -872,9 +881,30 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Verifica si un día tiene una excepción registrada
+   */
+  hasExceptionForDate(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.exceptionDatesSet().has(dateKey);
+  }
+
+  /**
    * Alterna la selección de un día para solicitudes de excepción
    */
   toggleDaySelection(date: Date): void {
+    // No permitir seleccionar días que ya tienen excepciones
+    if (this.hasExceptionForDate(date)) {
+      this.translateService.get('exceptionRequest.dayHasException').subscribe((message) => {
+        this.messageService.add({
+          severity: 'warn',
+          summary: this.translateService.instant('exceptionRequest.warning'),
+          detail: message,
+          life: 5000,
+        });
+      });
+      return;
+    }
+
     const selectedDays = [...this.selectedDaysForException()];
     const dateKey = this.formatDateKey(date);
     const index = selectedDays.findIndex((d) => this.formatDateKey(d) === dateKey);
@@ -897,11 +927,49 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Carga las excepciones para validación en modo selección
+   */
+  private async loadExceptionDates(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const requests = await this.getExceptionRequestsUseCase.execute(
+        user.employeeId,
+        '',
+        undefined,
+        undefined,
+        'all',
+      );
+      // Crear un Set con todas las fechas que tienen excepciones (cualquier estado)
+      const exceptionDates = new Set<string>();
+      requests.forEach((request) => {
+        if (request.requestedDate) {
+          // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+          const requestDate = this.parseDateString(request.requestedDate);
+          const dateKey = this.formatDateKey(requestDate);
+          exceptionDates.add(dateKey);
+        }
+      });
+      this.exceptionDatesSet.set(exceptionDates);
+    } catch (error) {
+      this.logger.error('Error al cargar excepciones para validación:', error);
+    }
+  }
+
+  /**
    * Alterna el modo de selección de días
    */
   toggleSelectionMode(): void {
-    this.selectionMode.set(!this.selectionMode());
-    // Si se desactiva el modo selección, no limpiar los días seleccionados
+    const newMode = !this.selectionMode();
+    this.selectionMode.set(newMode);
+
+    // Si se activa el modo selección, cargar las excepciones
+    if (newMode) {
+      void this.loadExceptionDates();
+    }
   }
 
   /**
@@ -934,6 +1002,8 @@ export class VacationCalendarComponent implements OnInit {
   onExceptionRequestCreated(): void {
     this.selectedDaysForException.set([]);
     this.selectionMode.set(false);
-    // Recargar datos si es necesario
+    // Limpiar el set de excepciones ya que se desactivó el modo selección
+    // Se recargarán automáticamente cuando se active el modo selección de nuevo
+    this.exceptionDatesSet.set(new Set());
   }
 }

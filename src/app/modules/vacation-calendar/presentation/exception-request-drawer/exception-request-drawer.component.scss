@@ -207,6 +207,15 @@
   color: var(--text-primary);
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
+
+  &.disabled,
+  &:disabled {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.6;
+    border-color: var(--border-color);
+  }
   border-radius: $radius-md;
 }
 
@@ -289,7 +298,7 @@
   }
 
   &.active {
-    color: var(--primary);
+    color: var(--text-primary);
     border-bottom-color: var(--primary);
     font-weight: $font-weight-semibold;
   }

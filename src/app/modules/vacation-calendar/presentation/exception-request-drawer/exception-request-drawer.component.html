@@ -149,27 +149,6 @@
           </div>
         }
 
-        <!-- Horas a aplicar (si es requerido) -->
-        @if (needsPeriodInHours()) {
-          <div class="form-group">
-            <label for="hoursToApply" class="form-label">
-              {{ 'exceptionRequest.hoursToApply' | translate }}
-              <span class="required">*</span>
-            </label>
-            <input
-              type="number"
-              id="hoursToApply"
-              formControlName="hoursToApply"
-              class="form-input"
-              min="0"
-              step="0.5"
-              [class.invalid]="form.get('hoursToApply')?.invalid && form.get('hoursToApply')?.touched"
-            />
-            @if (form.get('hoursToApply')?.invalid && form.get('hoursToApply')?.touched) {
-              <span class="error-message">{{ 'validation.required' | translate }}</span>
-            }
-          </div>
-        }
 
         <!-- Fechas seleccionadas -->
         <div class="form-group">
@@ -205,10 +184,16 @@
                       (change)="updateDate($index, $event)"
                       class="date-input"
                       [class.invalid]="dateErrors().has($index)"
+                      [class.disabled]="hasRequestForDate(date)"
+                      [disabled]="hasRequestForDate(date)"
                     />
                     @if (dateErrors().has($index)) {
                       <span class="date-error-message">
                         {{ dateErrors().get($index) ?? '' | translate }}
+                      </span>
+                    } @else if (hasRequestForDate(date)) {
+                      <span class="date-error-message">
+                        {{ 'exceptionRequest.dateHasRequest' | translate }}
                       </span>
                     }
                   </div>

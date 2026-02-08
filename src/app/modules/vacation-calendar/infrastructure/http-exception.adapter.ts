@@ -79,10 +79,10 @@ export class HttpExceptionAdapter implements IExceptionPort {
     positionId?: number,
     status?: string,
     page = 1,
-    limit = 30,
+    limit = 9999,
   ): Promise<IExceptionRequestDetail[]> {
     try {
-      let url = `${this.apiUrl}/exception-requests/all?employeeName=${employeeId}&page=${page}&limit=${limit}`;
+      let url = `${this.apiUrl}/exception-requests/my-requests?employeeName=${employeeId}&page=${page}&limit=${limit}`;
 
       if (searchText) {
         url += `&searchText=${encodeURIComponent(searchText)}`;

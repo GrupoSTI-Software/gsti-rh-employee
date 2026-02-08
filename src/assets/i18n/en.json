@@ -358,6 +358,10 @@
       "accepted": "Accepted",
       "refused": "Refused"
     },
-    "dateHasPendingRequest": "This date already has a pending request"
+    "dateHasPendingRequest": "This date already has a pending request",
+    "dateHasRequest": "This date already has a registered request",
+    "someDatesHaveRequests": "Some dates already have registered requests and will not be sent",
+    "dayHasException": "This day already has a registered exception and cannot be selected",
+    "warning": "Warning"
   }
 }

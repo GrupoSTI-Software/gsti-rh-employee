@@ -358,6 +358,10 @@
       "accepted": "Aceptada",
       "refused": "Rechazada"
     },
-    "dateHasPendingRequest": "Esta fecha ya tiene una solicitud pendiente"
+    "dateHasPendingRequest": "Esta fecha ya tiene una solicitud pendiente",
+    "dateHasRequest": "Esta fecha ya tiene una solicitud registrada",
+    "someDatesHaveRequests": "Algunas fechas ya tienen solicitudes registradas y no se enviarán",
+    "dayHasException": "Este día ya tiene una excepción registrada y no puede ser seleccionado",
+    "warning": "Advertencia"
   }
 }

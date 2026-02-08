@@ -79,6 +79,8 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
   readonly exceptionTypes = signal<IExceptionType[]>([]);
   readonly selectedDatesList = signal<Date[]>([]);
   readonly pendingRequests = signal<IExceptionRequestDetail[]>([]);
+  // Todas las solicitudes (cualquier estado) para validación de fechas
+  readonly allRequests = signal<IExceptionRequestDetail[]>([]);
   readonly activeTab = signal<'request' | 'pending'>('request');
   readonly dateErrors = signal<Map<number, string>>(new Map());
   readonly errorMessage = signal<string | null>(null);
@@ -106,14 +108,16 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const typeId = this.selectedExceptionTypeId();
     if (!typeId) return false;
     const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
-    return type?.exceptionTypeNeedCheckInTime === 1;
+    // Si necesita periodo en horas, también necesita check-in
+    return type?.exceptionTypeNeedCheckInTime === 1 || type?.exceptionTypeNeedPeriodInHours === 1;
   });
 
   readonly needsCheckOutTime = computed(() => {
     const typeId = this.selectedExceptionTypeId();
     if (!typeId) return false;
     const type = this.exceptionTypes().find((t) => t.exceptionTypeId === typeId);
-    return type?.exceptionTypeNeedCheckOutTime === 1;
+    // Si necesita periodo en horas, también necesita check-out
+    return type?.exceptionTypeNeedCheckOutTime === 1 || type?.exceptionTypeNeedPeriodInHours === 1;
   });
 
   readonly needsReason = computed(() => {
@@ -182,13 +186,20 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
           );
         } else {
           // Limpiar campos que no son necesarios para el nuevo tipo
-          if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
-            this.form.patchValue({ exceptionRequestCheckInTime: null }, { emitEvent: false });
-          }
-          if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
-            this.form.patchValue({ exceptionRequestCheckOutTime: null }, { emitEvent: false });
-          }
+          // Si necesita periodo en horas, NO limpiar check-in y check-out
           if (selectedType.exceptionTypeNeedPeriodInHours !== 1) {
+            // Solo limpiar check-in si no se necesita directamente Y no se necesita periodo en horas
+            if (selectedType.exceptionTypeNeedCheckInTime !== 1) {
+              this.form.patchValue({ exceptionRequestCheckInTime: null }, { emitEvent: false });
+            }
+            // Solo limpiar check-out si no se necesita directamente Y no se necesita periodo en horas
+            if (selectedType.exceptionTypeNeedCheckOutTime !== 1) {
+              this.form.patchValue({ exceptionRequestCheckOutTime: null }, { emitEvent: false });
+            }
+            // Limpiar horas solo si NO se necesita periodo en horas
+            this.form.patchValue({ hoursToApply: 0 }, { emitEvent: false });
+          } else {
+            // Si necesita periodo en horas, limpiar el campo de horas pero mantener check-in y check-out
             this.form.patchValue({ hoursToApply: 0 }, { emitEvent: false });
           }
         }
@@ -225,10 +236,31 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     this.loadingRequests.set(true);
     try {
       const requests = await this.getExceptionRequestsUseCase.execute(user.employeeId);
-      // Solo mostrar solicitudes que no estén rechazadas
-      const visibleRequests = requests.filter(
-        (request) => request.exceptionRequestStatus !== 'refused',
-      );
+      // Guardar todas las solicitudes para validación
+      this.allRequests.set(requests);
+      // Solo mostrar solicitudes que no estén rechazadas en la pestaña de pendientes
+      const visibleRequests = requests
+        .filter((request) => request.exceptionRequestStatus !== 'refused')
+        .sort((a, b) => {
+          // Primero ordenar por estado: accepted primero, luego pending/requested
+          const statusOrder: Record<string, number> = {
+            accepted: 0,
+            pending: 1,
+            requested: 1,
+          };
+          const statusDiff =
+            (statusOrder[a.exceptionRequestStatus] ?? 2) -
+            (statusOrder[b.exceptionRequestStatus] ?? 2);
+
+          if (statusDiff !== 0) {
+            return statusDiff;
+          }
+
+          // Si tienen el mismo estado, ordenar por fecha descendente (más recientes primero)
+          const dateA = new Date(a.requestedDate).getTime();
+          const dateB = new Date(b.requestedDate).getTime();
+          return dateB - dateA;
+        });
       this.pendingRequests.set(visibleRequests);
     } catch (error) {
       this.logger.error('Error al cargar solicitudes pendientes:', error);
@@ -313,9 +345,8 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       checkOutTimeControl?.setValidators([Validators.required]);
     }
 
-    if (this.needsPeriodInHours()) {
-      hoursToApplyControl?.setValidators([Validators.required, Validators.min(0)]);
-    }
+    // No validar hoursToApply cuando se necesita periodo en horas
+    // porque se usan check-in y check-out en su lugar
 
     // Actualizar estado de validación
     descriptionControl?.updateValueAndValidity();
@@ -363,19 +394,43 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
    * Maneja cuando el drawer se muestra
    */
   onShow(): void {
-    if (this.selectedDates.length > 0) {
-      this.selectedDatesList.set([...this.selectedDates]);
-    } else {
-      this.selectedDatesList.set([]);
-    }
-    // Cargar solicitudes pendientes para validación
-    void this.loadPendingRequests();
-    // Resetear el formulario y forzar actualización de validadores
-    this.form.reset();
-    this.selectedExceptionTypeId.set(null);
-    this.errorMessage.set(null);
-    this.updateFormValidators();
-    this.cdr.markForCheck();
+    // Cargar solicitudes primero para poder validar las fechas
+    void this.loadPendingRequests().then(() => {
+      if (this.selectedDates.length > 0) {
+        // Validar fechas que vienen del calendario
+        const validDates: Date[] = [];
+        const errors = new Map<number, string>();
+
+        this.selectedDates.forEach((date, index) => {
+          if (this.hasRequestForDate(date)) {
+            errors.set(index, 'exceptionRequest.dateHasRequest');
+          } else {
+            validDates.push(date);
+          }
+        });
+
+        this.selectedDatesList.set(validDates);
+        this.dateErrors.set(errors);
+
+        // Mostrar mensaje si hay fechas con solicitudes
+        if (errors.size > 0) {
+          this.errorMessage.set('exceptionRequest.someDatesHaveRequests');
+          setTimeout(() => {
+            this.errorMessage.set(null);
+            this.cdr.detectChanges();
+          }, 5000);
+        }
+      } else {
+        this.selectedDatesList.set([]);
+        this.dateErrors.set(new Map());
+      }
+
+      // Resetear el formulario y forzar actualización de validadores
+      this.form.reset();
+      this.selectedExceptionTypeId.set(null);
+      this.updateFormValidators();
+      this.cdr.markForCheck();
+    });
   }
 
   /**
@@ -389,12 +444,14 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     this.selectedDatesList.set([]);
     this.activeTab.set('request');
     this.dateErrors.set(new Map());
+    this.errorMessage.set(null);
+    this.allRequests.set([]);
   }
 
   /**
-   * Verifica si una fecha ya tiene una solicitud pendiente
+   * Verifica si una fecha ya tiene una solicitud (cualquier estado)
    */
-  hasPendingRequestForDate(date: Date): boolean {
+  hasRequestForDate(date: Date): boolean {
     if (!date || isNaN(date.getTime())) {
       return false;
     }
@@ -405,7 +462,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const day = String(date.getDate()).padStart(2, '0');
     const dateString = `${year}-${month}-${day}`;
 
-    return this.pendingRequests().some((request) => {
+    return this.allRequests().some((request) => {
       if (!request.requestedDate) return false;
 
       // Parsear la fecha de la solicitud
@@ -426,6 +483,21 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
    */
   addDate(): void {
     const newDate = new Date();
+    // Validar que la fecha no tenga una solicitud
+    if (this.hasRequestForDate(newDate)) {
+      this.logger.warn('Esta fecha ya tiene una solicitud');
+      // Mostrar mensaje de error al usuario
+      this.errorMessage.set('exceptionRequest.dateHasRequest');
+      // Limpiar el mensaje después de 5 segundos
+      setTimeout(() => {
+        this.errorMessage.set(null);
+        this.cdr.detectChanges();
+      }, 5000);
+      this.cdr.detectChanges();
+      return;
+    }
+    // Limpiar mensaje de error si la fecha es válida
+    this.errorMessage.set(null);
     const dates = [...this.selectedDatesList(), newDate];
     this.selectedDatesList.set(dates);
     this.cdr.detectChanges();
@@ -492,10 +564,28 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     const input = event.target as HTMLInputElement;
     const newDate = new Date(input.value);
 
+    // Validar que la fecha no tenga una solicitud
+    if (this.hasRequestForDate(newDate)) {
+      const errors = new Map(this.dateErrors());
+      errors.set(index, 'exceptionRequest.dateHasRequest');
+      this.dateErrors.set(errors);
+      // Mostrar mensaje de error al usuario
+      this.errorMessage.set('exceptionRequest.dateHasRequest');
+      // Limpiar el mensaje después de 5 segundos
+      setTimeout(() => {
+        this.errorMessage.set(null);
+        this.cdr.detectChanges();
+      }, 5000);
+      // Restaurar la fecha anterior
+      this.cdr.detectChanges();
+      return;
+    }
+
     // Limpiar error si existe
     const errors = new Map(this.dateErrors());
     errors.delete(index);
     this.dateErrors.set(errors);
+    this.errorMessage.set(null);
 
     const dates = [...this.selectedDatesList()];
     dates[index] = newDate;
@@ -537,6 +627,26 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       return;
     }
 
+    // Filtrar fechas que ya tienen solicitudes
+    const validDates = dates.filter((date) => !this.hasRequestForDate(date));
+    const datesWithRequests = dates.filter((date) => this.hasRequestForDate(date));
+
+    if (datesWithRequests.length > 0) {
+      // Mostrar mensaje de error indicando que hay fechas con solicitudes
+      this.errorMessage.set('exceptionRequest.someDatesHaveRequests');
+      // Limpiar el mensaje después de 5 segundos
+      setTimeout(() => {
+        this.errorMessage.set(null);
+        this.cdr.detectChanges();
+      }, 5000);
+      this.cdr.detectChanges();
+    }
+
+    if (validDates.length === 0) {
+      // Todas las fechas tienen solicitudes, no enviar nada
+      return;
+    }
+
     const user = this.authPort.getCurrentUser();
     if (typeof user?.employeeId !== 'number') {
       this.logger.error('No se encontró el ID del empleado');
@@ -549,11 +659,11 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
       const formValue = this.form.value;
       const requests: IExceptionRequest[] = [];
 
-      for (const date of dates) {
+      for (const date of validDates) {
         const request: IExceptionRequest = {
           employeeId: user.employeeId,
           exceptionTypeId: formValue.exceptionTypeId,
-          exceptionRequestStatus: 'requested',
+          exceptionRequestStatus: 'pending',
           exceptionRequestDescription: formValue.exceptionRequestDescription ?? '',
           requestedDate: this.formatDateForRequest(date),
           exceptionRequestCheckInTime: formValue.exceptionRequestCheckInTime
@@ -562,8 +672,11 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
           exceptionRequestCheckOutTime: formValue.exceptionRequestCheckOutTime
             ? this.parseTimeFromInput(formValue.exceptionRequestCheckOutTime)
             : null,
+          // Si necesita periodo en horas, no enviar el campo de horas (se calcula con check-in y check-out)
+          exceptionRequestPeriodInHours: this.needsPeriodInHours()
+            ? null
+            : (formValue.hoursToApply ?? null),
         };
-
         requests.push(request);
       }
 

@@ -9,7 +9,7 @@ export interface IExceptionRequest {
   requestedDate: string;
   exceptionRequestCheckInTime?: string | null;
   exceptionRequestCheckOutTime?: string | null;
-  daysToApply?: number;
+  exceptionRequestPeriodInHours?: number | null;
 }
 
 /**

@@ -183,7 +183,7 @@
 
   &.active {
     background: var(--primary);
-    color: var(--bg-primary);
+    color: var(--text-primary);
     border-color: var(--primary);
 
     &:hover {
@@ -211,7 +211,7 @@
 .cancel-selection-button {
   @include button-base;
   background: var(--danger);
-  color: var(--bg-primary);
+  color: var(--text-primary);
   @include flex-center;
   gap: $spacing-xs;
   padding: $spacing-sm $spacing-md;
@@ -593,6 +593,33 @@
         justify-content: center;
         font-size: $font-size-sm;
         font-weight: $font-weight-bold;
+        z-index: 10;
+      }
+    }
+
+    &.blocked {
+      cursor: not-allowed;
+      opacity: 0.5;
+      background: rgba(var(--danger-rgb), 0.1);
+      border: 2px solid var(--danger);
+      position: relative;
+
+      &:hover {
+        background: rgba(var(--danger-rgb), 0.15);
+        border-color: var(--danger);
+      }
+
+      &::after {
+        content: '🚫';
+        position: absolute;
+        top: $spacing-xs;
+        right: $spacing-xs;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $font-size-sm;
         z-index: 10;
       }
     }
