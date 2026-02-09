@@ -84,7 +84,24 @@
         }
       </button>
 
+
+
+
       <div class="version-info">v{{ version }}</div>
     </form>
+    <div class="forgot-password-container">
+      <button
+      type="button"
+      class="forgot-password-button"
+      [disabled]="loading()"
+      (click)="forgotPassword()"
+    >
+        {{ 'auth.forgotPassword' | translate }}
+    </button>
+    </div>
+
+  <div class="version-info">
+    v{{ version }}
+  </div>
   </div>
 </div>

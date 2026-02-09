@@ -25,6 +25,14 @@ import { HttpExceptionAdapter } from '@modules/vacation-calendar/infrastructure/
 import { EXCEPTION_PORT } from '@modules/vacation-calendar/domain/exception.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
+import { BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT } from '@modules/attendance/domain/employee-biometric-face-id.token';
+import { HttpEmployeeBiometricFaceIdAdapter } from '@modules/attendance/infrastructure/http-employee-biometric-face-id.adapter';
+import { FORGOT_PASSWORD_PORT } from '@modules/forgot-password/domain/forgot-password.token';
+import { HttpForgotPasswordAdapter } from '@modules/forgot-password/infrastructure/http-forgot-password.adapter';
+import { HttpResetPasswordAdapter } from '@modules/reset-password/infrastructure/http-reset-password.adapter';
+import { RESET_PASSWORD_PORT } from '@modules/reset-password/domain/reset-password.token';
+import { HttpPincodePasswordAdapter } from '@modules/pincode-password/infrastructure/http-pincode-password.adapter';
+import { PINCODE_PASSWORD_PORT } from '@modules/pincode-password/domain/pincode-password.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -57,12 +65,28 @@ export const appConfig: ApplicationConfig = {
       useClass: HttpAuthAdapter,
     },
     {
+      provide: FORGOT_PASSWORD_PORT,
+      useClass: HttpForgotPasswordAdapter,
+    },
+    {
+      provide: PINCODE_PASSWORD_PORT,
+      useClass: HttpPincodePasswordAdapter,
+    },
+    {
+      provide: RESET_PASSWORD_PORT,
+      useClass: HttpResetPasswordAdapter,
+    },
+    {
       provide: SYSTEM_SETTINGS_PORT,
       useClass: HttpSystemSettingsAdapter,
     },
     {
       provide: ATTENDANCE_PORT,
       useClass: HttpAttendanceAdapter,
+    },
+    {
+      provide: BIO_EMPLOYEE_BIOMETRIC_FACE_ID_PORT,
+      useClass: HttpEmployeeBiometricFaceIdAdapter,
     },
     {
       provide: VACATION_PORT,

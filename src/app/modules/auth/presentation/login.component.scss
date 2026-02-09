@@ -42,6 +42,21 @@
   gap: $gap-md;
 }
 
+.forgot-password-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: $padding-md;
+}
+
+.forgot-password-button {
+  margin-top: $padding-md;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
 .version-info {
   text-align: center;
   margin-top: $padding-md;
