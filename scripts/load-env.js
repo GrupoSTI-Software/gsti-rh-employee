@@ -119,6 +119,7 @@ const injectEnvIntoServiceWorker = (envVars) => {
   let content = fs.readFileSync(swPath, 'utf-8');
 
   const requiredKeys = [
+    'FIREBASE_VAPID_KEY',
     'FIREBASE_API_KEY',
     'FIREBASE_AUTH_DOMAIN',
     'FIREBASE_PROJECT_ID',

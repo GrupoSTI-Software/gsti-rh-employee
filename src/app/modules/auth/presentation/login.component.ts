@@ -9,6 +9,7 @@ import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import packageJson from '../../../../../package.json';
 
 import { PushNotificationsService } from '@core/services/push-notifications.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -31,8 +32,8 @@ export class LoginComponent {
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
   readonly loginForm: FormGroup = this.fb.group({
-    email: ['jsoto@siler-mx.com', [Validators.required, Validators.email]],
-    password: ['Lupe.-,1', [Validators.required, Validators.minLength(6)]],
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
     rememberMe: [false],
   });
 
@@ -41,43 +42,40 @@ export class LoginComponent {
   readonly showPassword = signal(false);
   readonly version = packageJson.version;
   readonly pushService = inject(PushNotificationsService);
-
+  readonly apiUrl = environment.API_URL;
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
   }
 
   async onSubmit(): Promise<void> {
-    await this.pushService.requestPermission();
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
+    if (this.loginForm.invalid || this.loading()) return;
 
     this.loading.set(true);
     this.error.set(null);
-
     const { email, password } = this.loginForm.value;
 
     try {
       const result = await this.loginUseCase.execute(email, password);
 
       if (result.success) {
-        // Redirigir al dashboard
+        await this.pushService.requestPermission();
+
         void this.pushService.listen();
         await this.router.navigate(['/dashboard/checkin']);
       } else {
-        const errorMessage =
-          result.error !== undefined && result.error.length > 0
+        this.error.set(
+          result.error?.length
             ? result.error
-            : this.translateService.instant('auth.invalidCredentials');
-        this.error.set(errorMessage);
+            : this.translateService.instant('auth.invalidCredentials'),
+        );
       }
-    } catch (_err) {
-      this.error.set(this.translateService.instant('auth.error'));
+    } catch (error) {
+      this.error.set(this.translateService.instant('auth.error' + error));
     } finally {
       this.loading.set(false);
     }
   }
+
   async forgotPassword(): Promise<void> {
     await this.router.navigate(['/forgot-password']);
   }

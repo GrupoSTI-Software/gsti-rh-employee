@@ -18,16 +18,28 @@ export class PushNotificationsService {
 
   private messaging = getMessaging(this.firebaseApp);
 
+  async getToken() {
+    try {
+      const registration = await navigator.serviceWorker.register(
+        'assets/firebase-messaging-sw.js',
+      );
+      const token = await getToken(this.messaging, {
+        vapidKey: environment.FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      });
+      // Guardar el token en el secure storage
+      this.secureStorage.setItem('fcmToken', token);
+      return token;
+    } catch (error) {
+      console.error('error al obtener token', error);
+      return null;
+    }
+  }
+
   async requestPermission() {
-    const registration = await navigator.serviceWorker.register('assets/firebase-messaging-sw.js');
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
-    const token = await getToken(this.messaging, {
-      vapidKey: '',
-      serviceWorkerRegistration: registration,
-    });
-    // Guardar el token en el secure storage
-    this.secureStorage.setItem('fcmToken', token);
+    return true;
   }
 
   listen() {
