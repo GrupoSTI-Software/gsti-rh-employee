@@ -18,8 +18,8 @@ export class GetNoticesUseCase {
    */
   async execute(
     employeeId: number,
-    page: number = 1,
-    limit: number = 10,
+    page = 1,
+    limit = 10,
     search?: string,
     readStatus?: 'all' | 'read' | 'unread',
   ): Promise<INoticesPaginatedResponse | null> {

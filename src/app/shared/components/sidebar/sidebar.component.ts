@@ -78,10 +78,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
       translationKey: 'menu.attendance',
     },
     {
-      label: 'Vacaciones',
+      label: 'Calendario',
       route: '/dashboard/vacations',
       icon: 'pi-calendar',
-      translationKey: 'menu.vacations',
+      translationKey: 'menu.calendar',
     },
     {
       label: 'Avisos',

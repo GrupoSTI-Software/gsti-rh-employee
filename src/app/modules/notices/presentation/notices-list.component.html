@@ -88,6 +88,11 @@
             class="notice-card"
             [class.unread]="!isNoticeRead(notice)"
             (click)="goToNoticeDetail(notice.noticeId)"
+            (keydown.enter)="goToNoticeDetail(notice.noticeId)"
+            (keydown.space)="goToNoticeDetail(notice.noticeId)"
+            tabindex="0"
+            role="button"
+            [attr.aria-label]="'notices.viewDetail' | translate"
           >
             <div class="notice-header">
               <h3 class="notice-title">{{ notice.noticeSubject }}</h3>

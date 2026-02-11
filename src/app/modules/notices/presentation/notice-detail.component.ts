@@ -1,10 +1,4 @@
-import {
-  Component,
-  inject,
-  signal,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -96,7 +90,10 @@ export class NoticeDetailComponent implements OnInit {
       this.notice.set(notice);
 
       // Marcar como leído si no está leído
-      const recipient = notice.recipients && notice.recipients.length > 0 ? notice.recipients[0] : null;
+      const recipient =
+        notice.recipients && notice.recipients.length > 0 && notice.recipients[0]
+          ? notice.recipients[0]
+          : null;
       if (recipient && !recipient.noticeRecipientRead) {
         const marked = await this.markNoticeAsReadUseCase.execute(noticeId, user.employeeId);
         if (marked && recipient) {

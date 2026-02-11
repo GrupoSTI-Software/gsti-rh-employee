@@ -59,7 +59,10 @@ export class NoticesListComponent implements OnInit {
   readonly hasNotices = computed(() => this.notices().length > 0);
   readonly hasUnreadNotices = computed(() =>
     this.notices().some(
-      (notice) => notice.recipients && notice.recipients.length > 0 && !notice.recipients[0].noticeRecipientRead,
+      (notice) =>
+        notice.recipients &&
+        notice.recipients.length > 0 &&
+        !notice.recipients[0].noticeRecipientRead,
     ),
   );
 
@@ -70,7 +73,7 @@ export class NoticesListComponent implements OnInit {
   /**
    * Carga la lista de avisos
    */
-  async loadNotices(page: number = 1): Promise<void> {
+  async loadNotices(page = 1): Promise<void> {
     const user = this.authPort.getCurrentUser();
     if (typeof user?.employeeId !== 'number') {
       this.error.set('No se encontró el ID del empleado');

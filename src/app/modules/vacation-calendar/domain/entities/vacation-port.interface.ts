@@ -11,4 +11,17 @@ export interface IVacationPort {
    * @returns Lista de años trabajados con sus vacaciones
    */
   getYearsWorked(employeeId: number, year?: number): Promise<IYearWorked[]>;
+
+  /**
+   * Firma las excepciones de turno (vacaciones)
+   * @param signature - Blob de la imagen de la firma
+   * @param vacationSettingId - ID de la configuración de vacaciones
+   * @param shiftExceptionIds - Array de IDs de excepciones de turno a firmar
+   * @returns Promise que se resuelve cuando la firma se envía correctamente
+   */
+  signShiftExceptions(
+    signature: Blob,
+    vacationSettingId: number,
+    shiftExceptionIds: number[],
+  ): Promise<boolean>;
 }

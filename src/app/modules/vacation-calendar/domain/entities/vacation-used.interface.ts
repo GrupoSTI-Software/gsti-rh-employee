@@ -16,4 +16,5 @@ export interface IVacationUsed {
   shiftExceptionsUpdatedAt: string;
   deletedAt: string | null;
   vacationSettingId: number | null;
+  employeeSignature: string | null;
 }

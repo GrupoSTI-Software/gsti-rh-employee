@@ -10,13 +10,38 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { GetYearsWorkedUseCase } from '../../application/get-years-worked.use-case';
-import { IYearWorked, IVacationUsed } from '../../domain/vacation.port';
+import { SignVacationUseCase } from '../../application/sign-vacation.use-case';
+import { GetHolidaysUseCase } from '../../application/get-holidays.use-case';
+import { IYearWorked, IVacationUsed, IHoliday } from '../../domain/vacation.port';
+import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
+import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
+import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
+import { ExceptionRequestDrawerComponent } from '../exception-request-drawer/exception-request-drawer.component';
+import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
+import { IAttendance } from '@modules/attendance/domain/attendance.port';
+import { GetWorkDisabilitiesUseCase } from '../../application/get-work-disabilities.use-case';
+import { GetExceptionRequestsUseCase } from '../../application/get-exception-requests.use-case';
+
+/**
+ * Tipo de evento en el calendario
+ */
+export enum ECalendarEventType {
+  VACATION = 'vacation',
+  HOLIDAY = 'holiday',
+  BIRTHDAY = 'birthday',
+  ANNIVERSARY = 'anniversary',
+  SHIFT = 'shift',
+}
 
 /**
  * Interfaz para representar un día del calendario
@@ -27,6 +52,11 @@ interface ICalendarDay {
   isCurrentMonth: boolean;
   isVacation: boolean;
   vacationData?: IVacationUsed;
+  holidays: IHoliday[];
+  isBirthday: boolean;
+  isAnniversary: boolean;
+  shiftName: string | null;
+  hasDisability: boolean;
 }
 
 /**
@@ -39,16 +69,32 @@ interface ICalendarDay {
 @Component({
   selector: 'app-vacation-calendar',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    TooltipModule,
+    ToastModule,
+    VacationDetailDrawerComponent,
+    VacationSignatureComponent,
+    ExceptionRequestDrawerComponent,
+  ],
   templateUrl: './vacation-calendar.component.html',
   styleUrl: './vacation-calendar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VacationCalendarComponent implements OnInit {
   private readonly getYearsWorkedUseCase = inject(GetYearsWorkedUseCase);
+  private readonly signVacationUseCase = inject(SignVacationUseCase);
+  private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
+  private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
+  private readonly getWorkDisabilitiesUseCase = inject(GetWorkDisabilitiesUseCase);
+  private readonly getExceptionRequestsUseCase = inject(GetExceptionRequestsUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly messageService = inject(MessageService);
 
   // Inputs opcionales para hacer el componente reutilizable
   /**
@@ -87,6 +133,37 @@ export class VacationCalendarComponent implements OnInit {
 
   // Días de vacaciones como Set para búsqueda rápida (formato: YYYY-MM-DD)
   readonly vacationDaysSet = signal<Set<string>>(new Set());
+
+  // Festividades cargadas
+  readonly holidays = signal<IHoliday[]>([]);
+
+  // Fechas de cumpleaños y aniversarios del empleado
+  readonly employeeBirthday = signal<{ month: number; day: number } | null>(null);
+  readonly employeeAnniversary = signal<{ month: number; day: number } | null>(null);
+
+  // Drawer de detalle
+  readonly showDetailDrawer = signal(false);
+  readonly selectedVacation = signal<IVacationUsed | null>(null);
+  readonly selectedVacationSetting = signal<IVacationSetting | null>(null);
+  readonly selectedDate = signal<Date | null>(null);
+  readonly selectedHolidays = signal<IHoliday[]>([]);
+  readonly selectedIsBirthday = signal(false);
+  readonly selectedIsAnniversary = signal(false);
+  readonly selectedAttendance = signal<IAttendance | null>(null);
+  readonly loadingAttendance = signal(false);
+
+  // Mapa de incapacidades por fecha (formato: YYYY-MM-DD -> boolean)
+  readonly disabilityMap = signal<Map<string, boolean>>(new Map());
+
+  // Diálogo de firma
+  readonly showSignatureDialog = signal(false);
+
+  // Drawer de solicitud de excepciones
+  readonly showExceptionRequestDrawer = signal(false);
+  readonly selectionMode = signal(false);
+  readonly selectedDaysForException = signal<Date[]>([]);
+  // Fechas con excepciones (cualquier estado) - formato: YYYY-MM-DD
+  readonly exceptionDatesSet = signal<Set<string>>(new Set());
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -127,6 +204,10 @@ export class VacationCalendarComponent implements OnInit {
     const year = this.selectedYear();
     const month = this.selectedMonth();
     const vacationDays = this.vacationDaysSet();
+    const holidaysList = this.holidays();
+    const birthday = this.employeeBirthday();
+    const anniversary = this.employeeAnniversary();
+    const disabilityMap = this.disabilityMap();
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -139,11 +220,22 @@ export class VacationCalendarComponent implements OnInit {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
+      const dateKey = this.formatDateKey(date);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
+
       days.push({
         date,
         dayNumber: prevMonthLastDay - i,
         isCurrentMonth: false,
         isVacation: false,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null,
+        hasDisability,
       });
     }
 
@@ -152,6 +244,10 @@ export class VacationCalendarComponent implements OnInit {
       const date = new Date(year, month, day);
       const dateKey = this.formatDateKey(date);
       const isVacation = vacationDays.has(dateKey);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
 
       // Buscar datos de vacación si existe
       let vacationData: IVacationUsed | undefined;
@@ -165,6 +261,11 @@ export class VacationCalendarComponent implements OnInit {
         isCurrentMonth: true,
         isVacation,
         vacationData,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null, // Se puede obtener del attendance si es necesario
+        hasDisability,
       });
     }
 
@@ -172,11 +273,22 @@ export class VacationCalendarComponent implements OnInit {
     const remainingDays = 42 - days.length; // 6 semanas * 7 días
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
+      const dateKey = this.formatDateKey(date);
+      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+      const isBday = this.isBirthday(date, birthday);
+      const isAnniv = this.isAnniversary(date, anniversary);
+      const hasDisability = disabilityMap.get(dateKey) === true;
+
       days.push({
         date,
         dayNumber: day,
         isCurrentMonth: false,
         isVacation: false,
+        holidays: dayHolidays,
+        isBirthday: isBday,
+        isAnniversary: isAnniv,
+        shiftName: null,
+        hasDisability,
       });
     }
 
@@ -211,6 +323,9 @@ export class VacationCalendarComponent implements OnInit {
     // Cargar todas las vacaciones sin filtrar por año al iniciar el componente
     if (this.autoLoad) {
       void this.loadYearsWorked(undefined);
+      void this.loadHolidays();
+      this.loadEmployeeDates();
+      void this.loadDisabilitiesForMonth();
     }
   }
 
@@ -257,7 +372,8 @@ export class VacationCalendarComponent implements OnInit {
       const vacationDays = new Set<string>();
       data.forEach((yearWorked) => {
         yearWorked.vacationsUsedList.forEach((vacation) => {
-          const date = new Date(vacation.shiftExceptionsDate);
+          // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+          const date = this.parseDateString(vacation.shiftExceptionsDate);
           const dateKey = this.formatDateKey(date);
           vacationDays.add(dateKey);
         });
@@ -272,12 +388,26 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Normaliza una fecha string a Date sin problemas de zona horaria
+   * Parsea la fecha como UTC para evitar cambios de día
+   */
+  private parseDateString(dateString: string): Date {
+    // Si la fecha viene en formato ISO con hora, extraer solo la parte de fecha
+    const dateOnly = dateString.split('T')[0];
+    const [year, month, day] = dateOnly.split('-').map(Number);
+    // Crear fecha en UTC para evitar problemas de zona horaria
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  /**
    * Formatea una fecha como clave YYYY-MM-DD
+   * Usa UTC para evitar problemas de zona horaria
    */
   private formatDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    // Usar UTC para evitar problemas de zona horaria
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -290,7 +420,8 @@ export class VacationCalendarComponent implements OnInit {
 
     for (const yearWorked of yearsWorked) {
       const vacation = yearWorked.vacationsUsedList.find((v) => {
-        const vacationDate = new Date(v.shiftExceptionsDate);
+        // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+        const vacationDate = this.parseDateString(v.shiftExceptionsDate);
         return this.formatDateKey(vacationDate) === dateKey;
       });
 
@@ -316,8 +447,8 @@ export class VacationCalendarComponent implements OnInit {
       this.selectedMonth.set(month - 1);
     }
 
-    // Al cambiar de mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar de mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -334,8 +465,159 @@ export class VacationCalendarComponent implements OnInit {
       this.selectedMonth.set(month + 1);
     }
 
-    // Al cambiar de mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar de mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
+  }
+
+  /**
+   * Carga las festividades para el año seleccionado
+   */
+  private async loadHolidays(): Promise<void> {
+    try {
+      const year = this.selectedYear();
+      const firstDate = `${year}-01-01`;
+      const lastDate = `${year}-12-31`;
+
+      const holidaysList = await this.getHolidaysUseCase.execute(firstDate, lastDate, 1, 100);
+      this.holidays.set(holidaysList);
+    } catch (error) {
+      this.logger.error('Error al cargar festividades:', error);
+    }
+  }
+
+  /**
+   * Carga las fechas de cumpleaños y aniversario del empleado
+   */
+  private loadEmployeeDates(): void {
+    const user = this.authPort.getCurrentUser();
+    const person = user?.person;
+
+    // Obtener fecha de cumpleaños
+    if (person?.personBirthday) {
+      const birthDate = new Date(person.personBirthday);
+      this.employeeBirthday.set({
+        month: birthDate.getMonth(),
+        day: birthDate.getDate(),
+      });
+    }
+
+    // Obtener fecha de contratación (aniversario)
+    if (person?.employee?.employeeHireDate) {
+      const hireDate = new Date(person.employee.employeeHireDate);
+      this.employeeAnniversary.set({
+        month: hireDate.getMonth(),
+        day: hireDate.getDate(),
+      });
+    }
+  }
+
+  /**
+   * Obtiene las festividades para una fecha específica
+   */
+  private getHolidaysForDate(date: Date, holidaysList: IHoliday[]): IHoliday[] {
+    const dateKey = this.formatDateKey(date);
+    return holidaysList.filter((holiday) => {
+      const holidayDate = this.parseDateString(holiday.holidayDate);
+      return this.formatDateKey(holidayDate) === dateKey;
+    });
+  }
+
+  /**
+   * Verifica si una fecha es el cumpleaños del empleado
+   */
+  private isBirthday(date: Date, birthday: { month: number; day: number } | null): boolean {
+    if (!birthday) return false;
+    return date.getMonth() === birthday.month && date.getDate() === birthday.day;
+  }
+
+  /**
+   * Verifica si una fecha es el aniversario del empleado
+   */
+  private isAnniversary(date: Date, anniversary: { month: number; day: number } | null): boolean {
+    if (!anniversary) return false;
+    return date.getMonth() === anniversary.month && date.getDate() === anniversary.day;
+  }
+
+  /**
+   * Obtiene el HTML sanitizado del icono de una festividad
+   */
+  getHolidayIconHtml(icon: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(icon);
+  }
+
+  /**
+   * Obtiene el aria-label para un día del calendario
+   */
+  getDayAriaLabel(day: ICalendarDay): string {
+    const labels: string[] = [];
+    if (day.isVacation) {
+      labels.push(this.translateService.instant('vacations.vacationDay'));
+    }
+    if (day.holidays.length > 0) {
+      labels.push(
+        ...day.holidays.map(
+          (h) => `${this.translateService.instant('calendar.holiday')}: ${h.holidayName}`,
+        ),
+      );
+    }
+    if (day.isBirthday) {
+      labels.push(this.translateService.instant('calendar.birthday'));
+    }
+    if (day.isAnniversary) {
+      labels.push(this.translateService.instant('calendar.anniversary'));
+    }
+    if (day.hasDisability) {
+      labels.push(this.translateService.instant('calendar.disability'));
+    }
+    return labels.length > 0 ? labels.join(', ') : '';
+  }
+
+  /**
+   * Obtiene el texto del tooltip para un día del calendario
+   * Prioriza festividades, luego cumpleaños, luego aniversario
+   */
+  getDayTooltip(day: ICalendarDay): string {
+    const labels: string[] = [];
+
+    // Prioridad 1: Festividades
+    if (day.holidays.length > 0) {
+      labels.push(...day.holidays.map((h) => h.holidayName));
+    }
+
+    // Prioridad 2: Cumpleaños
+    if (day.isBirthday) {
+      labels.push(this.translateService.instant('calendar.birthday'));
+    }
+
+    // Prioridad 3: Aniversario
+    if (day.isAnniversary) {
+      labels.push(this.translateService.instant('calendar.anniversary'));
+    }
+
+    // Prioridad 4: Vacaciones
+    if (day.isVacation) {
+      labels.push(this.translateService.instant('vacations.vacationDay'));
+    }
+
+    // Prioridad 5: Incapacidad
+    if (day.hasDisability) {
+      labels.push(this.translateService.instant('calendar.disability'));
+    }
+
+    return labels.length > 0 ? labels.join(', ') : '';
+  }
+
+  /**
+   * Cuenta el número total de eventos en un día
+   */
+  getEventCount(day: ICalendarDay): number {
+    let count = 0;
+    if (day.isVacation) count++;
+    if (day.holidays.length > 0) count += day.holidays.length;
+    if (day.isBirthday) count++;
+    if (day.isAnniversary) count++;
+    if (day.hasDisability) count++;
+    return count;
   }
 
   /**
@@ -345,6 +627,8 @@ export class VacationCalendarComponent implements OnInit {
     this.selectedYear.set(year);
     // Cuando el usuario cambia el año, cargar las vacaciones de ese año específico
     void this.loadYearsWorked(year);
+    void this.loadHolidays();
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -352,8 +636,8 @@ export class VacationCalendarComponent implements OnInit {
    */
   onMonthChange(month: number): void {
     this.selectedMonth.set(month);
-    // Al cambiar el mes, no recargar datos, solo cambiar la vista
-    // Los datos ya están cargados (todas las vacaciones)
+    // Al cambiar el mes, cargar las incapacidades del nuevo mes
+    void this.loadDisabilitiesForMonth();
   }
 
   /**
@@ -396,5 +680,330 @@ export class VacationCalendarComponent implements OnInit {
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     );
+  }
+
+  /**
+   * Maneja el click en un día del calendario
+   */
+  async onDayClick(event: Event, day: ICalendarDay): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Permitir click en cualquier día del mes actual
+    if (!day.isCurrentMonth) {
+      return;
+    }
+
+    // Si está en modo selección, alternar la selección del día
+    if (this.selectionMode()) {
+      // toggleDaySelection ya maneja la validación y muestra el mensaje
+      this.toggleDaySelection(day.date);
+      return;
+    }
+
+    // Establecer la fecha seleccionada
+    this.selectedDate.set(day.date);
+
+    // Obtener datos de vacación si existe
+    const vacationData = day.vacationData ?? this.findVacationData(day.date);
+    this.selectedVacation.set(vacationData ?? null);
+
+    // Buscar la configuración de vacaciones correspondiente
+    if (vacationData) {
+      const vacationSetting = this.findVacationSetting(vacationData.vacationSettingId);
+      this.selectedVacationSetting.set(vacationSetting);
+    } else {
+      this.selectedVacationSetting.set(null);
+    }
+
+    // Establecer festividades, cumpleaños y aniversario
+    this.selectedHolidays.set(day.holidays);
+    this.selectedIsBirthday.set(day.isBirthday);
+    this.selectedIsAnniversary.set(day.isAnniversary);
+
+    // Cargar información de asistencia del día
+    await this.loadAttendanceForDate(day.date);
+
+    // Abrir el drawer
+    this.showDetailDrawer.set(true);
+  }
+
+  /**
+   * Carga la información de asistencia para una fecha específica
+   */
+  private async loadAttendanceForDate(date: Date): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      this.logger.error('No se encontró el ID del empleado');
+      this.selectedAttendance.set(null);
+      return;
+    }
+
+    this.loadingAttendance.set(true);
+
+    try {
+      const dateKey = this.formatDateKey(date);
+      const attendance = await this.getAttendanceUseCase.execute(dateKey, dateKey, user.employeeId);
+      this.selectedAttendance.set(attendance);
+    } catch (error) {
+      this.logger.error('Error al cargar asistencia para el día:', error);
+      this.selectedAttendance.set(null);
+    } finally {
+      this.loadingAttendance.set(false);
+    }
+  }
+
+  /**
+   * Carga las incapacidades para todos los días del mes actual
+   */
+  private async loadDisabilitiesForMonth(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const workDisabilities = await this.getWorkDisabilitiesUseCase.execute(user.employeeId);
+      const currentMap = new Map<string, boolean>(this.disabilityMap());
+      const year = this.selectedYear();
+      const month = this.selectedMonth();
+
+      // Limpiar incapacidades del mes actual del mapa
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const monthStart = this.formatDateKey(firstDay);
+      const monthEnd = this.formatDateKey(lastDay);
+
+      for (const [dateKey] of currentMap.entries()) {
+        if (dateKey >= monthStart && dateKey <= monthEnd) {
+          currentMap.delete(dateKey);
+        }
+      }
+
+      // Procesar períodos de incapacidad y marcar los días correspondientes
+      for (const workDisability of workDisabilities) {
+        for (const period of workDisability.workDisabilityPeriods) {
+          const startDate = this.parseDateString(period.workDisabilityPeriodStartDate);
+          const endDate = this.parseDateString(period.workDisabilityPeriodEndDate);
+
+          // Iterar sobre todos los días del período
+          const currentDate = new Date(startDate);
+          while (currentDate <= endDate) {
+            const dateKey = this.formatDateKey(currentDate);
+
+            // Solo marcar días que estén en el mes actual
+            if (dateKey >= monthStart && dateKey <= monthEnd) {
+              currentMap.set(dateKey, true);
+            }
+
+            // Avanzar al siguiente día
+            currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+          }
+        }
+      }
+
+      this.disabilityMap.set(currentMap);
+    } catch (error) {
+      this.logger.error('Error al cargar incapacidades del mes:', error);
+    }
+  }
+
+  /**
+   * Busca la configuración de vacaciones por ID
+   */
+  private findVacationSetting(vacationSettingId: number | null): IVacationSetting | null {
+    if (!vacationSettingId) {
+      return null;
+    }
+
+    const yearsWorked = this.yearsWorked();
+    for (const yearWorked of yearsWorked) {
+      if (yearWorked.vacationSetting?.vacationSettingId === vacationSettingId) {
+        return yearWorked.vacationSetting;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Cierra el drawer de detalle
+   */
+  onDetailDrawerClose(): void {
+    this.showDetailDrawer.set(false);
+    this.selectedVacation.set(null);
+    this.selectedVacationSetting.set(null);
+    this.selectedDate.set(null);
+    this.selectedHolidays.set([]);
+    this.selectedIsBirthday.set(false);
+    this.selectedIsAnniversary.set(false);
+    this.selectedAttendance.set(null);
+  }
+
+  /**
+   * Maneja la solicitud de firma desde el drawer
+   */
+  onSignRequested(_vacation: IVacationUsed): void {
+    this.showSignatureDialog.set(true);
+  }
+
+  /**
+   * Cierra el diálogo de firma
+   */
+  onSignatureDialogClose(): void {
+    this.showSignatureDialog.set(false);
+  }
+
+  /**
+   * Maneja el envío de la firma
+   */
+  async onSignatureSubmitted(event: { signature: Blob; vacation: IVacationUsed }): Promise<void> {
+    const { signature, vacation } = event;
+
+    if (!vacation.vacationSettingId) {
+      this.logger.error('No se encontró vacationSettingId en la vacación');
+      return;
+    }
+
+    const success = await this.signVacationUseCase.execute(signature, vacation.vacationSettingId, [
+      vacation.shiftExceptionId,
+    ]);
+
+    if (success) {
+      // Recargar los datos de vacaciones para actualizar la firma
+      await this.loadYearsWorked(undefined);
+      // Cerrar el drawer y el diálogo de firma
+      this.onDetailDrawerClose();
+      this.onSignatureDialogClose();
+    } else {
+      this.logger.error('Error al firmar la vacación');
+    }
+  }
+
+  /**
+   * Verifica si un día tiene una excepción registrada
+   */
+  hasExceptionForDate(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.exceptionDatesSet().has(dateKey);
+  }
+
+  /**
+   * Alterna la selección de un día para solicitudes de excepción
+   */
+  toggleDaySelection(date: Date): void {
+    // No permitir seleccionar días que ya tienen excepciones
+    if (this.hasExceptionForDate(date)) {
+      this.translateService.get('exceptionRequest.dayHasException').subscribe((message) => {
+        this.messageService.add({
+          severity: 'warn',
+          summary: this.translateService.instant('exceptionRequest.warning'),
+          detail: message,
+          life: 5000,
+        });
+      });
+      return;
+    }
+
+    const selectedDays = [...this.selectedDaysForException()];
+    const dateKey = this.formatDateKey(date);
+    const index = selectedDays.findIndex((d) => this.formatDateKey(d) === dateKey);
+
+    if (index === -1) {
+      selectedDays.push(date);
+    } else {
+      selectedDays.splice(index, 1);
+    }
+
+    this.selectedDaysForException.set(selectedDays);
+  }
+
+  /**
+   * Verifica si un día está seleccionado
+   */
+  isDaySelected(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.selectedDaysForException().some((d) => this.formatDateKey(d) === dateKey);
+  }
+
+  /**
+   * Carga las excepciones para validación en modo selección
+   */
+  private async loadExceptionDates(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const requests = await this.getExceptionRequestsUseCase.execute(
+        user.employeeId,
+        '',
+        undefined,
+        undefined,
+        'all',
+      );
+      // Crear un Set con todas las fechas que tienen excepciones (cualquier estado)
+      const exceptionDates = new Set<string>();
+      requests.forEach((request) => {
+        if (request.requestedDate) {
+          // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+          const requestDate = this.parseDateString(request.requestedDate);
+          const dateKey = this.formatDateKey(requestDate);
+          exceptionDates.add(dateKey);
+        }
+      });
+      this.exceptionDatesSet.set(exceptionDates);
+    } catch (error) {
+      this.logger.error('Error al cargar excepciones para validación:', error);
+    }
+  }
+
+  /**
+   * Alterna el modo de selección de días
+   */
+  toggleSelectionMode(): void {
+    const newMode = !this.selectionMode();
+    this.selectionMode.set(newMode);
+
+    // Si se activa el modo selección, cargar las excepciones
+    if (newMode) {
+      void this.loadExceptionDates();
+    }
+  }
+
+  /**
+   * Cancela el modo de selección y limpia los días seleccionados
+   */
+  cancelSelectionMode(): void {
+    this.selectionMode.set(false);
+    this.selectedDaysForException.set([]);
+  }
+
+  /**
+   * Abre el drawer de solicitud de excepciones
+   */
+  openExceptionRequestDrawer(): void {
+    // Abrir el drawer con los días seleccionados (si hay)
+    this.showExceptionRequestDrawer.set(true);
+  }
+
+  /**
+   * Cierra el drawer de solicitud de excepciones
+   */
+  closeExceptionRequestDrawer(): void {
+    this.showExceptionRequestDrawer.set(false);
+    // No desactivar el modo selección automáticamente
+  }
+
+  /**
+   * Maneja cuando se crea una solicitud de excepción
+   */
+  onExceptionRequestCreated(): void {
+    this.selectedDaysForException.set([]);
+    this.selectionMode.set(false);
+    // Limpiar el set de excepciones ya que se desactivó el modo selección
+    // Se recargarán automáticamente cuando se active el modo selección de nuevo
+    this.exceptionDatesSet.set(new Set());
   }
 }
