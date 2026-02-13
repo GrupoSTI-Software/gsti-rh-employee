@@ -18,7 +18,7 @@ export class PushNotificationsService {
 
   private messaging = getMessaging(this.firebaseApp);
 
-  async getToken() {
+  async getToken(): Promise<string | null> {
     try {
       const registration = await navigator.serviceWorker.register(
         'assets/firebase-messaging-sw.js',
@@ -36,15 +36,15 @@ export class PushNotificationsService {
     }
   }
 
-  async requestPermission() {
+  async requestPermission(): Promise<boolean | void> {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
     return true;
   }
 
-  listen() {
-    onMessage(this.messaging, (payload) => {
-      console.log('message received', payload);
+  listen(): void {
+    onMessage(this.messaging, (_payload) => {
+      // Mensajes push recibidos en primer plano
     });
   }
 }
