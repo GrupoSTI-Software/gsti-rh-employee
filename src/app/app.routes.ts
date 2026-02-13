@@ -82,6 +82,28 @@ export const routes: Routes = [
           import('@modules/profile/presentation/profile.component').then((m) => m.ProfileComponent),
       },
       {
+        path: 'notices',
+        data: {
+          breadcrumb: 'notices',
+          label: 'Avisos',
+        },
+        loadComponent: () =>
+          import('@modules/notices/presentation/notices-list.component').then(
+            (m) => m.NoticesListComponent,
+          ),
+      },
+      {
+        path: 'notices/:id',
+        data: {
+          breadcrumb: 'notices',
+          label: 'Detalle de Aviso',
+        },
+        loadComponent: () =>
+          import('@modules/notices/presentation/notice-detail.component').then(
+            (m) => m.NoticeDetailComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'checkin',
         pathMatch: 'full',

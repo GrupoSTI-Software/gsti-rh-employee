@@ -4,6 +4,7 @@ import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
+import { MessageService } from 'primeng/api';
 import Aura from '@primeng/themes/aura';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -16,10 +17,14 @@ import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-a
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
 import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/http-vacation.adapter';
 import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
+import { HttpNoticesAdapter } from '@modules/notices/infrastructure/http-notices.adapter';
+import { NOTICES_PORT } from '@modules/notices/domain/notices.token';
 import { HttpCalendarAdapter } from '@modules/vacation-calendar/infrastructure/http-calendar.adapter';
 import { CALENDAR_PORT } from '@modules/vacation-calendar/domain/calendar.token';
 import { HttpWorkDisabilityAdapter } from '@modules/vacation-calendar/infrastructure/http-work-disability.adapter';
 import { WORK_DISABILITY_PORT } from '@modules/vacation-calendar/domain/work-disability.token';
+import { HttpExceptionAdapter } from '@modules/vacation-calendar/infrastructure/http-exception.adapter';
+import { EXCEPTION_PORT } from '@modules/vacation-calendar/domain/exception.token';
 import { tokenInterceptor } from '@core/interceptors/token.interceptor';
 import { errorInterceptor } from '@core/interceptors/error.interceptor';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -91,12 +96,20 @@ export const appConfig: ApplicationConfig = {
       useClass: HttpVacationAdapter,
     },
     {
+      provide: NOTICES_PORT,
+      useClass: HttpNoticesAdapter,
+    },
+    {
       provide: CALENDAR_PORT,
       useClass: HttpCalendarAdapter,
     },
     {
       provide: WORK_DISABILITY_PORT,
       useClass: HttpWorkDisabilityAdapter,
+    },
+    {
+      provide: EXCEPTION_PORT,
+      useClass: HttpExceptionAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({
@@ -113,5 +126,6 @@ export const appConfig: ApplicationConfig = {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
+    MessageService,
   ],
 };

@@ -3,6 +3,7 @@
     "title": "Menú",
     "attendance": "Asistencia",
     "vacations": "Vacaciones",
+    "notices": "Avisos",
     "calendar": "Calendario",
     "profile": "Perfil",
     "settings": "Configuración",
@@ -10,7 +11,8 @@
     "apiConfig": "Configuración de API",
     "menu": "Menú",
     "close": "Cerrar",
-    "logout": "Cerrar Sesión"
+    "logout": "Cerrar Sesión",
+    "cancel": "Cancelar"
   },
   "auth": {
     "loginTitle": "Iniciar Sesión",
@@ -301,6 +303,21 @@
       "saturday": "Sáb"
     }
   },
+  "notices": {
+    "title": "Avisos",
+    "subtitle": "Consulta los avisos y comunicados importantes",
+    "searchPlaceholder": "Buscar avisos...",
+    "loading": "Cargando avisos...",
+    "empty": "No hay avisos disponibles",
+    "unread": "No leído",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "back": "Volver",
+    "retry": "Reintentar",
+    "filterAll": "Todos",
+    "filterUnread": "No leídos",
+    "filterRead": "Leídos"
+  },
   "vacationDetail": {
     "title": "Detalle de Vacaciones",
     "subtitle": "Ver tus detalles de vacaciones",
@@ -338,5 +355,40 @@
     "submit": "Enviar",
     "confirmTitle": "Confirmar envío de firma",
     "confirmMessage": "¿Estás seguro de que deseas enviar esta firma? Esta acción no se puede deshacer."
+  },
+  "exceptionRequest": {
+    "title": "Solicitud de Excepción",
+    "tabRequest": "Nueva Solicitud",
+    "tabPending": "Pendientes",
+    "exceptionType": "Tipo de Excepción",
+    "description": "Descripción",
+    "checkInTime": "Hora de Entrada",
+    "checkOutTime": "Hora de Salida",
+    "daysToApply": "Días a Aplicar",
+    "hoursToApply": "Horas a Aplicar",
+    "selectedDates": "Fechas Seleccionadas",
+    "selectDays": "Seleccionar Días",
+    "addDate": "Agregar Fecha",
+    "removeDate": "Eliminar Fecha",
+    "noDatesSelected": "No hay fechas seleccionadas. Agrega al menos una fecha.",
+    "selectExceptionType": "Selecciona un tipo de excepción",
+    "loadingTypes": "Cargando tipos de excepción...",
+    "loadingRequests": "Cargando solicitudes...",
+    "noPendingRequests": "No hay solicitudes pendientes",
+    "createdAt": "Creada el",
+    "submit": "Enviar Solicitud",
+    "success": "Solicitud enviada exitosamente",
+    "error": "Error al enviar la solicitud",
+    "status": {
+      "requested": "Solicitada",
+      "pending": "Pendiente",
+      "accepted": "Aceptada",
+      "refused": "Rechazada"
+    },
+    "dateHasPendingRequest": "Esta fecha ya tiene una solicitud pendiente",
+    "dateHasRequest": "Esta fecha ya tiene una solicitud registrada",
+    "someDatesHaveRequests": "Algunas fechas ya tienen solicitudes registradas y no se enviarán",
+    "dayHasException": "Este día ya tiene una excepción registrada y no puede ser seleccionado",
+    "warning": "Advertencia"
   }
 }

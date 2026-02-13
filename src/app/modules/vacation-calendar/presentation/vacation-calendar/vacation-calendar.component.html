@@ -35,6 +35,37 @@
           }
         </select>
       </div>
+
+      <!-- Botones para solicitar excepciones -->
+      <div class="filter-group">
+        <button
+          type="button"
+          class="select-days-button"
+          (click)="toggleSelectionMode()"
+          [class.active]="selectionMode()"
+        >
+          <i class="pi pi-calendar"></i>
+          {{ 'exceptionRequest.selectDays' | translate }}
+        </button>
+        <button
+          type="button"
+          class="exception-request-button"
+          (click)="openExceptionRequestDrawer()"
+        >
+          <i class="pi pi-plus-circle"></i>
+          {{ 'exceptionRequest.title' | translate }}
+        </button>
+        @if (selectionMode()) {
+          <button
+            type="button"
+            class="cancel-selection-button"
+            (click)="cancelSelectionMode()"
+          >
+            <i class="pi pi-times"></i>
+            {{ 'menu.cancel' | translate }}
+          </button>
+        }
+      </div>
     </div>
 
     <!-- Navegación del calendario -->
@@ -86,16 +117,19 @@
               [class.current-month]="day.isCurrentMonth"
               [class.has-multiple-events]="getEventCount(day) > 1"
               [class.today]="isToday(day.date) && day.isCurrentMonth"
-              [class.clickable]="day.isCurrentMonth"
+              [class.clickable]="day.isCurrentMonth && !(selectionMode() && hasExceptionForDate(day.date))"
+              [class.selection-mode]="selectionMode() && day.isCurrentMonth"
+              [class.selected]="selectionMode() && isDaySelected(day.date) && day.isCurrentMonth"
+              [class.blocked]="selectionMode() && hasExceptionForDate(day.date) && day.isCurrentMonth"
               [pTooltip]="getDayTooltip(day)"
               [tooltipPosition]="'top'"
               [showDelay]="300"
               (click)="onDayClick($event, day)"
               [attr.aria-label]="getDayAriaLabel(day)"
               [attr.role]="day.isCurrentMonth ? 'button' : null"
-              [attr.tabindex]="day.isCurrentMonth ? 0 : -1"
-              (keydown.enter)="day.isCurrentMonth && onDayClick($event, day)"
-              (keydown.space)="day.isCurrentMonth && onDayClick($event, day)"
+              [attr.tabindex]="day.isCurrentMonth && !(selectionMode() && hasExceptionForDate(day.date)) ? 0 : -1"
+              (keydown.enter)="day.isCurrentMonth && !(selectionMode() && hasExceptionForDate(day.date)) && onDayClick($event, day)"
+              (keydown.space)="day.isCurrentMonth && !(selectionMode() && hasExceptionForDate(day.date)) && onDayClick($event, day)"
             >
               <div class="day-header">
                 <span class="day-number">{{ day.dayNumber }}</span>
@@ -230,3 +264,14 @@
   (visibleChange)="showSignatureDialog.set($event)"
   (signatureSubmitted)="onSignatureSubmitted($event)"
 />
+
+<!-- Drawer de solicitud de excepciones -->
+<app-exception-request-drawer
+  [visible]="showExceptionRequestDrawer()"
+  [selectedDates]="selectedDaysForException()"
+  (visibleChange)="closeExceptionRequestDrawer()"
+  (requestCreated)="onExceptionRequestCreated()"
+/>
+
+<!-- Toast para mensajes -->
+<p-toast></p-toast>
