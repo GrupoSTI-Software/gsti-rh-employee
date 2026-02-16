@@ -84,10 +84,19 @@
         }
       </button>
 
-
-
-
-      <div class="version-info">v{{ version }}</div>
+      <button
+        type="button"
+        class="btn secondary passkey-button"
+        (click)="loginWithPasskey()"
+      >
+        @if (loadingPasskey()) {
+          <i class="pi pi-spin pi-spinner"></i>
+          {{ 'auth.loading' | translate }}
+        } @else {
+          <i class="pi pi-fingerprint"></i>
+          {{ 'auth.loginWithPasskey' | translate }}
+        }
+      </button>
     </form>
     <div class="forgot-password-container">
       <button

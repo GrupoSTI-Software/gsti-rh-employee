@@ -47,7 +47,23 @@
     "darkMode": "Dark Mode",
     "lightMode": "Light Mode",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "or": "or",
+    "loginWithPasskey": "Sign in with Biometrics",
+    "passkeyAuthError": "Error authenticating with biometrics",
+    "passkeyNotSupported": "Biometrics not available",
+    "passkeyNotSupportedDescription": "Your browser or device does not support biometric authentication. Please update your browser or device to use this feature.",
+    "registerPasskeyTitle": "Set up your Biometrics",
+    "registerPasskeyDescription": "Use your fingerprint or face recognition to access your account faster without needing a password.",
+    "deviceName": "Device Name",
+    "deviceNamePlaceholder": "e.g. John's iPhone, Personal Laptop",
+    "deviceNameRequired": "Device name is required",
+    "passkeyRegisterError": "Error registering biometrics",
+    "registerPasskey": "Set up Biometrics",
+    "skipForNow": "Skip for now",
+    "passkeyRegisteredSuccess": "Biometrics set up successfully!",
+    "noUserAuthenticated": "No authenticated user",
+    "continue": "Continue"
   },
   "validation": {
     "required": "This field is required",
@@ -188,6 +204,10 @@
     "languageOption": {
       "title": "Language",
       "description": "Change the application language"
+    },
+    "passkeyOption": {
+      "title": "Biometric Authentication",
+      "description": "Set up fingerprint or Face ID for quick access"
     },
     "profileOption": {
       "title": "Profile",
