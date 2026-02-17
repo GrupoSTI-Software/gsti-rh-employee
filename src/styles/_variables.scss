@@ -82,6 +82,7 @@ $gap-lg: 1.5rem;
   background-color: var(--bg-primary);
   padding: $spacing-lg;
   line-height: 1.5rem;
+  border-bottom: 0.25rem solid var(--bg-secondary);
 }
 
 .page-title {

@@ -8,6 +8,7 @@ import {
   inject,
   DestroyRef,
   effect,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -70,15 +71,18 @@ export class WeekCalendarComponent implements OnInit {
       .subscribe((event) => this.currentLang.set(event.lang));
 
     // Sincronizar la semana mostrada cuando selectedDate cambia desde fuera (ej. drawer del calendario)
-    effect(() => {
-      const selected = this.selectedDate();
-      const currentBase = this.weekBaseDate();
-      const selectedMonday = this.getMonday(selected);
-      const currentMonday = this.getMonday(currentBase);
-      if (selectedMonday.getTime() !== currentMonday.getTime()) {
-        this.weekBaseDate.set(new Date(selected));
-      }
-    });
+    // Usamos untracked para leer weekBaseDate sin crear dependencia reactiva
+    effect(
+      () => {
+        const selected = this.selectedDate();
+        const selectedMonday = this.getMonday(selected);
+        const currentMonday = untracked(() => this.getMonday(this.weekBaseDate()));
+        if (selectedMonday.getTime() !== currentMonday.getTime()) {
+          this.weekBaseDate.set(new Date(selected));
+        }
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   /**
@@ -135,7 +139,8 @@ export class WeekCalendarComponent implements OnInit {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar cuando es domingo
-    return new Date(d.setDate(diff));
+    d.setDate(diff);
+    return new Date(d);
   }
 
   /**
@@ -150,8 +155,8 @@ export class WeekCalendarComponent implements OnInit {
    */
   previousWeek(): void {
     const current = this.weekBaseDate();
-    const newDate = new Date(current);
-    newDate.setDate(current.getDate() - 7);
+    const newDate = new Date(current.getTime());
+    newDate.setDate(newDate.getDate() - 7);
     this.weekBaseDate.set(newDate);
   }
 
@@ -160,8 +165,8 @@ export class WeekCalendarComponent implements OnInit {
    */
   nextWeek(): void {
     const current = this.weekBaseDate();
-    const newDate = new Date(current);
-    newDate.setDate(current.getDate() + 7);
+    const newDate = new Date(current.getTime());
+    newDate.setDate(newDate.getDate() + 7);
     this.weekBaseDate.set(newDate);
   }
 

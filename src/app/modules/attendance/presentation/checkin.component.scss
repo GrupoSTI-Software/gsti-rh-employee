@@ -21,7 +21,6 @@
   max-width: $container-max-width-md;
   margin: 0 auto;
   @include flex-column;
-  gap: 0.25rem;
 }
 
 .checkin-title-section {
@@ -32,6 +31,7 @@
   width: 100%;
   @include card;
   position: relative;
+  border-bottom: 0.25rem solid var(--bg-secondary);
 }
 
 .checkin-header {
@@ -291,6 +291,14 @@
   max-height: 90vh;
   overflow-y: auto;
   padding-bottom: env(safe-area-inset-bottom, 0);
+  
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
 }
 
 // Header del drawer
@@ -527,6 +535,14 @@
   max-height: 60vh;
   overflow-y: auto;
   padding: $spacing-sm;
+  
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
 }
 .no-exceptions, .no-records {
   @include flex-center;
