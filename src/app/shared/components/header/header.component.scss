@@ -21,33 +21,10 @@
   background: rgba(255, 255, 255, 0.3);
   border-radius: 24px;
   padding: $spacing-sm $spacing-lg;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08),
-              0 2px 8px rgba(0, 0, 0, 0.04),
-              inset 0 0 0 0.5px rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(5px) saturate(10%);
-  -webkit-backdrop-filter: blur(5px) saturate(10%);
-  border: 0.5px solid rgba(255, 255, 255, 0.4);
   gap: $spacing-xs;
   position: relative;
   overflow: visible;
 
-  // Sombra superior sutil tipo iOS
-  &::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.6) 20%,
-      rgba(255, 255, 255, 0.6) 80%,
-      transparent
-    );
-    pointer-events: none;
-  }
 }
 
 .nav-item {
