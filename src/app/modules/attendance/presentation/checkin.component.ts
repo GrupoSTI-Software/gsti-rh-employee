@@ -18,6 +18,7 @@ import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-
 import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
 import { TooltipModule } from 'primeng/tooltip';
+import { WeekCalendarComponent } from '@shared/components/week-calendar/week-calendar.component';
 import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
 import { SecureStorageService } from '@core/services/secure-storage.service';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -56,6 +57,7 @@ interface IFaceDetectionWithLandmarks {
     EatInIconComponent,
     EatOutIconComponent,
     TooltipModule,
+    WeekCalendarComponent,
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
@@ -1418,6 +1420,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       second: '2-digit',
     });
+  }
+
+  /**
+   * Maneja la selección de fecha desde el calendario semanal
+   */
+  onWeekCalendarDateSelected(date: Date): void {
+    this.selectedDate.set(date);
+    void this.loadAttendance();
   }
 
   /**

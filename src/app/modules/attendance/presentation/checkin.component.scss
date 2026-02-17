@@ -20,7 +20,7 @@
   max-width: $container-max-width-md;
   margin: 0 auto;
   @include flex-column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .checkin-title-section {
@@ -29,7 +29,6 @@
 
 .checkin-card {
   width: 100%;
-  max-width: $container-max-width-md;
   @include card;
   position: relative;
 }
@@ -37,9 +36,11 @@
 .checkin-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: $spacing-2xl;
 
-  .header-actions { display: flex; gap: $spacing-xs; }
+  .header-actions {
+    display: flex;
+    gap: $spacing-xs;
+  }
 
   .action-icon-button {
     @include button-base;

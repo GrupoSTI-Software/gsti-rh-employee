@@ -89,7 +89,7 @@
 @mixin card {
   background: var(--bg-primary);
   // border-radius: $radius;
-  padding: $spacing-3xl;
+  padding: 0.75rem;
 }
 
 // Form group

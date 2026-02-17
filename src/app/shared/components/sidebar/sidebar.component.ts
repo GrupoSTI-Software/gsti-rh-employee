@@ -72,31 +72,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   readonly menuItems: MenuItem[] = [
     {
-      label: 'Asistencia',
-      route: '/dashboard/checkin',
-      icon: 'pi-clock',
-      translationKey: 'menu.attendance',
-    },
-    {
-      label: 'Calendario',
-      route: '/dashboard/vacations',
-      icon: 'pi-calendar',
-      translationKey: 'menu.calendar',
-    },
-    {
-      label: 'Avisos',
-      route: '/dashboard/notices',
-      icon: 'pi-bell',
-      translationKey: 'menu.notices',
-      badgeCount: () => this.unreadCount(),
-    },
-    {
-      label: 'Perfil',
-      route: '/dashboard/profile',
-      icon: 'pi-user',
-      translationKey: 'menu.profile',
-    },
-    {
       label: 'Configuración',
       route: '/dashboard/settings',
       icon: 'pi-cog',

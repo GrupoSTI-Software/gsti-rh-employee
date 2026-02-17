@@ -80,17 +80,19 @@ $gap-lg: 1.5rem;
 
 .page-header {
   background-color: var(--bg-primary);
-  padding: $spacing-md $spacing-lg;
+  padding: $spacing-lg;
+  line-height: 1.2rem;
 }
 
 .page-title {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-bold;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-medium;
   color: var(--text-primary);
   margin: 0;
 }
 
 .page-subtitle {
+  font-size: $font-size-xs;
   color: var(--text-secondary);
   margin: 0;
 }

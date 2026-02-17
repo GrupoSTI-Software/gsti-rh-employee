@@ -1,0 +1,50 @@
+<div class="week-calendar">
+  <!-- Navegación y título -->
+  <div class="calendar-header">
+    <button
+      type="button"
+      class="nav-button"
+      (click)="previousWeek()"
+      aria-label="Semana anterior"
+    >
+      <i class="pi pi-chevron-left"></i>
+    </button>
+
+    <span class="month-year">{{ currentMonthYear() }}</span>
+
+    <button
+      type="button"
+      class="nav-button"
+      (click)="nextWeek()"
+      aria-label="Semana siguiente"
+    >
+      <i class="pi pi-chevron-right"></i>
+    </button>
+
+    <button
+      type="button"
+      class="today-button"
+      (click)="goToToday()"
+      aria-label="Ir a hoy"
+    >
+      Hoy
+    </button>
+  </div>
+
+  <!-- Días de la semana -->
+  <div class="week-days">
+    @for (day of weekDays(); track day.date.getTime()) {
+      <button
+        type="button"
+        class="day-item"
+        [class.today]="day.isToday"
+        [class.selected]="day.isSelected"
+        (click)="onDayClick(day)"
+        [attr.aria-label]="day.dayName + ' ' + day.dayNumber"
+      >
+        <span class="day-name">{{ day.dayName }}</span>
+        <span class="day-number">{{ day.dayNumber }}</span>
+      </button>
+    }
+  </div>
+</div>
