@@ -3,7 +3,7 @@
     @for (item of menuItems; track item.route) {
       <a
         [routerLink]="[item.route]"
-        routerLinkActive="active"
+        routerLinkActive="active bg-glass"
         [routerLinkActiveOptions]="{ exact: false }"
         class="nav-item"
         [attr.aria-label]="item.translationKey | translate"

@@ -70,10 +70,8 @@
   }
 
   &.active {
-    background: var(--primary);
+    background: rgba(var(--primary-rgb), 0.75);
     color: #ffffff;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
 
     i {
       font-weight: 600;
