@@ -84,12 +84,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
       icon: 'pi-user',
       translationKey: 'menu.profile',
     },
-    {
-      label: 'Configuración',
-      route: '/dashboard/settings',
-      icon: 'pi-cog',
-      translationKey: 'menu.settings',
-    },
   ];
 
   ngOnInit(): void {

@@ -14,5 +14,13 @@
         }
       </a>
     }
+    <button
+      type="button"
+      class="nav-item nav-item-menu"
+      (click)="toggleSidebar()"
+      [attr.aria-label]="'menu.menu' | translate"
+    >
+      <i class="pi pi-bars"></i>
+    </button>
   </div>
 </nav>
