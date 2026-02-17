@@ -3,11 +3,16 @@
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .app-container {
   min-height: 100vh;
   width: 100%;
+  padding-bottom: 3rem;
 }
 
 // Pull-to-refresh indicator styles
