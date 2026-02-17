@@ -7,6 +7,7 @@ import {
   OnInit,
   inject,
   DestroyRef,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -67,6 +68,17 @@ export class WeekCalendarComponent implements OnInit {
     this.translateService.onLangChange
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.currentLang.set(event.lang));
+
+    // Sincronizar la semana mostrada cuando selectedDate cambia desde fuera (ej. drawer del calendario)
+    effect(() => {
+      const selected = this.selectedDate();
+      const currentBase = this.weekBaseDate();
+      const selectedMonday = this.getMonday(selected);
+      const currentMonday = this.getMonday(currentBase);
+      if (selectedMonday.getTime() !== currentMonday.getTime()) {
+        this.weekBaseDate.set(new Date(selected));
+      }
+    });
   }
 
   /**

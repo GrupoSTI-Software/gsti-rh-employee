@@ -1,5 +1,15 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  OnInit,
+  OnDestroy,
+  computed,
+  PLATFORM_ID,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -71,7 +81,17 @@ interface IFaceDetectionWithLandmarks {
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0 }),
-        animate('400ms ease-out', style({ opacity: 1 })),
+        animate('250ms ease-out', style({ opacity: 1 })),
+      ]),
+      transition(':leave', [animate('200ms ease-in', style({ opacity: 0 }))]),
+    ]),
+    trigger('slideUpDrawer', [
+      transition(':enter', [
+        style({ transform: 'translateY(100%)' }),
+        animate('350ms cubic-bezier(0.4, 0.0, 0.2, 1)', style({ transform: 'translateY(0)' })),
+      ]),
+      transition(':leave', [
+        animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)', style({ transform: 'translateY(100%)' })),
       ]),
     ]),
   ],
@@ -88,6 +108,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly logger = inject(LoggerService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly secureStorage = inject(SecureStorageService);
+  private readonly destroyRef = inject(DestroyRef);
   private timeInterval?: ReturnType<typeof setInterval>;
 
   // Clave para almacenar la foto del rostro del empleado en base64
@@ -109,6 +130,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly currentDate = signal<Date>(new Date());
   readonly selectedDate = signal<Date>(new Date());
   readonly currentTime = signal<string>('');
+  private readonly currentLang = signal<string>(this.translateService.currentLang || 'es');
 
   private livenessVideo?: HTMLVideoElement;
   private livenessUI?: HTMLDivElement;
@@ -121,6 +143,39 @@ export class CheckinComponent implements OnInit, OnDestroy {
   showDatePicker = false;
   datePickerValue = '';
   maxDate = new Date(); // No permitir fechas futuras
+
+  // Calendario drawer
+  readonly calendarDate = signal<Date>(new Date());
+  readonly calendarDays = signal<
+    {
+      date: Date;
+      day: number;
+      isCurrentMonth: boolean;
+      isSelected: boolean;
+      isToday: boolean;
+      isInRange: boolean;
+      isFuture: boolean;
+    }[]
+  >([]);
+  readonly calendarLoading = signal<boolean>(false);
+  readonly weekDays = computed(() => {
+    const currentLang = this.currentLang();
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+
+    // Generar las iniciales de los días de la semana (domingo a sábado)
+    const days: string[] = [];
+    const baseDate = new Date(2024, 0, 7); // Domingo 7 de enero de 2024
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + i);
+      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
+      // Tomar la primera letra y convertir a mayúscula
+      days.push(dayName.charAt(0).toUpperCase());
+    }
+
+    return days;
+  });
 
   // Excepciones popup
   showExceptionsDialog = false;
@@ -192,6 +247,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.timeInterval = setInterval(() => {
       this.updateCurrentTime();
     }, 1000);
+
+    // Suscribirse a cambios de idioma
+    this.translateService.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this.currentLang.set(event.lang));
 
     // Solicitar permisos necesarios
     void this.requestPermissions();
@@ -1304,8 +1364,190 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   openDatePicker(): void {
     const date = this.selectedDate();
-    this.datePickerValue = date.toISOString().split('T')[0];
+    this.calendarDate.set(new Date(date));
     this.showDatePicker = true;
+    this.calendarLoading.set(true);
+
+    // Cargar los días del calendario de forma asíncrona para no bloquear la animación
+    setTimeout(() => {
+      this.calendarDays.set(this.generateCalendarDays());
+      this.calendarLoading.set(false);
+    }, 0);
+  }
+
+  /**
+   * Cierra el drawer del calendario
+   */
+  closeDatePicker(): void {
+    this.showDatePicker = false;
+  }
+
+  /**
+   * Genera los días del calendario para el mes actual
+   */
+  private generateCalendarDays(): {
+    date: Date;
+    day: number;
+    isCurrentMonth: boolean;
+    isSelected: boolean;
+    isToday: boolean;
+    isInRange: boolean;
+    isFuture: boolean;
+  }[] {
+    const currentDate = this.calendarDate();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    // Primer día del mes
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+
+    // Día de la semana del primer día (0 = domingo, 1 = lunes, etc.)
+    const firstDayWeekday = firstDayOfMonth.getDay();
+
+    // Días del mes anterior que se muestran
+    const daysFromPrevMonth = firstDayWeekday;
+    const prevMonthLastDay = new Date(year, month, 0);
+
+    const days: {
+      date: Date;
+      day: number;
+      isCurrentMonth: boolean;
+      isSelected: boolean;
+      isToday: boolean;
+      isInRange: boolean;
+      isFuture: boolean;
+    }[] = [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const selectedDate = this.selectedDate();
+    selectedDate.setHours(0, 0, 0, 0);
+
+    // Agregar días del mes anterior
+    for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
+      const day = prevMonthLastDay.getDate() - i;
+      const date = new Date(year, month - 1, day);
+      date.setHours(0, 0, 0, 0);
+
+      days.push({
+        date,
+        day,
+        isCurrentMonth: false,
+        isSelected: date.getTime() === selectedDate.getTime(),
+        isToday: date.getTime() === today.getTime(),
+        isInRange: false,
+        isFuture: date > today,
+      });
+    }
+
+    // Agregar días del mes actual
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const date = new Date(year, month, day);
+      date.setHours(0, 0, 0, 0);
+
+      days.push({
+        date,
+        day,
+        isCurrentMonth: true,
+        isSelected: date.getTime() === selectedDate.getTime(),
+        isToday: date.getTime() === today.getTime(),
+        isInRange: false,
+        isFuture: date > today,
+      });
+    }
+
+    // Agregar días del mes siguiente para completar la última semana
+    const remainingDays = 42 - days.length; // 6 semanas * 7 días
+    for (let day = 1; day <= remainingDays; day++) {
+      const date = new Date(year, month + 1, day);
+      date.setHours(0, 0, 0, 0);
+
+      days.push({
+        date,
+        day,
+        isCurrentMonth: false,
+        isSelected: date.getTime() === selectedDate.getTime(),
+        isToday: date.getTime() === today.getTime(),
+        isInRange: false,
+        isFuture: date > today,
+      });
+    }
+
+    return days;
+  }
+
+  /**
+   * Selecciona una fecha del calendario
+   */
+  selectCalendarDate(date: Date): void {
+    this.calendarDate.set(new Date(date));
+    this.selectedDate.set(new Date(date));
+    void this.loadAttendance();
+    this.closeDatePicker();
+  }
+
+  /**
+   * Limpia la selección de fecha (vuelve a hoy)
+   */
+  clearDateSelection(): void {
+    this.calendarDate.set(new Date());
+    this.calendarDays.set(this.generateCalendarDays());
+  }
+
+  /**
+   * Navega al mes anterior en el calendario
+   */
+  previousCalendarMonth(): void {
+    const date = new Date(this.calendarDate());
+    date.setMonth(date.getMonth() - 1);
+    this.calendarDate.set(date);
+    this.calendarDays.set(this.generateCalendarDays());
+  }
+
+  /**
+   * Navega al mes siguiente en el calendario
+   */
+  nextCalendarMonth(): void {
+    const date = new Date(this.calendarDate());
+    date.setMonth(date.getMonth() + 1);
+    this.calendarDate.set(date);
+    this.calendarDays.set(this.generateCalendarDays());
+  }
+
+  /**
+   * Formatea el día del calendario para mostrar en el chip
+   */
+  formatCalendarDay(date: Date): string {
+    return date.getDate().toString().padStart(2, '0') + ' ' + this.getMonthAbbreviation(date);
+  }
+
+  /**
+   * Formatea el nombre del día para mostrar en el chip
+   */
+  formatCalendarDayName(date: Date): string {
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    return date.toLocaleDateString(locale, { weekday: 'short' });
+  }
+
+  /**
+   * Formatea el mes y año del calendario
+   */
+  formatCalendarMonth(date: Date): string {
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  }
+
+  /**
+   * Obtiene la abreviación del mes
+   */
+  private getMonthAbbreviation(date: Date): string {
+    const currentLang = this.translateService.currentLang || 'es';
+    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+    return date.toLocaleDateString(locale, { month: 'short' });
   }
 
   /**

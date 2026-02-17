@@ -137,7 +137,9 @@
     "previousDay": "Día anterior",
     "nextDay": "Día siguiente",
     "previousMonth": "Mes anterior",
-    "nextMonth": "Mes siguiente"
+    "nextMonth": "Mes siguiente",
+    "more": "Más",
+    "done": "Listo"
   },
   "profile": {
     "title": "Mi Perfil",
