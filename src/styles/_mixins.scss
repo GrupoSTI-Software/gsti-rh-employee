@@ -88,7 +88,7 @@
 // Card styles
 @mixin card {
   background: var(--bg-primary);
-  border-radius: $radius;
+  // border-radius: $radius;
   padding: $spacing-3xl;
 }
 

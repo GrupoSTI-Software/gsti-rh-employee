@@ -1,160 +1,184 @@
 @use '../../../../styles/variables' as *;
 @use '../../../../styles/mixins' as *;
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+.bottom-nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  bottom: $spacing-lg;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: $z-index-fixed;
-  box-shadow: var(--shadow-sm);
-  height: 64px; // Altura fija para calcular padding-top en otros componentes
+  width: calc(100% - #{$spacing-2xl});
+  max-width: 600px;
+  padding: 0 $spacing-md;
   box-sizing: border-box;
 }
 
-.header-left {
+.bottom-nav-container {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
+  padding: $spacing-sm $spacing-lg;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08),
+              0 2px 8px rgba(0, 0, 0, 0.04),
+              inset 0 0 0 0.5px rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(5px) saturate(10%);
+  -webkit-backdrop-filter: blur(5px) saturate(10%);
+  border: 0.5px solid rgba(255, 255, 255, 0.4);
   gap: $spacing-xs;
+  position: relative;
+  overflow: visible;
+
+  // Sombra superior sutil tipo iOS
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.6) 20%,
+      rgba(255, 255, 255, 0.6) 80%,
+      transparent
+    );
+    pointer-events: none;
+  }
 }
 
-.menu-button {
+.nav-item {
   @include button-base;
-  background: transparent;
-  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   padding: $spacing-sm;
-  min-width: 40px;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  i {
-    font-size: $font-size-xl;
-  }
-
-  &:hover {
-    background: var(--bg-hover);
-  }
-}
-
-.navigation-buttons {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  margin-left: $spacing-xs;
-
-  @media (max-width: $breakpoint-sm) {
-    // Ocultar botones de navegación en pantallas muy pequeñas si es necesario
-    // display: none;
-  }
-}
-
-.nav-button {
-  @include button-base;
-  width: 2rem;
-  height: 2rem;
-  min-width: 3rem;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: $radius;
-  transition: background-color $transition-fast, transform $transition-fast;
-
-  i {
-    font-size: $font-size-lg;
-  }
-
-  &:hover:not(.disabled):not(:disabled) {
-    background: var(--bg-hover);
-    transform: scale(1.05);
-  }
-
-  &:active:not(.disabled):not(:disabled) {
-    transform: scale(0.95);
-  }
-
-  &.disabled,
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    background: var(--bg-secondary);
-    
-    &:hover {
-      transform: none;
-      background: var(--bg-secondary);
-    }
-  }
-}
-
-.logo-container {
+  background: transparent;
+  color: rgba(60, 60, 67, 0.6);
+  border: none;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 52px;
+  height: 52px;
   flex: 1;
-  display: flex;
-  justify-content: center;
+  max-width: 70px;
+  position: relative;
+  text-decoration: none;
+  z-index: 1;
 
-  .logo {
-    max-height: 40px;
-    max-width: 120px;
-    object-fit: contain;
+  i {
+    font-size: 22px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
   }
 
-  .logo-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    width: 40px;
+  &:hover:not(.active) {
+    background: rgba(120, 120, 128, 0.18);
+    color: rgba(60, 60, 67, 0.85);
+    transform: scale(1.05);
 
     i {
-      font-size: $font-size-lg;
-      color: var(--text-secondary);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.active {
+    background: rgba(0, 122, 255, 0.85);
+    color: #ffffff;
+    box-shadow: 0 3px 12px rgba(0, 122, 255, 0.35),
+                0 1px 4px rgba(0, 122, 255, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    i {
+      font-weight: 600;
+    }
+
+    &:hover {
+      background: rgba(0, 112, 245, 0.9);
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(0, 122, 255, 0.45),
+                  0 2px 6px rgba(0, 122, 255, 0.3);
+    }
+
+    &:active {
+      transform: scale(0.96);
     }
   }
 }
 
-.user-info {
+.nav-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #FF3B30;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: $font-weight-semibold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  line-height: 1;
+}
 
-  .user-name {
-    font-size: $font-size-sm;
-    color: var(--text-secondary);
-    display: none; // Ocultar en móvil, mostrar en tablet/desktop si es necesario
+// Responsive
+@media (max-width: $breakpoint-sm) {
+  .bottom-nav {
+    bottom: $spacing-md;
+    width: calc(100% - #{$spacing-xl});
+  }
 
-    @media (min-width: $breakpoint-md) {
-      display: block;
+  .bottom-nav-container {
+    padding: $spacing-xs $spacing-md;
+    border-radius: 20px;
+  }
+
+  .nav-item {
+    min-width: 44px;
+    height: 44px;
+    padding: $spacing-xs;
+
+    i {
+      font-size: 20px;
     }
   }
 
-  .logout-button {
-    @include button-base;
-    background: transparent;
-    color: var(--text-primary);
-    padding: $spacing-sm;
-    min-width: 40px;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .nav-badge {
+    top: 4px;
+    right: 4px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+}
+
+// Efecto de profundidad en dispositivos grandes
+@media (min-width: $breakpoint-md) {
+  .bottom-nav-container {
+    padding: $spacing-md $spacing-xl;
+  }
+
+  .nav-item {
+    min-width: 60px;
+    height: 60px;
 
     i {
-      font-size: $font-size-lg;
-    }
-
-    &:hover {
-      background: var(--bg-hover);
-      color: var(--danger);
+      font-size: 24px;
     }
   }
 }

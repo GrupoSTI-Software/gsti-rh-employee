@@ -20,23 +20,11 @@
   max-width: $container-max-width-md;
   margin: 0 auto;
   @include flex-column;
-  gap: $spacing-lg;
+  gap: 0.5rem;
 }
 
 .checkin-title-section {
   margin-bottom: $spacing-lg;
-
-  .page-title {
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin: 0 0 $spacing-xs 0;
-  }
-
-  .page-subtitle {
-    color: var(--text-secondary);
-    margin: 0;
-  }
 }
 
 .checkin-card {
