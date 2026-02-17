@@ -6,12 +6,10 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
-  // padding-top: 64px; // Altura del header fijo
 }
 
 .main-content {
   flex: 1;
-  // padding-top: calc(6px + $spacing-sm); // Padding mínimo después del header (muy pegado)
   overflow-y: auto;
   background: var(--bg-secondary);
   min-height: calc(100vh - 64px); // Altura total menos el header

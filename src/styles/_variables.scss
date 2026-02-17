@@ -81,12 +81,12 @@ $gap-lg: 1.5rem;
 .page-header {
   background-color: var(--bg-primary);
   padding: $spacing-lg;
-  line-height: 1.2rem;
+  line-height: 1.5rem;
 }
 
 .page-title {
   font-size: $font-size-lg;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   color: var(--text-primary);
   margin: 0;
 }

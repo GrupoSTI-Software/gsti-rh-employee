@@ -6,6 +6,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  padding: calc(env(safe-area-inset-top, 0px) + $spacing-xl) 0;
 }
 
 .holiday-icon-container {
