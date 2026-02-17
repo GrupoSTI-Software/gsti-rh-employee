@@ -1,5 +1,28 @@
-import { Component, input, output, computed, signal, OnInit } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  computed,
+  signal,
+  OnInit,
+  inject,
+  DestroyRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@shared/pipes/translate.pipe';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+/** Claves de traducción para los días de la semana (domingo = 0) */
+const WEEK_DAY_KEYS = [
+  'weekCalendar.sunday',
+  'weekCalendar.monday',
+  'weekCalendar.tuesday',
+  'weekCalendar.wednesday',
+  'weekCalendar.thursday',
+  'weekCalendar.friday',
+  'weekCalendar.saturday',
+] as const;
 
 /**
  * Interfaz para representar un día en el calendario semanal
@@ -7,7 +30,8 @@ import { CommonModule } from '@angular/common';
 interface IWeekDay {
   date: Date;
   dayNumber: number;
-  dayName: string;
+  /** Clave de traducción del nombre del día */
+  dayNameKey: string;
   isToday: boolean;
   isSelected: boolean;
 }
@@ -19,11 +43,17 @@ interface IWeekDay {
 @Component({
   selector: 'app-week-calendar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './week-calendar.component.html',
   styleUrl: './week-calendar.component.scss',
 })
 export class WeekCalendarComponent implements OnInit {
+  private readonly translateService = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Signal del idioma actual para que currentMonthYear se actualice al cambiar idioma */
+  private readonly currentLang = signal<string>(this.translateService.currentLang || 'es');
+
   // Input: fecha seleccionada actual
   readonly selectedDate = input<Date>(new Date());
 
@@ -32,6 +62,12 @@ export class WeekCalendarComponent implements OnInit {
 
   // Signal para la fecha base de la semana mostrada
   private readonly weekBaseDate = signal<Date>(new Date());
+
+  constructor() {
+    this.translateService.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this.currentLang.set(event.lang));
+  }
 
   /**
    * Computed: días de la semana actual
@@ -58,7 +94,7 @@ export class WeekCalendarComponent implements OnInit {
       days.push({
         date: date,
         dayNumber: date.getDate(),
-        dayName: this.getDayName(date.getDay()),
+        dayNameKey: this.getDayNameKey(date.getDay()),
         isToday: date.getTime() === today.getTime(),
         isSelected: date.getTime() === selectedDateNormalized.getTime(),
       });
@@ -68,11 +104,12 @@ export class WeekCalendarComponent implements OnInit {
   });
 
   /**
-   * Computed: mes y año actual de la semana mostrada
+   * Computed: mes y año actual de la semana mostrada (según idioma actual)
    */
   readonly currentMonthYear = computed((): string => {
     const baseDate = this.weekBaseDate();
-    const locale = 'es-MX';
+    const lang = this.currentLang(); // dependencia para re-ejecutar al cambiar idioma
+    const locale = lang?.startsWith('en') ? 'en-US' : 'es-MX';
     return baseDate.toLocaleDateString(locale, {
       month: 'long',
       year: 'numeric',
@@ -90,11 +127,10 @@ export class WeekCalendarComponent implements OnInit {
   }
 
   /**
-   * Obtiene el nombre corto del día (2 letras)
+   * Obtiene la clave de traducción del nombre corto del día
    */
-  private getDayName(dayIndex: number): string {
-    const days = ['DO', 'LU', 'MA', 'MI', 'JU', 'VI', 'SA'];
-    return days[dayIndex];
+  private getDayNameKey(dayIndex: number): string {
+    return WEEK_DAY_KEYS[dayIndex] ?? 'weekCalendar.sunday';
   }
 
   /**

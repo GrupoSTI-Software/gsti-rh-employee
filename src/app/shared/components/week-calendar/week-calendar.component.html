@@ -5,7 +5,7 @@
       type="button"
       class="nav-button"
       (click)="previousWeek()"
-      aria-label="Semana anterior"
+      [attr.aria-label]="'weekCalendar.previousWeek' | translate"
     >
       <i class="pi pi-chevron-left"></i>
     </button>
@@ -16,7 +16,7 @@
       type="button"
       class="nav-button"
       (click)="nextWeek()"
-      aria-label="Semana siguiente"
+      [attr.aria-label]="'weekCalendar.nextWeek' | translate"
     >
       <i class="pi pi-chevron-right"></i>
     </button>
@@ -25,9 +25,9 @@
       type="button"
       class="today-button"
       (click)="goToToday()"
-      aria-label="Ir a hoy"
+      [attr.aria-label]="'weekCalendar.goToToday' | translate"
     >
-      Hoy
+      {{ 'weekCalendar.today' | translate }}
     </button>
   </div>
 
@@ -40,9 +40,9 @@
         [class.today]="day.isToday"
         [class.selected]="day.isSelected"
         (click)="onDayClick(day)"
-        [attr.aria-label]="day.dayName + ' ' + day.dayNumber"
+        [attr.aria-label]="(day.dayNameKey | translate) + ' ' + day.dayNumber"
       >
-        <span class="day-name">{{ day.dayName }}</span>
+        <span class="day-name">{{ day.dayNameKey | translate }}</span>
         <span class="day-number">{{ day.dayNumber }}</span>
       </button>
     }

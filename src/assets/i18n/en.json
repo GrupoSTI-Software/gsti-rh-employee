@@ -390,5 +390,18 @@
     "someDatesHaveRequests": "Some dates already have registered requests and will not be sent",
     "dayHasException": "This day already has a registered exception and cannot be selected",
     "warning": "Warning"
+  },
+  "weekCalendar": {
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "goToToday": "Go to today",
+    "today": "Today",
+    "sunday": "Su",
+    "monday": "Mo",
+    "tuesday": "Tu",
+    "wednesday": "We",
+    "thursday": "Th",
+    "friday": "Fr",
+    "saturday": "Sa"
   }
 }
