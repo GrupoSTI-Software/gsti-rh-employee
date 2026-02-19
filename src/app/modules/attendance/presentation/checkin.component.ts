@@ -35,6 +35,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 // @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
+import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -138,6 +139,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private frameCaptureInterval?: ReturnType<typeof setInterval>;
   private livenessCheckInterval?: ReturnType<typeof setInterval>;
   private livenessPromiseReject?: (reason?: unknown) => void;
+  private readonly getVerificationAttendanceLockUseCase = inject(
+    GetVerificationAttendanceLockUseCase,
+  );
 
   // Datepicker
   showDatePicker = false;
@@ -407,6 +411,31 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Maneja el registro de check-in con cámara
    */
   async handleRegisterCheckIn(): Promise<void> {
+    this.loading.set(true);
+    const verificationAttendanceLock = await this.getVerificationAttendanceLockUseCase.execute();
+    const isFirstCheckIn = this.attendance()?.checkInTime === null;
+    this.loading.set(false);
+    if (verificationAttendanceLock?.status === 200) {
+      if (
+        verificationAttendanceLock?.data?.locked &&
+        verificationAttendanceLock?.data?.type === 'absences' &&
+        isFirstCheckIn
+      ) {
+        this.error.set(verificationAttendanceLock?.message);
+        return;
+      } else if (
+        verificationAttendanceLock?.data?.locked &&
+        verificationAttendanceLock?.data?.type === 'tardiness'
+      ) {
+        this.error.set(verificationAttendanceLock?.message);
+        return;
+      }
+    } else {
+      this.error.set(
+        verificationAttendanceLock?.message ?? 'Error al verificar el bloqueo de asistencia',
+      );
+      return;
+    }
     this.success.set(null);
     this.error.set(null);
     if (!this.canCheckIn()) return;
@@ -518,7 +547,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
         location.coords.longitude,
         location.coords.accuracy ?? 0,
       );
-
       if (success) {
         // Recargar asistencia
         await this.loadAttendance();

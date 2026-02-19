@@ -36,6 +36,8 @@ import { HttpResetPasswordAdapter } from '@modules/reset-password/infrastructure
 import { RESET_PASSWORD_PORT } from '@modules/reset-password/domain/reset-password.token';
 import { HttpPincodePasswordAdapter } from '@modules/pincode-password/infrastructure/http-pincode-password.adapter';
 import { PINCODE_PASSWORD_PORT } from '@modules/pincode-password/domain/pincode-password.token';
+import { VERIFICATION_ATTENDANCE_LOCK_PORT } from '@modules/verification-attendance-lock/domain/verification-attendance-lock.token';
+import { HttpVerificationAttendanceLockAdapter } from '@modules/verification-attendance-lock/infrastructure/http-verification-attendance-lock.adapter';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -110,6 +112,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: EXCEPTION_PORT,
       useClass: HttpExceptionAdapter,
+    },
+    {
+      provide: VERIFICATION_ATTENDANCE_LOCK_PORT,
+      useClass: HttpVerificationAttendanceLockAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({
