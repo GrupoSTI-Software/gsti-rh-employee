@@ -2,6 +2,7 @@
   "name": "gsti-pwa-empleado",
   "short_name": "gsti-pwa-empleado",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
   "icons": [

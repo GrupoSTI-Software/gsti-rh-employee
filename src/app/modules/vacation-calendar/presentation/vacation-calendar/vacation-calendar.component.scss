@@ -8,10 +8,12 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  padding: calc(env(safe-area-inset-top, 0px) + $spacing-sm) $spacing-md $spacing-md;
+  @include safe-area-vertical($spacing-sm, $spacing-md);
+  @include safe-area-horizontal($spacing-md);
 
   @media (max-width: $breakpoint-md) {
-    padding: calc(env(safe-area-inset-top, 0px) + $spacing-xs) $spacing-sm $spacing-sm;
+    @include safe-area-vertical($spacing-xs, $spacing-sm);
+    @include safe-area-horizontal($spacing-sm);
   }
 }
 

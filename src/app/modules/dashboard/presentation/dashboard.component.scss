@@ -12,12 +12,12 @@
   flex: 1;
   overflow-y: auto;
   background: var(--bg-primary);
-  min-height: calc(100vh - 64px); // Altura total menos el header
-  
+  min-height: calc(100dvh - 64px);
+
   /* Ocultar scrollbar pero mantener funcionalidad */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE y Edge */
-  
+
   &::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Edge */
   }

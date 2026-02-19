@@ -29,6 +29,12 @@
   }
 }
 
+.profile-container {
+  width: 100%;
+  @include safe-area-vertical($spacing-md, $spacing-md);
+  @include safe-area-horizontal($spacing-md);
+}
+
 .profile-wrapper {
   width: 100%;
   max-width: $container-max-width-md;

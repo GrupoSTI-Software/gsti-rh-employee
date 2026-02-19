@@ -25,9 +25,11 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  @include safe-area-horizontal($spacing-md);
 }
 
 .drawer-header {
+  @include safe-area-top($spacing-lg);
   padding: $spacing-lg;
   border-bottom: 1px solid var(--border-color);
   position: relative;
@@ -238,6 +240,7 @@
 }
 
 .form-actions {
+  @include safe-area-bottom($spacing-md);
   display: flex;
   gap: $spacing-md;
   margin-top: $spacing-xl;

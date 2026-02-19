@@ -6,7 +6,9 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: calc(env(safe-area-inset-top, 0px) + $spacing-xl) 0;
+  // padding: calc(env(safe-area-inset-top, 0px) + $spacing-sm) 0;
+  @include safe-area-vertical($spacing-lg);
+  @include safe-area-horizontal($spacing-lg);
 }
 
 .holiday-icon-container {
@@ -290,12 +292,13 @@
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   max-height: 90vh;
   overflow-y: auto;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  
+  // @include safe-area-vertical(0px, $spacing-md);
+  // @include safe-area-horizontal($spacing-md);
+
   /* Ocultar scrollbar pero mantener funcionalidad */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE y Edge */
-  
+
   &::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Edge */
   }
@@ -535,11 +538,11 @@
   max-height: 60vh;
   overflow-y: auto;
   padding: $spacing-sm;
-  
+
   /* Ocultar scrollbar pero mantener funcionalidad */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE y Edge */
-  
+
   &::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Edge */
   }
