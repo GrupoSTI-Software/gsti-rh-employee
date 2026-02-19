@@ -3,183 +3,196 @@
 
 .vacation-calendar-container {
   width: 100%;
+  height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: $spacing-lg;
+  flex-direction: column;
   box-sizing: border-box;
-  overflow-x: hidden; // Evitar scroll horizontal en el contenedor principal
-
-  // En pantallas grandes, reducir padding para maximizar el espacio del calendario
-  @media (min-width: $breakpoint-lg) {
-    padding: $spacing-lg $spacing-xl; // Más padding horizontal, menos vertical
-  }
+  overflow: hidden;
+  padding: calc(env(safe-area-inset-top, 0px) + $spacing-sm) $spacing-md $spacing-md;
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-md;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
+    padding: calc(env(safe-area-inset-top, 0px) + $spacing-xs) $spacing-sm $spacing-sm;
   }
 }
 
 .vacation-calendar-wrapper {
   width: 100%;
-  max-width: $container-max-width-xl;
-  margin: 0 auto;
-  @include flex-column;
-  gap: $spacing-xl;
-  box-sizing: border-box;
-  min-width: 0; // Permite que se ajuste al contenedor padre
-
-  // En pantallas grandes (más de 1024px), ocupar todo el espacio disponible
-  @media (min-width: $breakpoint-lg) {
-    max-width: 100%; // Eliminar limitación de ancho máximo
-    width: 100%;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: $spacing-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: $spacing-md;
-  }
-}
-
-.vacation-calendar-title-section {
-  margin-bottom: $spacing-lg;
-  margin-top: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    margin-bottom: $spacing-md;
-  }
-
-  .page-title {
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin: 0 0 $spacing-xs 0;
-    line-height: 1.2;
-
-    @media (max-width: $breakpoint-md) {
-      font-size: $font-size-2xl;
-    }
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-xl;
-    }
-  }
-
-  .page-subtitle {
-    font-size: $font-size-base;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.3;
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-sm;
-    }
-  }
-}
-
-// Filtros
-.calendar-filters {
+  height: 100%;
   display: flex;
-  gap: $spacing-lg;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--border-color);
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-md;
-    padding: $spacing-md;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
-    gap: $spacing-sm;
-  }
-}
-
-.filter-group {
-  @include flex-center;
+  flex-direction: column;
   gap: $spacing-sm;
+  overflow: hidden;
 
   @media (max-width: $breakpoint-md) {
-    width: 100%;
-    justify-content: space-between;
-    flex-direction: row;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column;
-    align-items: stretch;
     gap: $spacing-xs;
   }
 }
 
-.filter-label {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  color: var(--text-primary);
-  white-space: nowrap;
+// Header compacto
+.calendar-header-compact {
+  @include flex-between;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  gap: $spacing-md;
+  flex-shrink: 0;
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-sm;
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-sm;
+    padding: $spacing-xs $spacing-sm;
   }
 }
 
-.filter-select {
-  padding: $spacing-sm $spacing-md;
+.header-left {
+  @include flex-center;
+  gap: $spacing-sm;
+
+  @media (max-width: $breakpoint-md) {
+    flex: 1;
+  }
+}
+
+.header-center {
+  @include flex-center;
+
+  @media (max-width: $breakpoint-md) {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.header-right {
+  @include flex-center;
+  gap: $spacing-xs;
+
+  @media (max-width: $breakpoint-md) {
+    justify-content: flex-end;
+  }
+}
+
+.view-mode-buttons-compact {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 2px;
+  border-radius: $radius;
+  border: 1px solid var(--border-color);
+}
+
+.view-mode-button-compact {
+  @include button-base;
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+
+  @media (max-width: $breakpoint-md) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  i {
+    font-size: $font-size-sm;
+  }
+
+  &:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: var(--primary);
+    color: var(--text-primary);
+
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+}
+
+.today-button {
+  @include button-base;
+  padding: $spacing-xs $spacing-md;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  border-radius: $radius;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+.filter-select-compact {
+  padding: $spacing-xs $spacing-sm;
   border: 1px solid var(--border-color);
   border-radius: $radius;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   cursor: pointer;
-  transition: border-color $transition-base, background-color $transition-base;
-  min-width: 120px;
+  transition: border-color $transition-base;
+  min-width: 100px;
 
   @media (max-width: $breakpoint-md) {
-    flex: 1;
-    min-width: auto;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    padding: $spacing-sm;
-    font-size: $font-size-sm;
+    min-width: 80px;
+    font-size: $font-size-xs;
   }
 
   &:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
   }
 
   &:hover {
     border-color: var(--border-hover);
-    background: var(--bg-hover);
   }
 }
 
-.select-days-button {
+.icon-button {
   @include button-base;
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
-  @include flex-center;
-  gap: $spacing-sm;
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-base;
-  white-space: nowrap;
+  border-radius: $radius;
+  transition: all $transition-base;
+
+  @media (max-width: $breakpoint-md) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  i {
+    font-size: $font-size-sm;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
 
   &.active {
     background: var(--primary);
@@ -192,117 +205,71 @@
     }
   }
 
-  &:hover:not(.active) {
-    background: var(--bg-hover);
+  &.primary {
+    background: var(--primary);
+    color: var(--text-primary);
     border-color: var(--primary);
-  }
-}
 
-.exception-request-button {
-  @include button-base;
-  @include button-primary;
-  @include flex-center;
-  gap: $spacing-sm;
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-base;
-  white-space: nowrap;
-}
-
-.cancel-selection-button {
-  @include button-base;
-  background: var(--danger);
-  color: var(--text-primary);
-  @include flex-center;
-  gap: $spacing-xs;
-  padding: $spacing-sm $spacing-md;
-  font-size: $font-size-sm;
-  white-space: nowrap;
-  border: 1px solid var(--danger);
-
-  &:hover {
-    background: var(--danger-dark);
-    border-color: var(--danger-dark);
-  }
-}
-
-// Navegación del calendario
-.calendar-navigation {
-  @include flex-between;
-  align-items: center;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--border-color);
-  gap: $spacing-sm;
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-sm;
+    &:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
   }
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-xs;
-    gap: $spacing-xs;
+  &.danger {
+    background: var(--danger);
+    color: var(--text-primary);
+    border-color: var(--danger);
+
+    &:hover {
+      background: var(--danger-dark);
+      border-color: var(--danger-dark);
+    }
   }
 }
 
 .calendar-title {
-  font-size: $font-size-xl;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: var(--text-primary);
   margin: 0;
   text-transform: capitalize;
-  text-align: center;
-  flex: 1;
+  white-space: nowrap;
 
   @media (max-width: $breakpoint-md) {
-    font-size: $font-size-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
     font-size: $font-size-base;
-    padding: 0 $spacing-xs;
   }
 }
 
 .nav-button {
   @include button-base;
   @include flex-center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
-  background: var(--bg-primary);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: none;
+  border-radius: $radius;
   transition: all $transition-base;
   flex-shrink: 0;
 
   @media (max-width: $breakpoint-md) {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 2rem;
-    height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
   i {
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
 
     @media (max-width: $breakpoint-md) {
-      font-size: $font-size-base;
-    }
-
-    @media (max-width: $breakpoint-sm) {
       font-size: $font-size-sm;
     }
   }
 
   &:hover:not(:disabled) {
     background: var(--bg-hover);
-    border-color: var(--primary);
     color: var(--primary);
-    transform: scale(1.1);
   }
 
   &:active:not(:disabled) {
@@ -333,78 +300,64 @@
   }
 }
 
-// Contenedor tipo card para el calendario
+// Contenedor del calendario - ocupa todo el espacio disponible
 .calendar-card {
   width: 100%;
-  @include card;
-  position: relative;
-  overflow-x: hidden; // Cambiar a hidden para evitar scroll horizontal
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: $radius-md;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
   box-sizing: border-box;
+  padding: $spacing-md;
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-md;
+    padding: $spacing-sm;
   }
 }
 
 // Calendario
 .calendar-wrapper {
   width: 100%;
-  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
-  overflow: hidden; // Evitar overflow
 }
 
 .calendar-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-xs;
-  margin-bottom: $spacing-sm;
+  gap: 1px;
+  margin-bottom: 1px;
   width: 100%;
   box-sizing: border-box;
-
-  @media (min-width: $breakpoint-lg) {
-    gap: 2px;
-    margin-bottom: $spacing-xs;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: 2px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px;
-  }
+  flex-shrink: 0;
 }
 
 .calendar-header-day {
-  padding: $spacing-sm;
+  padding: $spacing-xs;
   text-align: center;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-xs;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   box-sizing: border-box;
-  min-width: 0; // Permite que el texto se ajuste
-
-  // Pantallas grandes - más compacto
-  @media (min-width: $breakpoint-lg) {
-    padding: $spacing-xs;
-    font-size: $font-size-xs;
-  }
+  min-width: 0;
+  background: var(--bg-secondary);
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-xs;
-    font-size: $font-size-xs;
+    padding: 4px;
+    font-size: 0.65rem;
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: 4px 2px;
-    font-size: 0.65rem;
+    padding: 2px;
+    font-size: 0.6rem;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -413,76 +366,56 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-xs;
+  grid-auto-rows: 1fr;
+  gap: 1px;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-
-  // Pantallas grandes - reducir gap
-  @media (min-width: $breakpoint-lg) {
-    gap: 2px;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: 2px; // Usar el mismo gap que el header
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px; // Usar el mismo gap que el header
-  }
+  flex: 1;
+  overflow: auto;
+  background: var(--border-color);
 }
 
 .calendar-day {
-  min-height: 100px;
-  padding: $spacing-sm;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius;
+  min-height: 0;
+  padding: $spacing-xs;
+  background: var(--bg-primary);
+  border: none;
   @include flex-column;
-  transition: all $transition-base;
+  transition: background-color $transition-base;
   cursor: default;
-  aspect-ratio: 1;
   box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
   position: relative;
   user-select: none;
 
-  @media (min-width: $breakpoint-lg) {
-    min-height: 30px;
-    padding: $spacing-sm $spacing-md;
-    border-radius: $radius-sm;
-  }
   @media (max-width: $breakpoint-md) {
-    min-height: 30px;
-    padding: $spacing-xs;
-    border-radius: $radius-sm;
+    padding: 4px;
   }
+
   @media (max-width: $breakpoint-sm) {
-    min-height: 50px;
-    padding: 3px 2px;
-    border-radius: 2px;
+    padding: 2px;
   }
 
   &.current-month {
     background: var(--bg-primary);
-    border-color: var(--border-color);
 
     &:hover {
       background: var(--bg-hover);
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
     }
   }
 
   &:not(.current-month) {
-    opacity: 0.4;
+    opacity: 0.3;
     background: var(--bg-secondary);
   }
 
   %event-day {
     position: relative;
-    &.current-month:hover { background: rgba(var(--primary-rgb), 0.25); }
+    &.current-month:hover {
+      background: rgba(var(--primary-rgb), 0.25);
+    }
   }
   &.vacation-day {
     @extend %event-day;
@@ -490,7 +423,9 @@
     border-color: var(--primary);
     &.current-month {
       background: rgba(var(--primary-rgb), 0.15);
-      &:hover { border-color: var(--primary-dark); }
+      &:hover {
+        border-color: var(--primary-dark);
+      }
     }
   }
   &.holiday-day {
@@ -499,7 +434,9 @@
     border-color: var(--warning);
     &.current-month {
       background: rgba(var(--warning-rgb), 0.15);
-      &:hover { background: rgba(var(--warning-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--warning-rgb), 0.25);
+      }
     }
   }
   &.birthday-day {
@@ -508,7 +445,9 @@
     border-color: var(--success);
     &.current-month {
       background: rgba(var(--success-rgb), 0.15);
-      &:hover { background: rgba(var(--success-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--success-rgb), 0.25);
+      }
     }
   }
   &.anniversary-day {
@@ -517,14 +456,36 @@
     border-color: var(--secondary);
     &.current-month {
       background: rgba(var(--secondary-rgb), 0.15);
-      &:hover { background: rgba(var(--secondary-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--secondary-rgb), 0.25);
+      }
     }
   }
 
   &.today {
-    border: 2px solid var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+    background: rgba(var(--primary-rgb), 0.1);
     font-weight: $font-weight-bold;
+
+    .day-number {
+      background: var(--primary);
+      color: var(--text-primary);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: $breakpoint-md) {
+        width: 20px;
+        height: 20px;
+      }
+
+      @media (max-width: $breakpoint-sm) {
+        width: 18px;
+        height: 18px;
+      }
+    }
   }
 
   &.has-multiple-events {
@@ -550,17 +511,16 @@
     cursor: pointer;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
+      background: var(--bg-hover);
     }
 
     &:active {
-      transform: translateY(0);
+      background: var(--bg-secondary);
     }
 
     &:focus {
       outline: 2px solid var(--primary);
-      outline-offset: 2px;
+      outline-offset: -2px;
     }
   }
 
@@ -629,114 +589,125 @@
 .event-section {
   width: 100%;
   margin-bottom: 2px;
-  padding-left: $spacing-xs;
-  border-left: 3px solid;
-  &:last-child { margin-bottom: 0; }
-  &.vacation-section { border-left-color: var(--primary); }
-  &.holiday-section { border-left-color: var(--warning); }
-  &.birthday-section { border-left-color: var(--success); }
-  &.anniversary-section { border-left-color: var(--secondary); }
-  @media (max-width: $breakpoint-sm) {
-    border-left-width: 2px;
-    padding-left: 2px;
+  &:last-child {
+    margin-bottom: 0;
   }
 }
 
 .event-indicators {
   position: absolute;
-  inset: 0;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
   pointer-events: none;
-  border-radius: inherit;
-  overflow: hidden;
-}
-.event-indicator {
-  position: absolute;
   z-index: 1;
-  // TOP: Verde (Cumpleaños)
+}
+
+.event-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-md) {
+    width: 3px;
+    height: 3px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 2px;
+    height: 2px;
+  }
+
   &.birthday-indicator {
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
     background: var(--success);
-    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-  // BOTTOM: Azul (Aniversario)
+
   &.anniversary-indicator {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
     background: var(--secondary);
-    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-  // LEFT: Azul oscuro (Vacaciones)
+
   &.vacation-indicator {
-    left: 0;
-    top: 0;
-    width: 3px;
-    height: 100%;
     background: var(--primary);
-    @media (max-width: $breakpoint-sm) { width: 2px; }
   }
-  // RIGHT: Naranja (Holiday)
+
   &.holiday-indicator {
-    right: 0;
-    top: 0;
-    width: 3px;
-    height: 100%;
     background: var(--warning);
-    @media (max-width: $breakpoint-sm) { width: 2px; }
   }
 }
 
 .day-header {
   @include flex-between;
   align-items: flex-start;
-  margin-bottom: $spacing-xs;
+  margin-bottom: 4px;
   width: 100%;
-  gap: $spacing-xs;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-sm) {
-    margin-bottom: 0;
-    align-items: center;
+  gap: 4px;
+
+  @media (max-width: $breakpoint-md) {
+    margin-bottom: 2px;
+    gap: 2px;
+  }
+}
+
+.day-header-info {
+  @include flex-column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.shift-name {
+  font-size: 0.65rem;
+  font-weight: $font-weight-medium;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.6rem;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 0.55rem;
   }
 }
 
 .day-icons {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 2px;
   flex-wrap: wrap;
   justify-content: flex-end;
-  flex: 1;
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px;
-  }
 }
 
 .day-number {
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: var(--text-primary);
-  @media (min-width: $breakpoint-lg) {
-    font-weight: $font-weight-semibold;
-  }
+  padding: 2px;
+  line-height: 1;
+
   @media (max-width: $breakpoint-md) {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
   }
+
   @media (max-width: $breakpoint-sm) {
-    font-size: 0.7rem;
-    font-weight: $font-weight-semibold;
+    font-size: 0.65rem;
   }
 }
 
 %icon-base {
   flex-shrink: 0;
-  font-size: $font-size-sm;
+  font-size: 0.7rem;
 
-  @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-lg;
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.65rem;
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -750,21 +721,21 @@
 }
 
 .holiday-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.8rem;
+  height: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
-  @media (min-width: $breakpoint-lg) {
-    width: 1.5rem;
-    height: 1.5rem;
+  @media (max-width: $breakpoint-md) {
+    width: 0.7rem;
+    height: 0.7rem;
   }
 
   @media (max-width: $breakpoint-sm) {
-    width: 0.7rem;
-    height: 0.7rem;
+    width: 0.6rem;
+    height: 0.6rem;
   }
 
   ::ng-deep svg {
@@ -792,27 +763,34 @@
 .day-content {
   margin-top: auto;
   @include flex-column;
-  gap: $spacing-xs;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
-    display: flex;
-  }
-  @media (max-width: $breakpoint-sm) {
-    display: none;
-  }
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 %badge-base {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
+  display: block;
+  padding: 2px 4px;
   color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
+  border-radius: 2px;
+  font-size: 0.65rem;
   font-weight: $font-weight-medium;
-  text-align: center;
+  text-align: left;
   width: 100%;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 0.55rem;
+    padding: 1px 2px;
   }
 }
 
@@ -839,70 +817,9 @@
   background: var(--secondary);
 }
 
-// Leyenda
+// Leyenda - oculta por defecto para maximizar espacio
 .calendar-legend {
-  display: flex;
-  gap: $spacing-lg;
-  justify-content: center;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--border-color);
-  flex-wrap: wrap;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
-    gap: $spacing-md;
-  }
-}
-
-.legend-item {
-  @include flex-center;
-  gap: $spacing-sm;
-  font-size: $font-size-sm;
-  color: var(--text-secondary);
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-xs;
-    gap: $spacing-xs;
-  }
-}
-
-.legend-color {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: $radius-sm;
-  border: 1px solid var(--border-color);
-
-  @media (max-width: $breakpoint-sm) {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  &.vacation-day {
-    background: rgba(var(--primary-rgb), 0.15);
-    border-color: var(--primary);
-  }
-
-  &.holiday-day {
-    background: rgba(var(--warning-rgb), 0.15);
-    border-color: var(--warning);
-  }
-
-  &.birthday-day {
-    background: rgba(var(--success-rgb), 0.15);
-    border-color: var(--success);
-  }
-
-  &.anniversary-day {
-    background: rgba(var(--secondary-rgb), 0.15);
-    border-color: var(--secondary);
-  }
-
-  &.today {
-    border: 2px solid var(--primary);
-    background: var(--bg-primary);
-  }
+  display: none;
 }
 
 // Loading responsive
@@ -921,3 +838,594 @@
   }
 }
 
+// Vista Semanal
+.calendar-weekly {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.weekly-container {
+  display: flex;
+  gap: $spacing-sm;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: $spacing-sm;
+  height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: $radius;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: $radius;
+
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+
+  @media (max-width: $breakpoint-md) {
+    gap: $spacing-xs;
+    padding: $spacing-xs;
+  }
+}
+
+.weekly-column {
+  @include flex-column;
+  gap: $spacing-xs;
+  min-width: 280px;
+  max-width: 280px;
+  flex-shrink: 0;
+  height: 100%;
+
+  @media (max-width: $breakpoint-md) {
+    min-width: 240px;
+    max-width: 240px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    min-width: 200px;
+    max-width: 200px;
+  }
+}
+
+.weekly-header-day {
+  @include flex-column;
+  @include flex-center;
+  padding: $spacing-sm;
+  background: var(--bg-primary);
+  border-radius: $radius;
+  border: 1px solid var(--border-color);
+  transition: all $transition-base;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-xs;
+  }
+
+  &.today {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+
+    .day-date {
+      background: var(--primary);
+      color: var(--text-primary);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: $breakpoint-md) {
+        width: 28px;
+        height: 28px;
+      }
+    }
+  }
+
+  .day-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    white-space: nowrap;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: 0.65rem;
+    }
+  }
+
+  .day-date {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-base;
+    }
+  }
+
+  .shift-name {
+    font-size: 0.65rem;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: 0.6rem;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 0.55rem;
+    }
+  }
+}
+
+.weekly-day {
+  @include flex-column;
+  flex: 1;
+  min-height: 0;
+  padding: $spacing-sm;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius;
+  cursor: pointer;
+  transition: all $transition-base;
+  overflow-y: auto;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-xs;
+  }
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--bg-hover);
+  }
+
+  &.today {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+  }
+
+  &.has-events {
+    background: var(--bg-primary);
+  }
+}
+
+.weekly-day-events {
+  @include flex-column;
+  gap: $spacing-xs;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.weekly-event {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border-left: 3px solid;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 4px $spacing-xs;
+    font-size: 0.65rem;
+  }
+
+  i {
+    font-size: $font-size-sm;
+    flex-shrink: 0;
+    margin-top: 1px;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-xs;
+    }
+  }
+
+  span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.3;
+  }
+
+  &.vacation-event {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    border-left-color: var(--primary);
+  }
+
+  &.holiday-event {
+    background: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning);
+    border-left-color: var(--warning);
+  }
+
+  &.birthday-event {
+    background: rgba(var(--success-rgb), 0.1);
+    color: var(--success);
+    border-left-color: var(--success);
+  }
+
+  &.anniversary-event {
+    background: rgba(var(--secondary-rgb), 0.1);
+    color: var(--secondary);
+    border-left-color: var(--secondary);
+  }
+
+  &.disability-event {
+    background: rgba(var(--danger-rgb), 0.1);
+    color: var(--danger);
+    border-left-color: var(--danger);
+  }
+}
+
+.weekly-no-events {
+  padding: $spacing-md;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: $font-size-xs;
+  font-style: italic;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-sm;
+    font-size: 0.65rem;
+  }
+}
+
+// Vista Diaria
+.calendar-daily {
+  width: 100%;
+}
+
+.daily-container {
+  @include flex-column;
+  gap: $spacing-lg;
+}
+
+.daily-header {
+  @include flex-between;
+  align-items: center;
+  padding: $spacing-xl;
+  background: var(--bg-secondary);
+  border-radius: $radius-md;
+  border: 2px solid var(--border-color);
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-lg;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-md;
+  }
+}
+
+.daily-date {
+  @include flex-center;
+  gap: $spacing-lg;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-md;
+  }
+}
+
+.daily-day-name {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  text-transform: capitalize;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-lg;
+  }
+}
+
+.daily-day-number {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: var(--primary);
+  line-height: 1;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: $font-size-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $font-size-2xl;
+  }
+}
+
+.daily-today-badge {
+  padding: $spacing-sm $spacing-lg;
+  background: var(--primary);
+  color: var(--text-primary);
+  border-radius: $radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-xs;
+  }
+}
+
+.daily-content {
+  @include flex-column;
+  gap: $spacing-md;
+}
+
+.daily-no-events {
+  @include flex-column;
+  @include flex-center;
+  padding: $spacing-4xl;
+  background: var(--bg-secondary);
+  border-radius: $radius-md;
+  border: 2px dashed var(--border-color);
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-3xl;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2xl;
+  }
+
+  i {
+    font-size: $font-size-4xl;
+    color: var(--text-secondary);
+    margin-bottom: $spacing-md;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-3xl;
+    }
+  }
+
+  p {
+    font-size: $font-size-lg;
+    color: var(--text-secondary);
+    margin: 0;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-base;
+    }
+  }
+}
+
+// Información del turno en vista diaria
+.daily-shift-info {
+  padding: $spacing-lg;
+  background: rgba(var(--primary-rgb), 0.05);
+  border-radius: $radius-md;
+  border: 2px solid rgba(var(--primary-rgb), 0.2);
+  border-left-width: 6px;
+  border-left-color: var(--primary);
+  margin-bottom: $spacing-md;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-md;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-sm;
+    border-left-width: 4px;
+  }
+
+  .daily-shift-header {
+    @include flex-center;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-sm;
+
+    i {
+      font-size: $font-size-xl;
+      color: var(--primary);
+      flex-shrink: 0;
+
+      @media (max-width: $breakpoint-md) {
+        font-size: $font-size-lg;
+      }
+    }
+
+    h3 {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      color: var(--primary);
+      margin: 0;
+
+      @media (max-width: $breakpoint-md) {
+        font-size: $font-size-base;
+      }
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: $font-size-sm;
+      }
+    }
+  }
+
+  .daily-shift-content {
+    padding-left: calc($font-size-xl + $spacing-sm);
+
+    @media (max-width: $breakpoint-sm) {
+      padding-left: calc($font-size-lg + $spacing-sm);
+    }
+
+    p {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin: 0;
+
+      @media (max-width: $breakpoint-md) {
+        font-size: $font-size-sm;
+      }
+    }
+  }
+}
+
+.daily-event {
+  padding: $spacing-xl;
+  background: var(--bg-primary);
+  border-radius: $radius-md;
+  border: 2px solid var(--border-color);
+  border-left-width: 6px;
+  transition: all $transition-base;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-lg;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-md;
+    border-left-width: 4px;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  &.vacation-event {
+    border-left-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+  }
+
+  &.holiday-event {
+    border-left-color: var(--warning);
+    background: rgba(var(--warning-rgb), 0.05);
+  }
+
+  &.birthday-event {
+    border-left-color: var(--success);
+    background: rgba(var(--success-rgb), 0.05);
+  }
+
+  &.anniversary-event {
+    border-left-color: var(--secondary);
+    background: rgba(var(--secondary-rgb), 0.05);
+  }
+
+  &.disability-event {
+    border-left-color: var(--danger);
+    background: rgba(var(--danger-rgb), 0.05);
+  }
+}
+
+.daily-event-header {
+  @include flex-center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-sm;
+  }
+
+  i {
+    font-size: $font-size-2xl;
+    flex-shrink: 0;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-xl;
+    }
+  }
+
+  h3 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-lg;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $font-size-base;
+    }
+  }
+
+  .vacation-event & {
+    i,
+    h3 {
+      color: var(--primary);
+    }
+  }
+
+  .holiday-event & {
+    i,
+    h3 {
+      color: var(--warning);
+    }
+  }
+
+  .birthday-event & {
+    i,
+    h3 {
+      color: var(--success);
+    }
+  }
+
+  .anniversary-event & {
+    i,
+    h3 {
+      color: var(--secondary);
+    }
+  }
+
+  .disability-event & {
+    i,
+    h3 {
+      color: var(--danger);
+    }
+  }
+}
+
+.daily-event-content {
+  padding-left: calc($font-size-2xl + $spacing-md);
+
+  @media (max-width: $breakpoint-sm) {
+    padding-left: calc($font-size-xl + $spacing-sm);
+  }
+
+  p {
+    font-size: $font-size-base;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+
+    @media (max-width: $breakpoint-md) {
+      font-size: $font-size-sm;
+    }
+  }
+}

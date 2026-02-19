@@ -19,10 +19,7 @@
   background: transparent;
   border-radius: 24px;
   overflow: hidden;
-  
-  // El contenedor usa las capas del efecto liquid glass
-  // definidas en styles.scss (.bg-glass, .glass-filter, etc.)
-  
+
   // El contenido se posiciona dentro de .glass-content
   .glass-content {
     display: flex;
@@ -142,7 +139,7 @@
 
   .bottom-nav-container {
     border-radius: 20px;
-    
+
     .glass-content {
       padding: $spacing-xs $spacing-md;
     }
