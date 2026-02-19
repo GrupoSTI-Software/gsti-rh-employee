@@ -139,3 +139,30 @@
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   }
 }
+
+// Safe area mixins
+@mixin safe-area-top($extra: 0px) {
+  padding-top: calc(env(safe-area-inset-top, 0px) + #{$extra});
+}
+
+@mixin safe-area-bottom($extra: 0px) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + #{$extra});
+}
+
+@mixin safe-area-left($extra: 0px) {
+  padding-left: calc(env(safe-area-inset-left, 0px) + #{$extra});
+}
+
+@mixin safe-area-right($extra: 0px) {
+  padding-right: calc(env(safe-area-inset-right, 0px) + #{$extra});
+}
+
+@mixin safe-area-horizontal($extra: 0px) {
+  @include safe-area-left($extra);
+  @include safe-area-right($extra);
+}
+
+@mixin safe-area-vertical($extra-top: 0px, $extra-bottom: 0px) {
+  @include safe-area-top($extra-top);
+  @include safe-area-bottom($extra-bottom);
+}

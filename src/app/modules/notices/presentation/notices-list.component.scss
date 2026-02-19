@@ -7,6 +7,8 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  @include safe-area-vertical($spacing-md, $spacing-md);
+  @include safe-area-horizontal($spacing-md);
 }
 
 .notices-wrapper {

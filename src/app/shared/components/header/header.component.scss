@@ -15,16 +15,20 @@
 }
 
 .bottom-nav-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 24px;
-  padding: $spacing-sm $spacing-lg;
-  gap: $spacing-xs;
   position: relative;
-  overflow: visible;
+  background: transparent;
+  border-radius: 24px;
+  overflow: hidden;
 
+  // El contenido se posiciona dentro de .glass-content
+  .glass-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm $spacing-lg;
+    gap: $spacing-xs;
+    width: 100%;
+  }
 }
 
 .nav-item {
@@ -134,8 +138,11 @@
   }
 
   .bottom-nav-container {
-    padding: $spacing-xs $spacing-md;
     border-radius: 20px;
+
+    .glass-content {
+      padding: $spacing-xs $spacing-md;
+    }
   }
 
   .nav-item {
@@ -160,7 +167,9 @@
 // Efecto de profundidad en dispositivos grandes
 @media (min-width: $breakpoint-md) {
   .bottom-nav-container {
-    padding: $spacing-md $spacing-xl;
+    .glass-content {
+      padding: $spacing-md $spacing-xl;
+    }
   }
 
   .nav-item {

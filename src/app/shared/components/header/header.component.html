@@ -1,26 +1,59 @@
 <nav class="bottom-nav">
   <div class="bottom-nav-container bg-glass">
-    @for (item of menuItems; track item.route) {
-      <a
-        [routerLink]="[item.route]"
-        routerLinkActive="active bg-glass"
-        [routerLinkActiveOptions]="{ exact: false }"
-        class="nav-item"
-        [attr.aria-label]="item.translationKey | translate"
+    <!-- Capas del efecto liquid glass -->
+    <div class="glass-filter"></div>
+    <div class="glass-overlay"></div>
+    <div class="glass-specular"></div>
+    
+    <!-- Contenido sobre las capas de vidrio -->
+    <div class="glass-content">
+      @for (item of menuItems; track item.route) {
+        <a
+          [routerLink]="[item.route]"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="nav-item"
+          [attr.aria-label]="item.translationKey | translate"
+        >
+          <i [class]="'pi ' + item.icon"></i>
+          @if (item.badgeCount && item.badgeCount() > 0) {
+            <span class="nav-badge">{{ item.badgeCount() }}</span>
+          }
+        </a>
+      }
+      <button
+        type="button"
+        class="nav-item nav-item-menu"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="'menu.menu' | translate"
       >
-        <i [class]="'pi ' + item.icon"></i>
-        @if (item.badgeCount && item.badgeCount() > 0) {
-          <span class="nav-badge">{{ item.badgeCount() }}</span>
-        }
-      </a>
-    }
-    <button
-      type="button"
-      class="nav-item nav-item-menu"
-      (click)="toggleSidebar()"
-      [attr.aria-label]="'menu.menu' | translate"
-    >
-      <i class="pi pi-bars"></i>
-    </button>
+        <i class="pi pi-bars"></i>
+      </button>
+    </div>
   </div>
 </nav>
+
+<!-- Filtro SVG para el efecto de distorsión de vidrio líquido -->
+<!-- Este filtro debe estar presente una sola vez en la aplicación -->
+<svg style="position: absolute; width: 0; height: 0; visibility: hidden;">
+  <defs>
+    <filter id="lg-dist">
+      <!-- Generador de turbulencia para crear el patrón de distorsión -->
+      <feTurbulence
+        type="turbulence"
+        baseFrequency="0.008 0.004"
+        numOctaves="2"
+        result="turbulence"
+        seed="2"
+      />
+      <!-- Mapa de desplazamiento para aplicar la distorsión -->
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="turbulence"
+        scale="15"
+        xChannelSelector="R"
+        yChannelSelector="B"
+      />
+    </filter>
+  </defs>
+</svg>

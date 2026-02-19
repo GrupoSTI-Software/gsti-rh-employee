@@ -1,0 +1,305 @@
+// Estilos compartidos del calendario de vacaciones (vistas semanal y diaria)
+// Movidos aquí para cumplir el presupuesto anyComponentStyle
+
+@use './variables' as *;
+@use './mixins' as *;
+
+.vacation-calendar-container {
+  .loading-overlay {
+    @media (max-width: $breakpoint-sm) {
+      padding: $spacing-2xl;
+      gap: $spacing-sm;
+      i { font-size: $font-size-xl; }
+      span { font-size: $font-size-sm; }
+    }
+  }
+
+  .calendar-weekly {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .weekly-container {
+    display: flex;
+    gap: $spacing-sm;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: $spacing-sm;
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--bg-secondary);
+    &::-webkit-scrollbar { height: 8px; }
+    &::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: $radius; }
+    &::-webkit-scrollbar-thumb { background: var(--primary); border-radius: $radius; &:hover { background: var(--primary-dark); } }
+    @media (max-width: $breakpoint-md) { gap: $spacing-xs; padding: $spacing-xs; }
+  }
+
+  .weekly-column {
+    @include flex-column;
+    gap: $spacing-xs;
+    min-width: 280px;
+    max-width: 280px;
+    flex-shrink: 0;
+    height: 100%;
+    @media (max-width: $breakpoint-md) { min-width: 240px; max-width: 240px; }
+    @media (max-width: $breakpoint-sm) { min-width: 200px; max-width: 200px; }
+  }
+
+  .weekly-header-day {
+    @include flex-column;
+    @include flex-center;
+    padding: $spacing-sm;
+    background: var(--bg-primary);
+    border-radius: $radius;
+    border: 1px solid var(--border-color);
+    transition: all $transition-base;
+    flex-shrink: 0;
+    @media (max-width: $breakpoint-md) { padding: $spacing-xs; }
+    &.today {
+      border-color: var(--primary);
+      background: rgba(var(--primary-rgb), 0.1);
+      .day-date {
+        background: var(--primary);
+        color: var(--text-primary);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        @media (max-width: $breakpoint-md) { width: 28px; height: 28px; }
+      }
+    }
+    .day-name {
+      font-size: $font-size-xs;
+      font-weight: $font-weight-medium;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      @media (max-width: $breakpoint-md) { font-size: 0.65rem; }
+    }
+    .day-date {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      color: var(--text-primary);
+      @media (max-width: $breakpoint-md) { font-size: $font-size-base; }
+    }
+    .shift-name {
+      font-size: 0.65rem;
+      font-weight: $font-weight-medium;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      @media (max-width: $breakpoint-md) { font-size: 0.6rem; }
+      @media (max-width: $breakpoint-sm) { font-size: 0.55rem; }
+    }
+  }
+
+  .weekly-day {
+    @include flex-column;
+    flex: 1;
+    min-height: 0;
+    padding: $spacing-sm;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: $radius;
+    cursor: pointer;
+    transition: all $transition-base;
+    overflow-y: auto;
+    @media (max-width: $breakpoint-md) { padding: $spacing-xs; }
+    &:hover { border-color: var(--primary); background: var(--bg-hover); }
+    &.today { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.05); }
+    &.has-events { background: var(--bg-primary); }
+  }
+
+  .weekly-day-events {
+    @include flex-column;
+    gap: $spacing-xs;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .weekly-event {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-xs;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $radius-sm;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    border-left: 3px solid;
+    flex-shrink: 0;
+    @media (max-width: $breakpoint-md) { padding: 4px $spacing-xs; font-size: 0.65rem; }
+    i {
+      font-size: $font-size-sm;
+      flex-shrink: 0;
+      margin-top: 1px;
+      @media (max-width: $breakpoint-md) { font-size: $font-size-xs; }
+    }
+    span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.3;
+    }
+    &.vacation-event { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); border-left-color: var(--primary); }
+    &.holiday-event { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); border-left-color: var(--warning); }
+    &.birthday-event { background: rgba(var(--success-rgb), 0.1); color: var(--success); border-left-color: var(--success); }
+    &.anniversary-event { background: rgba(var(--secondary-rgb), 0.1); color: var(--secondary); border-left-color: var(--secondary); }
+    &.disability-event { background: rgba(var(--danger-rgb), 0.1); color: var(--danger); border-left-color: var(--danger); }
+  }
+
+  .weekly-no-events {
+    padding: $spacing-md;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: $font-size-xs;
+    font-style: italic;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    @media (max-width: $breakpoint-md) { padding: $spacing-sm; font-size: 0.65rem; }
+  }
+
+  .calendar-daily { width: 100%; }
+
+  .daily-container { @include flex-column; gap: $spacing-lg; }
+
+  .daily-header {
+    @include flex-between;
+    align-items: center;
+    padding: $spacing-xl;
+    background: var(--bg-secondary);
+    border-radius: $radius-md;
+    border: 2px solid var(--border-color);
+    @media (max-width: $breakpoint-md) { padding: $spacing-lg; }
+    @media (max-width: $breakpoint-sm) { padding: $spacing-md; }
+  }
+
+  .daily-date {
+    @include flex-center;
+    gap: $spacing-lg;
+    @media (max-width: $breakpoint-sm) { gap: $spacing-md; }
+  }
+
+  .daily-day-name {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    text-transform: capitalize;
+    @media (max-width: $breakpoint-md) { font-size: $font-size-xl; }
+    @media (max-width: $breakpoint-sm) { font-size: $font-size-lg; }
+  }
+
+  .daily-day-number {
+    font-size: $font-size-4xl;
+    font-weight: $font-weight-bold;
+    color: var(--primary);
+    line-height: 1;
+    @media (max-width: $breakpoint-md) { font-size: $font-size-3xl; }
+    @media (max-width: $breakpoint-sm) { font-size: $font-size-2xl; }
+  }
+
+  .daily-today-badge {
+    padding: $spacing-sm $spacing-lg;
+    background: var(--primary);
+    color: var(--text-primary);
+    border-radius: $radius-full;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    @media (max-width: $breakpoint-sm) { padding: $spacing-xs $spacing-md; font-size: $font-size-xs; }
+  }
+
+  .daily-content { @include flex-column; gap: $spacing-md; }
+
+  .daily-no-events {
+    @include flex-column;
+    @include flex-center;
+    padding: $spacing-4xl;
+    background: var(--bg-secondary);
+    border-radius: $radius-md;
+    border: 2px dashed var(--border-color);
+    @media (max-width: $breakpoint-md) { padding: $spacing-3xl; }
+    @media (max-width: $breakpoint-sm) { padding: $spacing-2xl; }
+    i {
+      font-size: $font-size-4xl;
+      color: var(--text-secondary);
+      margin-bottom: $spacing-md;
+      @media (max-width: $breakpoint-md) { font-size: $font-size-3xl; }
+    }
+    p { font-size: $font-size-lg; color: var(--text-secondary); margin: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-base; } }
+  }
+
+  .daily-shift-info {
+    padding: $spacing-lg;
+    background: rgba(var(--primary-rgb), 0.05);
+    border-radius: $radius-md;
+    border: 2px solid rgba(var(--primary-rgb), 0.2);
+    border-left-width: 6px;
+    border-left-color: var(--primary);
+    margin-bottom: $spacing-md;
+    @media (max-width: $breakpoint-md) { padding: $spacing-md; }
+    @media (max-width: $breakpoint-sm) { padding: $spacing-sm; border-left-width: 4px; }
+    .daily-shift-header {
+      @include flex-center;
+      gap: $spacing-sm;
+      margin-bottom: $spacing-sm;
+      i { font-size: $font-size-xl; color: var(--primary); flex-shrink: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-lg; } }
+      h3 { font-size: $font-size-lg; font-weight: $font-weight-bold; color: var(--primary); margin: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-base; } @media (max-width: $breakpoint-sm) { font-size: $font-size-sm; } }
+    }
+    .daily-shift-content {
+      padding-left: calc($font-size-xl + $spacing-sm);
+      @media (max-width: $breakpoint-sm) { padding-left: calc($font-size-lg + $spacing-sm); }
+      p { font-size: $font-size-base; font-weight: $font-weight-semibold; color: var(--text-primary); line-height: 1.6; margin: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-sm; } }
+    }
+  }
+
+  .daily-event {
+    padding: $spacing-xl;
+    background: var(--bg-primary);
+    border-radius: $radius-md;
+    border: 2px solid var(--border-color);
+    border-left-width: 6px;
+    transition: all $transition-base;
+    @media (max-width: $breakpoint-md) { padding: $spacing-lg; }
+    @media (max-width: $breakpoint-sm) { padding: $spacing-md; border-left-width: 4px; }
+    &:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    &.vacation-event { border-left-color: var(--primary); background: rgba(var(--primary-rgb), 0.05); }
+    &.holiday-event { border-left-color: var(--warning); background: rgba(var(--warning-rgb), 0.05); }
+    &.birthday-event { border-left-color: var(--success); background: rgba(var(--success-rgb), 0.05); }
+    &.anniversary-event { border-left-color: var(--secondary); background: rgba(var(--secondary-rgb), 0.05); }
+    &.disability-event { border-left-color: var(--danger); background: rgba(var(--danger-rgb), 0.05); }
+  }
+
+  .daily-event-header {
+    @include flex-center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-md;
+    @media (max-width: $breakpoint-sm) { gap: $spacing-sm; }
+    i { font-size: $font-size-2xl; flex-shrink: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-xl; } }
+    h3 { font-size: $font-size-xl; font-weight: $font-weight-bold; color: var(--text-primary); margin: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-lg; } @media (max-width: $breakpoint-sm) { font-size: $font-size-base; } }
+    .vacation-event & { i, h3 { color: var(--primary); } }
+    .holiday-event & { i, h3 { color: var(--warning); } }
+    .birthday-event & { i, h3 { color: var(--success); } }
+    .anniversary-event & { i, h3 { color: var(--secondary); } }
+    .disability-event & { i, h3 { color: var(--danger); } }
+  }
+
+  .daily-event-content {
+    padding-left: calc($font-size-2xl + $spacing-md);
+    @media (max-width: $breakpoint-sm) { padding-left: calc($font-size-xl + $spacing-sm); }
+    p { font-size: $font-size-base; color: var(--text-secondary); line-height: 1.6; margin: 0; @media (max-width: $breakpoint-md) { font-size: $font-size-sm; } }
+  }
+}
