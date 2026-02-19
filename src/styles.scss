@@ -7,6 +7,15 @@
 /* Estilos globales para botones */
 @use './styles/_buttons.scss' as *;
 
+/* Estilos compartidos del calendario de vacaciones (vistas semanal y diaria) */
+@use './styles/_vacation-calendar.scss' as *;
+
+/* Estilos compartidos del módulo check-in (drawer, calendario, excepciones) */
+@use './styles/_checkin.scss' as *;
+
+/* Estilos compartidos del drawer de solicitudes de excepción */
+@use './styles/_exception-request-drawer.scss' as *;
+
 /* Reset CSS básico */
 * {
   margin: 0;
@@ -60,10 +69,11 @@
   --primary-rgb: 9, 48, 87;
   /* RGB del secondary para usar en rgba */
   --secondary-rgb: 36, 111, 215;
-  /* RGB de success, warning y danger para usar en rgba */
+  /* RGB de success, warning, danger e info para usar en rgba */
   --success-rgb: 51, 212, 173;
   --warning-rgb: 255, 153, 58;
   --danger-rgb: 205, 54, 12;
+  --info-rgb: 60, 180, 229;
 
   /* Variables CSS de PrimeNG Select - Sobrescribir color verde por azul primario */
 }
@@ -111,10 +121,11 @@
   --primary-rgb: 108, 99, 255;
   /* RGB del secondary para usar en rgba */
   --secondary-rgb: 58, 191, 248;
-  /* RGB de success, warning y danger para usar en rgba */
+  /* RGB de success, warning, danger e info para usar en rgba */
   --success-rgb: 16, 185, 129;
   --warning-rgb: 251, 191, 36;
   --danger-rgb: 239, 68, 68;
+  --info-rgb: 58, 191, 248;
 
   /* Variables CSS de PrimeNG Select - Sobrescribir color verde por azul primario */
   --p-select-focus-border-color: var(--primary);

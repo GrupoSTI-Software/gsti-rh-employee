@@ -71,6 +71,7 @@ interface IFaceDetectionWithLandmarks {
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
+  host: { class: 'checkin-page' },
   animations: [
     trigger('fadeInUp', [
       transition(':enter', [

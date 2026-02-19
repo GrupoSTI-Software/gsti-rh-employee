@@ -38,6 +38,7 @@ import { LoggerService } from '@core/services/logger.service';
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './exception-request-drawer.component.html',
   styleUrl: './exception-request-drawer.component.scss',
+  host: { class: 'exception-request-drawer-host' },
   changeDetection: ChangeDetectionStrategy.OnPush,
   animations: [
     trigger('slideInOut', [
