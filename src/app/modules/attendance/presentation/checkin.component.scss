@@ -261,6 +261,10 @@
   @include success-alert;
   margin-top: $spacing-lg;
 }
+.message-attendance-lock {
+  @include error-alert;
+  margin-top: $spacing-lg;
+}
 .loading-overlay {
   position: absolute;
   inset: 0;

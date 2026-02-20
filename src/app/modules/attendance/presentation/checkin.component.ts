@@ -128,6 +128,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly loading = signal(false);
   readonly starting = signal(false);
   readonly error = signal<string | null>(null);
+  readonly messageAttendanceLock = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly currentDate = signal<Date>(new Date());
   readonly selectedDate = signal<Date>(new Date());
@@ -413,6 +414,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   async handleRegisterCheckIn(): Promise<void> {
     this.loading.set(true);
+    this.messageAttendanceLock.set(null);
     const verificationAttendanceLock = await this.getVerificationAttendanceLockUseCase.execute();
     const isFirstCheckIn = this.attendance()?.checkInTime === null;
     this.loading.set(false);
@@ -422,14 +424,13 @@ export class CheckinComponent implements OnInit, OnDestroy {
         verificationAttendanceLock?.data?.type === 'absences' &&
         isFirstCheckIn
       ) {
-        this.error.set(verificationAttendanceLock?.message);
+        this.messageAttendanceLock.set(verificationAttendanceLock?.message);
         return;
       } else if (
         verificationAttendanceLock?.data?.locked &&
         verificationAttendanceLock?.data?.type === 'tardiness'
       ) {
-        this.error.set(verificationAttendanceLock?.message);
-        return;
+        this.messageAttendanceLock.set(verificationAttendanceLock?.message);
       }
     } else {
       this.error.set(
@@ -461,7 +462,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
       return;
     }
     const employeeBiometricFaceIdPhotoUrl = employeeBiometricFaceId.employeeBiometricFaceIdPhotoUrl;
-
     // Guardar la foto en base64 de forma segura
     if (employeeBiometricFaceIdPhotoUrl) {
       try {
@@ -1718,7 +1718,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Guardar en almacenamiento seguro
       this.secureStorage.setEncryptedItem(this.EMPLOYEE_BIOMETRIC_FACE_ID_PHOTO_KEY, base64Image);
     } catch (error) {
-      this.logger.error('Error al convertir y guardar la imagen en base64:', error);
+      this.logger.error('Error al convertir y guardar la imagen en base64: o', error);
       throw error;
     }
   }

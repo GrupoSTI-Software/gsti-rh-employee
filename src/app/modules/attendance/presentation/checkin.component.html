@@ -201,6 +201,13 @@
       </div>
     }
 
+    <!-- Mensaje de bloqueo de asistencia -->
+    @if (messageAttendanceLock()) {
+      <div class="message-attendance-lock" [@fadeInUp]>
+        {{ messageAttendanceLock() }}
+      </div>
+    }
+
     <!-- Loading -->
     @if (loading()) {
       <div class="loading-overlay">
