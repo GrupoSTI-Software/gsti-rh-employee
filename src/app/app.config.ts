@@ -17,6 +17,8 @@ import { HttpAttendanceAdapter } from '@modules/attendance/infrastructure/http-a
 import { ATTENDANCE_PORT } from '@modules/attendance/domain/attendance.token';
 import { HttpVacationAdapter } from '@modules/vacation-calendar/infrastructure/http-vacation.adapter';
 import { VACATION_PORT } from '@modules/vacation-calendar/domain/vacation.token';
+import { VACATIONS_EMPLOYEE_PORT } from '@modules/vacations/domain/vacations-employee.token';
+import { HttpVacationsEmployeeAdapter } from '@modules/vacations/infrastructure/http-vacations-employee.adapter';
 import { HttpNoticesAdapter } from '@modules/notices/infrastructure/http-notices.adapter';
 import { NOTICES_PORT } from '@modules/notices/domain/notices.token';
 import { HttpCalendarAdapter } from '@modules/vacation-calendar/infrastructure/http-calendar.adapter';
@@ -94,6 +96,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: VACATION_PORT,
       useClass: HttpVacationAdapter,
+    },
+    {
+      provide: VACATIONS_EMPLOYEE_PORT,
+      useClass: HttpVacationsEmployeeAdapter,
     },
     {
       provide: NOTICES_PORT,
