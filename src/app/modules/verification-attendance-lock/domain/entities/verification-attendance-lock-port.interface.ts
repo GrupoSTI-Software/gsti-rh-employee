@@ -7,7 +7,8 @@ import { IVerificationAttendanceLockApiResponse } from './verification-attandanc
 export interface IVerificationAttendanceLockPort {
   /**
    * Verifica el bloqueo de asistencia por faltas o retardos
+   * @param type - Tipo de verificación: 'absences' o 'tardiness'
    * @returns Promise con la respuesta de la verificación de bloqueo de asistencia
    */
-  verifyAttendanceLock(): Promise<IVerificationAttendanceLockApiResponse | null>;
+  verifyAttendanceLock(type: string): Promise<IVerificationAttendanceLockApiResponse | null>;
 }

@@ -36,6 +36,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
+import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -144,6 +145,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getVerificationAttendanceLockUseCase = inject(
     GetVerificationAttendanceLockUseCase,
   );
+  private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
 
   // Datepicker
   showDatePicker = false;
@@ -399,7 +401,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
         dateEnd,
         user.employeeId,
       );
-
       this.attendance.set(attendance);
     } catch (err) {
       this.error.set('Error al cargar la asistencia');
@@ -410,34 +411,92 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Verifica si la hora actual excede el tiempo de tolerancia después
+   * de la hora de inicio del turno, considerándose un retardo.
+   *
+   * @returns true si el empleado ha excedido la tolerancia de retardo
+   */
+  private async verifyIsTardiness(): Promise<boolean> {
+    const settings = await this.getSystemSettingsUseCase.execute();
+    const tolerances = settings?.systemSettingTolerances;
+
+    if (!tolerances || tolerances.length === 0) {
+      return false;
+    }
+
+    const tolerance = tolerances.find((t) => t.toleranceName === 'TardinessTolerance');
+    if (!tolerance) {
+      return false;
+    }
+
+    const shiftTimeStartRaw = this.attendance()?.shiftTimeStart;
+    if (!shiftTimeStartRaw) {
+      return false;
+    }
+
+    // shiftTimeStart viene en formato "HH:mm", se construye un Date con la fecha de hoy
+    const [hours, minutes] = shiftTimeStartRaw.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) {
+      return false;
+    }
+
+    const shiftStart = new Date();
+    shiftStart.setHours(hours, minutes, 0, 0);
+
+    // Límite máximo permitido = hora de inicio del turno + minutos de tolerancia
+    const deadlineMs = shiftStart.getTime() + tolerance.toleranceMinutes * 60 * 1000;
+    const now = Date.now();
+    if (now > deadlineMs) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Maneja el registro de check-in con cámara
    */
   async handleRegisterCheckIn(): Promise<void> {
     this.loading.set(true);
     this.messageAttendanceLock.set(null);
-    const verificationAttendanceLock = await this.getVerificationAttendanceLockUseCase.execute();
+
     const isFirstCheckIn = this.attendance()?.checkInTime === null;
-    this.loading.set(false);
-    if (verificationAttendanceLock?.status === 200) {
-      if (
-        verificationAttendanceLock?.data?.locked &&
-        verificationAttendanceLock?.data?.type === 'absences' &&
-        isFirstCheckIn
-      ) {
-        this.messageAttendanceLock.set(verificationAttendanceLock?.message);
+
+    if (isFirstCheckIn) {
+      const verificationAttendanceLock =
+        await this.getVerificationAttendanceLockUseCase.execute('absences');
+      if (verificationAttendanceLock?.status === 200) {
+        if (verificationAttendanceLock?.data?.locked) {
+          this.messageAttendanceLock.set(verificationAttendanceLock?.message);
+          this.loading.set(false);
+          return;
+        }
+      } else {
+        this.error.set(
+          verificationAttendanceLock?.message ?? 'Error al verificar el bloqueo de asistencia',
+        );
+        this.loading.set(false);
         return;
-      } else if (
-        verificationAttendanceLock?.data?.locked &&
-        verificationAttendanceLock?.data?.type === 'tardiness'
-      ) {
-        this.messageAttendanceLock.set(verificationAttendanceLock?.message);
       }
-    } else {
-      this.error.set(
-        verificationAttendanceLock?.message ?? 'Error al verificar el bloqueo de asistencia',
-      );
-      return;
+      const isTardiness = await this.verifyIsTardiness();
+      if (isTardiness) {
+        const verificationAttendanceLock =
+          await this.getVerificationAttendanceLockUseCase.execute('tardiness');
+        if (verificationAttendanceLock?.status === 200) {
+          if (verificationAttendanceLock?.data?.locked) {
+            this.messageAttendanceLock.set(verificationAttendanceLock?.message);
+            this.loading.set(false);
+          }
+        } else {
+          this.error.set(
+            verificationAttendanceLock?.message ?? 'Error al verificar el bloqueo de asistencia',
+          );
+          this.loading.set(false);
+          return;
+        }
+      }
     }
+    this.loading.set(false);
     this.success.set(null);
     this.error.set(null);
     if (!this.canCheckIn()) return;

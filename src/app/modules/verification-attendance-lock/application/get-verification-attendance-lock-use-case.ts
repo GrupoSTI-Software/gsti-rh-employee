@@ -20,11 +20,12 @@ export class GetVerificationAttendanceLockUseCase {
 
   /**
    * Ejecuta el caso de uso para verificar el bloqueo de asistencia
+   * @param type - Tipo de verificación: 'absences' o 'tardiness'
    * @returns Promise con la respuesta de la verificación de bloqueo de asistencia o null si hay error
    */
-  async execute(): Promise<IVerificationAttendanceLockApiResponse | null> {
+  async execute(type: string): Promise<IVerificationAttendanceLockApiResponse | null> {
     try {
-      return await this.verificationAttendanceLockPort.verifyAttendanceLock();
+      return await this.verificationAttendanceLockPort.verifyAttendanceLock(type);
     } catch (error) {
       this.logger.error('Error al verificar el bloqueo de asistencia:', error);
       return null;
