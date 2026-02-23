@@ -77,11 +77,42 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "ngrok": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.ngrok.ts"
+                }
+              ]
+            },
+            "localtunnel": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.localtunnel.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
+          "options": {
+            "host": "localhost",
+            "port": 4200,
+            "allowedHosts": [
+              "unmollified-kayla-refractively.ngrok-free.dev",
+              "*.loca.lt",
+              "*.trycloudflare.com"
+            ]
+          },
           "builder": "@angular/build:dev-server",
           "options": {
             "host": "0.0.0.0"
@@ -95,6 +126,12 @@
             },
             "development": {
               "buildTarget": "gsti-pwa-empleado:build:development"
+            },
+            "ngrok": {
+              "buildTarget": "gsti-pwa-empleado:build:ngrok"
+            },
+            "localtunnel": {
+              "buildTarget": "gsti-pwa-empleado:build:localtunnel"
             }
           },
           "defaultConfiguration": "development"
