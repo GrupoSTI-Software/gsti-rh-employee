@@ -3,6 +3,7 @@
     "title": "Menu",
     "attendance": "Attendance",
     "vacations": "Vacations",
+    "notices": "Notices",
     "calendar": "Calendar",
     "profile": "Profile",
     "settings": "Settings",
@@ -10,7 +11,8 @@
     "apiConfig": "API Configuration",
     "menu": "Menu",
     "close": "Close",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "cancel": "Cancel"
   },
   "auth": {
     "loginTitle": "Sign In",
@@ -151,7 +153,9 @@
     "previousDay": "Previous day",
     "nextDay": "Next day",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "more": "More",
+    "done": "Done"
   },
   "profile": {
     "title": "My Profile",
@@ -274,8 +278,10 @@
     "holidays": "Holidays",
     "birthday": "Birthday",
     "birthdayMessage": "Happy birthday!",
+    "birthdayDescription": "Today is your birthday. Have a great day!",
     "anniversary": "Anniversary",
     "anniversaryMessage": "Happy company anniversary",
+    "anniversaryDescription": "Today you celebrate another anniversary with the company. Congratulations!",
     "dayDetail": "Day Detail",
     "date": "Date",
     "shift": "Shift",
@@ -284,7 +290,18 @@
     "noAttendanceRecords": "No attendance records",
     "loadingAttendance": "Loading attendance information...",
     "noInformation": "No information available for this day",
-    "disability": "Disability"
+    "disability": "Disability",
+    "disabilityDescription": "This day is registered as work disability",
+    "monthly": "Monthly",
+    "weekly": "Weekly",
+    "daily": "Daily",
+    "monthlyView": "Monthly view",
+    "weeklyView": "Weekly view",
+    "dailyView": "Daily view",
+    "goToToday": "Go to today",
+    "noEvents": "No events",
+    "noEventsForDay": "No events for this day",
+    "vacationDayDescription": "This day is marked as vacation"
   },
   "vacations": {
     "title": "General Calendar",
@@ -320,6 +337,21 @@
       "friday": "Fri",
       "saturday": "Sat"
     }
+  },
+  "notices": {
+    "title": "Notices",
+    "subtitle": "View important notices and communications",
+    "searchPlaceholder": "Search notices...",
+    "loading": "Loading notices...",
+    "empty": "No notices available",
+    "unread": "Unread",
+    "previous": "Previous",
+    "next": "Next",
+    "back": "Back",
+    "retry": "Retry",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "filterRead": "Read"
   },
   "vacationDetail": {
     "title": "Vacation Detail",
@@ -358,5 +390,54 @@
     "submit": "Submit",
     "confirmTitle": "Confirm signature submission",
     "confirmMessage": "Are you sure you want to submit this signature? This action cannot be undone."
+  },
+  "exceptionRequest": {
+    "title": "Exception Request",
+    "tabRequest": "New Request",
+    "tabPending": "Pending",
+    "exceptionType": "Exception Type",
+    "description": "Description",
+    "checkInTime": "Check In Time",
+    "checkOutTime": "Check Out Time",
+    "daysToApply": "Days to Apply",
+    "hoursToApply": "Hours to Apply",
+    "selectedDates": "Selected Dates",
+    "selectDays": "Select Days",
+    "selectDaysOnlyMonthly": "Only available in monthly view",
+    "addDate": "Add Date",
+    "removeDate": "Remove Date",
+    "noDatesSelected": "No dates selected. Add at least one date.",
+    "selectExceptionType": "Select an exception type",
+    "loadingTypes": "Loading exception types...",
+    "loadingRequests": "Loading requests...",
+    "noPendingRequests": "No pending requests",
+    "createdAt": "Created on",
+    "submit": "Submit Request",
+    "success": "Request submitted successfully",
+    "error": "Error submitting request",
+    "status": {
+      "requested": "Requested",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "refused": "Refused"
+    },
+    "dateHasPendingRequest": "This date already has a pending request",
+    "dateHasRequest": "This date already has a registered request",
+    "someDatesHaveRequests": "Some dates already have registered requests and will not be sent",
+    "dayHasException": "This day already has a registered exception and cannot be selected",
+    "warning": "Warning"
+  },
+  "weekCalendar": {
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "goToToday": "Go to today",
+    "today": "Today",
+    "sunday": "Su",
+    "monday": "Mo",
+    "tuesday": "Tu",
+    "wednesday": "We",
+    "thursday": "Th",
+    "friday": "Fr",
+    "saturday": "Sa"
   }
 }

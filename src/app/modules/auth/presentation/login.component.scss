@@ -11,11 +11,13 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  @include safe-area-vertical(0px, 0px);
+  @include safe-area-horizontal($spacing-md);
 }
 
 .login-header {
   position: fixed;
-  top: $padding-xl;
+  top: calc(env(safe-area-inset-top, 0px) + #{$padding-xl});
   margin-left: $padding-lg;
 
   .login-logo {
@@ -28,6 +30,7 @@
 }
 
 .login-card {
+  @include safe-area-bottom($padding);
   position: relative;
   width: 100%;
   padding: $padding-lg;

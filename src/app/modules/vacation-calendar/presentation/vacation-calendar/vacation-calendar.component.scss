@@ -3,251 +3,270 @@
 
 .vacation-calendar-container {
   width: 100%;
+  height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: $spacing-lg;
+  flex-direction: column;
   box-sizing: border-box;
-  overflow-x: hidden; // Evitar scroll horizontal en el contenedor principal
-
-  // En pantallas grandes, reducir padding para maximizar el espacio del calendario
-  @media (min-width: $breakpoint-lg) {
-    padding: $spacing-lg $spacing-xl; // Más padding horizontal, menos vertical
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-md;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
-  }
+  overflow: hidden;
+  @include safe-area-vertical($spacing-lg);
+  @include safe-area-horizontal($spacing-lg);
 }
 
 .vacation-calendar-wrapper {
   width: 100%;
-  max-width: $container-max-width-xl;
-  margin: 0 auto;
-  @include flex-column;
-  gap: $spacing-xl;
-  box-sizing: border-box;
-  min-width: 0; // Permite que se ajuste al contenedor padre
-
-  // En pantallas grandes (más de 1024px), ocupar todo el espacio disponible
-  @media (min-width: $breakpoint-lg) {
-    max-width: 100%; // Eliminar limitación de ancho máximo
-    width: 100%;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: $spacing-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: $spacing-md;
-  }
-}
-
-.vacation-calendar-title-section {
-  margin-bottom: $spacing-lg;
-  margin-top: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    margin-bottom: $spacing-md;
-  }
-
-  .page-title {
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin: 0 0 $spacing-xs 0;
-    line-height: 1.2;
-
-    @media (max-width: $breakpoint-md) {
-      font-size: $font-size-2xl;
-    }
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-xl;
-    }
-  }
-
-  .page-subtitle {
-    font-size: $font-size-base;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.3;
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-sm;
-    }
-  }
-}
-
-// Filtros
-.calendar-filters {
+  height: 100%;
   display: flex;
-  gap: $spacing-lg;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--border-color);
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $spacing-md;
-    padding: $spacing-md;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
-    gap: $spacing-sm;
-  }
-}
-
-.filter-group {
-  @include flex-center;
+  flex-direction: column;
   gap: $spacing-sm;
+  overflow: hidden;
 
   @media (max-width: $breakpoint-md) {
-    width: 100%;
-    justify-content: space-between;
-    flex-direction: row;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column;
-    align-items: stretch;
     gap: $spacing-xs;
   }
 }
 
-.filter-label {
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  color: var(--text-primary);
-  white-space: nowrap;
+// Header compacto
+.calendar-header-compact {
+  @include flex-between;
+  align-items: center;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  gap: $spacing-md;
+  flex-shrink: 0;
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-sm;
+  @media (max-width: $breakpoint-md) {
+    flex-direction: column;
+    gap: $spacing-sm;
+    padding: $spacing-xs $spacing-sm;
   }
 }
 
-.filter-select {
-  padding: $spacing-sm $spacing-md;
+.header-left {
+  @include flex-center;
+  gap: $spacing-sm;
+
+  @media (max-width: $breakpoint-md) {
+    flex: 1;
+  }
+}
+
+.header-center {
+  @include flex-center;
+
+  @media (max-width: $breakpoint-md) {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.header-right {
+  @include flex-center;
+  gap: $spacing-xs;
+
+  @media (max-width: $breakpoint-md) {
+    justify-content: flex-end;
+  }
+}
+
+.view-mode-buttons-compact {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 2px;
+  border-radius: $radius;
+  border: 1px solid var(--border-color);
+}
+
+.view-mode-button-compact {
+  @include button-base;
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+
+  @media (max-width: $breakpoint-md) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  i {
+    font-size: $font-size-sm;
+  }
+
+  &:hover:not(.active) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: var(--primary);
+    color: var(--text-primary);
+
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+}
+
+.today-button {
+  @include button-base;
+  padding: $spacing-xs $spacing-md;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  border-radius: $radius;
+
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+}
+
+.filter-select-compact {
+  padding: $spacing-xs $spacing-sm;
   border: 1px solid var(--border-color);
   border-radius: $radius;
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   cursor: pointer;
-  transition: border-color $transition-base, background-color $transition-base;
-  min-width: 120px;
+  transition: border-color $transition-base;
+  min-width: 100px;
 
   @media (max-width: $breakpoint-md) {
-    flex: 1;
-    min-width: auto;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
-    padding: $spacing-sm;
-    font-size: $font-size-sm;
+    min-width: 80px;
+    font-size: $font-size-xs;
   }
 
   &:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
   }
 
   &:hover {
     border-color: var(--border-hover);
-    background: var(--bg-hover);
   }
 }
 
-// Navegación del calendario
-.calendar-navigation {
-  @include flex-between;
-  align-items: center;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
+.icon-button {
+  @include button-base;
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   border: 1px solid var(--border-color);
-  gap: $spacing-sm;
+  border-radius: $radius;
+  transition: all $transition-base;
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-sm;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-xs;
-    gap: $spacing-xs;
+  i {
+    font-size: $font-size-sm;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  &.active {
+    background: var(--primary);
+    color: var(--text-primary);
+    border-color: var(--primary);
+
+    &:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+  }
+
+  &.primary {
+    background: var(--primary);
+    color: var(--text-primary);
+    border-color: var(--primary);
+
+    &:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+  }
+
+  &.danger {
+    background: var(--danger);
+    color: var(--text-primary);
+    border-color: var(--danger);
+
+    &:hover {
+      background: var(--danger-dark);
+      border-color: var(--danger-dark);
+    }
   }
 }
 
 .calendar-title {
-  font-size: $font-size-xl;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: var(--text-primary);
   margin: 0;
   text-transform: capitalize;
-  text-align: center;
-  flex: 1;
+  white-space: nowrap;
 
   @media (max-width: $breakpoint-md) {
-    font-size: $font-size-lg;
-  }
-
-  @media (max-width: $breakpoint-sm) {
     font-size: $font-size-base;
-    padding: 0 $spacing-xs;
   }
 }
 
 .nav-button {
   @include button-base;
   @include flex-center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
-  background: var(--bg-primary);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: none;
+  border-radius: $radius;
   transition: all $transition-base;
   flex-shrink: 0;
 
   @media (max-width: $breakpoint-md) {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    width: 2rem;
-    height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
   }
 
   i {
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
 
     @media (max-width: $breakpoint-md) {
-      font-size: $font-size-base;
-    }
-
-    @media (max-width: $breakpoint-sm) {
       font-size: $font-size-sm;
     }
   }
 
   &:hover:not(:disabled) {
     background: var(--bg-hover);
-    border-color: var(--primary);
     color: var(--primary);
-    transform: scale(1.1);
   }
 
   &:active:not(:disabled) {
@@ -278,78 +297,64 @@
   }
 }
 
-// Contenedor tipo card para el calendario
+// Contenedor del calendario - ocupa todo el espacio disponible
 .calendar-card {
   width: 100%;
-  @include card;
-  position: relative;
-  overflow-x: hidden; // Cambiar a hidden para evitar scroll horizontal
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: $radius-md;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
   box-sizing: border-box;
+  padding: $spacing-md;
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-xl;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-md;
+    padding: $spacing-sm;
   }
 }
 
 // Calendario
 .calendar-wrapper {
   width: 100%;
-  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
-  overflow: hidden; // Evitar overflow
 }
 
 .calendar-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-xs;
-  margin-bottom: $spacing-sm;
+  gap: 1px;
+  margin-bottom: 1px;
   width: 100%;
   box-sizing: border-box;
-
-  @media (min-width: $breakpoint-lg) {
-    gap: 2px;
-    margin-bottom: $spacing-xs;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: 2px;
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px;
-  }
+  flex-shrink: 0;
 }
 
 .calendar-header-day {
-  padding: $spacing-sm;
+  padding: $spacing-xs;
   text-align: center;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  font-size: $font-size-xs;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   box-sizing: border-box;
-  min-width: 0; // Permite que el texto se ajuste
-
-  // Pantallas grandes - más compacto
-  @media (min-width: $breakpoint-lg) {
-    padding: $spacing-xs;
-    font-size: $font-size-xs;
-  }
+  min-width: 0;
+  background: var(--bg-secondary);
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-xs;
-    font-size: $font-size-xs;
+    padding: 4px;
+    font-size: 0.65rem;
   }
 
   @media (max-width: $breakpoint-sm) {
-    padding: 4px 2px;
-    font-size: 0.65rem;
+    padding: 2px;
+    font-size: 0.6rem;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -358,76 +363,56 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: $spacing-xs;
+  grid-auto-rows: 1fr;
+  gap: 1px;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-
-  // Pantallas grandes - reducir gap
-  @media (min-width: $breakpoint-lg) {
-    gap: 2px;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    gap: 2px; // Usar el mismo gap que el header
-  }
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px; // Usar el mismo gap que el header
-  }
+  flex: 1;
+  overflow: auto;
+  background: var(--border-color);
 }
 
 .calendar-day {
-  min-height: 100px;
-  padding: $spacing-sm;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius;
+  min-height: 0;
+  padding: $spacing-xs;
+  background: var(--bg-primary);
+  border: none;
   @include flex-column;
-  transition: all $transition-base;
+  transition: background-color $transition-base;
   cursor: default;
-  aspect-ratio: 1;
   box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
   position: relative;
   user-select: none;
 
-  @media (min-width: $breakpoint-lg) {
-    min-height: 30px;
-    padding: $spacing-sm $spacing-md;
-    border-radius: $radius-sm;
-  }
   @media (max-width: $breakpoint-md) {
-    min-height: 30px;
-    padding: $spacing-xs;
-    border-radius: $radius-sm;
+    padding: 4px;
   }
+
   @media (max-width: $breakpoint-sm) {
-    min-height: 50px;
-    padding: 3px 2px;
-    border-radius: 2px;
+    padding: 2px;
   }
 
   &.current-month {
     background: var(--bg-primary);
-    border-color: var(--border-color);
 
     &:hover {
       background: var(--bg-hover);
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
     }
   }
 
   &:not(.current-month) {
-    opacity: 0.4;
+    opacity: 0.3;
     background: var(--bg-secondary);
   }
 
   %event-day {
     position: relative;
-    &.current-month:hover { background: rgba(var(--primary-rgb), 0.25); }
+    &.current-month:hover {
+      background: rgba(var(--primary-rgb), 0.25);
+    }
   }
   &.vacation-day {
     @extend %event-day;
@@ -435,7 +420,9 @@
     border-color: var(--primary);
     &.current-month {
       background: rgba(var(--primary-rgb), 0.15);
-      &:hover { border-color: var(--primary-dark); }
+      &:hover {
+        border-color: var(--primary-dark);
+      }
     }
   }
   &.holiday-day {
@@ -444,7 +431,9 @@
     border-color: var(--warning);
     &.current-month {
       background: rgba(var(--warning-rgb), 0.15);
-      &:hover { background: rgba(var(--warning-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--warning-rgb), 0.25);
+      }
     }
   }
   &.birthday-day {
@@ -453,7 +442,9 @@
     border-color: var(--success);
     &.current-month {
       background: rgba(var(--success-rgb), 0.15);
-      &:hover { background: rgba(var(--success-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--success-rgb), 0.25);
+      }
     }
   }
   &.anniversary-day {
@@ -462,14 +453,36 @@
     border-color: var(--secondary);
     &.current-month {
       background: rgba(var(--secondary-rgb), 0.15);
-      &:hover { background: rgba(var(--secondary-rgb), 0.25); }
+      &:hover {
+        background: rgba(var(--secondary-rgb), 0.25);
+      }
     }
   }
 
   &.today {
-    border: 2px solid var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+    background: rgba(var(--primary-rgb), 0.1);
     font-weight: $font-weight-bold;
+
+    .day-number {
+      background: var(--primary);
+      color: var(--text-primary);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: $breakpoint-md) {
+        width: 20px;
+        height: 20px;
+      }
+
+      @media (max-width: $breakpoint-sm) {
+        width: 18px;
+        height: 18px;
+      }
+    }
   }
 
   &.has-multiple-events {
@@ -495,17 +508,77 @@
     cursor: pointer;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-md);
+      background: var(--bg-hover);
     }
 
     &:active {
-      transform: translateY(0);
+      background: var(--bg-secondary);
     }
 
     &:focus {
       outline: 2px solid var(--primary);
-      outline-offset: 2px;
+      outline-offset: -2px;
+    }
+  }
+
+  &.selection-mode {
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+      background: rgba(var(--primary-rgb), 0.1);
+      border-color: var(--primary);
+    }
+
+    &.selected {
+      background: rgba(var(--primary-rgb), 0.2);
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+
+      &::after {
+        content: '✓';
+        position: absolute;
+        top: $spacing-xs;
+        right: $spacing-xs;
+        width: 20px;
+        height: 20px;
+        background: var(--primary);
+        color: var(--bg-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $font-size-sm;
+        font-weight: $font-weight-bold;
+        z-index: 10;
+      }
+    }
+
+    &.blocked {
+      cursor: not-allowed;
+      opacity: 0.5;
+      background: rgba(var(--danger-rgb), 0.1);
+      border: 2px solid var(--danger);
+      position: relative;
+
+      &:hover {
+        background: rgba(var(--danger-rgb), 0.15);
+        border-color: var(--danger);
+      }
+
+      &::after {
+        content: '🚫';
+        position: absolute;
+        top: $spacing-xs;
+        right: $spacing-xs;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: $font-size-sm;
+        z-index: 10;
+      }
     }
   }
 }
@@ -513,114 +586,125 @@
 .event-section {
   width: 100%;
   margin-bottom: 2px;
-  padding-left: $spacing-xs;
-  border-left: 3px solid;
-  &:last-child { margin-bottom: 0; }
-  &.vacation-section { border-left-color: var(--primary); }
-  &.holiday-section { border-left-color: var(--warning); }
-  &.birthday-section { border-left-color: var(--success); }
-  &.anniversary-section { border-left-color: var(--secondary); }
-  @media (max-width: $breakpoint-sm) {
-    border-left-width: 2px;
-    padding-left: 2px;
+  &:last-child {
+    margin-bottom: 0;
   }
 }
 
 .event-indicators {
   position: absolute;
-  inset: 0;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
   pointer-events: none;
-  border-radius: inherit;
-  overflow: hidden;
-}
-.event-indicator {
-  position: absolute;
   z-index: 1;
-  // TOP: Verde (Cumpleaños)
+}
+
+.event-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-md) {
+    width: 3px;
+    height: 3px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    width: 2px;
+    height: 2px;
+  }
+
   &.birthday-indicator {
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
     background: var(--success);
-    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-  // BOTTOM: Azul (Aniversario)
+
   &.anniversary-indicator {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 3px;
     background: var(--secondary);
-    @media (max-width: $breakpoint-sm) { height: 2px; }
   }
-  // LEFT: Azul oscuro (Vacaciones)
+
   &.vacation-indicator {
-    left: 0;
-    top: 0;
-    width: 3px;
-    height: 100%;
     background: var(--primary);
-    @media (max-width: $breakpoint-sm) { width: 2px; }
   }
-  // RIGHT: Naranja (Holiday)
+
   &.holiday-indicator {
-    right: 0;
-    top: 0;
-    width: 3px;
-    height: 100%;
     background: var(--warning);
-    @media (max-width: $breakpoint-sm) { width: 2px; }
   }
 }
 
 .day-header {
   @include flex-between;
   align-items: flex-start;
-  margin-bottom: $spacing-xs;
+  margin-bottom: 4px;
   width: 100%;
-  gap: $spacing-xs;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-sm) {
-    margin-bottom: 0;
-    align-items: center;
+  gap: 4px;
+
+  @media (max-width: $breakpoint-md) {
+    margin-bottom: 2px;
+    gap: 2px;
+  }
+}
+
+.day-header-info {
+  @include flex-column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.shift-name {
+  font-size: 0.65rem;
+  font-weight: $font-weight-medium;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.6rem;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 0.55rem;
   }
 }
 
 .day-icons {
   display: flex;
   align-items: center;
-  gap: $spacing-xs;
+  gap: 2px;
   flex-wrap: wrap;
   justify-content: flex-end;
-  flex: 1;
-
-  @media (max-width: $breakpoint-sm) {
-    gap: 2px;
-  }
 }
 
 .day-number {
-  font-size: $font-size-base;
+  font-size: $font-size-sm;
   font-weight: $font-weight-medium;
   color: var(--text-primary);
-  @media (min-width: $breakpoint-lg) {
-    font-weight: $font-weight-semibold;
-  }
+  padding: 2px;
+  line-height: 1;
+
   @media (max-width: $breakpoint-md) {
-    font-size: $font-size-sm;
+    font-size: $font-size-xs;
   }
+
   @media (max-width: $breakpoint-sm) {
-    font-size: 0.7rem;
-    font-weight: $font-weight-semibold;
+    font-size: 0.65rem;
   }
 }
 
 %icon-base {
   flex-shrink: 0;
-  font-size: $font-size-sm;
+  font-size: 0.7rem;
 
-  @media (min-width: $breakpoint-lg) {
-    font-size: $font-size-lg;
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.65rem;
   }
 
   @media (max-width: $breakpoint-sm) {
@@ -634,21 +718,21 @@
 }
 
 .holiday-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 0.8rem;
+  height: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
-  @media (min-width: $breakpoint-lg) {
-    width: 1.5rem;
-    height: 1.5rem;
+  @media (max-width: $breakpoint-md) {
+    width: 0.7rem;
+    height: 0.7rem;
   }
 
   @media (max-width: $breakpoint-sm) {
-    width: 0.7rem;
-    height: 0.7rem;
+    width: 0.6rem;
+    height: 0.6rem;
   }
 
   ::ng-deep svg {
@@ -676,27 +760,34 @@
 .day-content {
   margin-top: auto;
   @include flex-column;
-  gap: $spacing-xs;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
-    display: flex;
-  }
-  @media (max-width: $breakpoint-sm) {
-    display: none;
-  }
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 %badge-base {
-  display: inline-block;
-  padding: $spacing-xs $spacing-sm;
+  display: block;
+  padding: 2px 4px;
   color: white;
-  border-radius: $radius-sm;
-  font-size: $font-size-xs;
+  border-radius: 2px;
+  font-size: 0.65rem;
   font-weight: $font-weight-medium;
-  text-align: center;
+  text-align: left;
   width: 100%;
-  @media (min-width: $breakpoint-lg), (max-width: $breakpoint-md) {
-    font-size: 0.65rem;
-    padding: 2px $spacing-xs;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+
+  @media (max-width: $breakpoint-md) {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 0.55rem;
+    padding: 1px 2px;
   }
 }
 
@@ -723,85 +814,7 @@
   background: var(--secondary);
 }
 
-// Leyenda
+// Leyenda - oculta por defecto para maximizar espacio
 .calendar-legend {
-  display: flex;
-  gap: $spacing-lg;
-  justify-content: center;
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius-md;
-  border: 1px solid var(--border-color);
-  flex-wrap: wrap;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-sm;
-    gap: $spacing-md;
-  }
+  display: none;
 }
-
-.legend-item {
-  @include flex-center;
-  gap: $spacing-sm;
-  font-size: $font-size-sm;
-  color: var(--text-secondary);
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $font-size-xs;
-    gap: $spacing-xs;
-  }
-}
-
-.legend-color {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: $radius-sm;
-  border: 1px solid var(--border-color);
-
-  @media (max-width: $breakpoint-sm) {
-    width: 1rem;
-    height: 1rem;
-  }
-
-  &.vacation-day {
-    background: rgba(var(--primary-rgb), 0.15);
-    border-color: var(--primary);
-  }
-
-  &.holiday-day {
-    background: rgba(var(--warning-rgb), 0.15);
-    border-color: var(--warning);
-  }
-
-  &.birthday-day {
-    background: rgba(var(--success-rgb), 0.15);
-    border-color: var(--success);
-  }
-
-  &.anniversary-day {
-    background: rgba(var(--secondary-rgb), 0.15);
-    border-color: var(--secondary);
-  }
-
-  &.today {
-    border: 2px solid var(--primary);
-    background: var(--bg-primary);
-  }
-}
-
-// Loading responsive
-.loading-overlay {
-  @media (max-width: $breakpoint-sm) {
-    padding: $spacing-2xl;
-    gap: $spacing-sm;
-
-    i {
-      font-size: $font-size-xl;
-    }
-
-    span {
-      font-size: $font-size-sm;
-    }
-  }
-}
-

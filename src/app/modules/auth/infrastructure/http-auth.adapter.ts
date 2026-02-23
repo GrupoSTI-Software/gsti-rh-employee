@@ -46,6 +46,14 @@ interface ILoginResponse {
   };
 }
 
+interface IFcmTokenResponse {
+  type: string;
+  title: string;
+  message: string;
+  data: {
+    token: string;
+  };
+}
 interface ISessionEmployeeData {
   employeeId: number;
   employeeCode?: string;
@@ -181,6 +189,20 @@ export class HttpAuthAdapter implements IAuthPort {
 
           // Guardar datos del usuario cifrados (sin datos ultra-sensibles)
           this.storeUserDataSecurely(user);
+          const fcmTokenPayload: {
+            userId: number;
+            userFcmToken: string;
+            userFcmActive: number;
+            userFcmTokenPlatform?: string;
+          } = {
+            userId: Number(this.currentUser?.id) ?? 0,
+            userFcmToken: this.secureStorage.getItem('fcmToken') ?? '',
+            userFcmActive: 1,
+            userFcmTokenPlatform: 'app',
+          };
+          await firstValueFrom(
+            this.http.post<IFcmTokenResponse>(`${this.apiUrl}/user-fcm-tokens`, fcmTokenPayload),
+          );
 
           return {
             success: true,
@@ -243,7 +265,15 @@ export class HttpAuthAdapter implements IAuthPort {
   async logout(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
       // Limpiar todos los datos de forma segura
+      const DEVICE_TOKEN_KEY = 'device_token';
+      // Limpiar todos los datos de forma segura
+      const systemToken = this.secureStorage.getItem(DEVICE_TOKEN_KEY);
+
       this.secureStorage.clearAllSecureData();
+      // restaurar
+      if (systemToken) {
+        this.secureStorage.setItem(DEVICE_TOKEN_KEY, systemToken);
+      }
     }
     this.currentUser = null;
     this.userInitialized = false;

@@ -6,6 +6,9 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  // padding: calc(env(safe-area-inset-top, 0px) + $spacing-sm) 0;
+  @include safe-area-vertical($spacing-lg);
+  @include safe-area-horizontal($spacing-lg);
 }
 
 .holiday-icon-container {
@@ -20,38 +23,27 @@
   max-width: $container-max-width-md;
   margin: 0 auto;
   @include flex-column;
-  gap: $spacing-lg;
 }
 
 .checkin-title-section {
   margin-bottom: $spacing-lg;
-
-  .page-title {
-    font-size: $font-size-3xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary);
-    margin: 0 0 $spacing-xs 0;
-  }
-
-  .page-subtitle {
-    color: var(--text-secondary);
-    margin: 0;
-  }
 }
 
 .checkin-card {
   width: 100%;
-  max-width: $container-max-width-md;
   @include card;
   position: relative;
+  border-bottom: 0.25rem solid var(--bg-secondary);
 }
 
 .checkin-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: $spacing-2xl;
 
-  .header-actions { display: flex; gap: $spacing-xs; }
+  .header-actions {
+    display: flex;
+    gap: $spacing-xs;
+  }
 
   .action-icon-button {
     @include button-base;
@@ -281,80 +273,3 @@
   i { font-size: 2rem; color: var(--primary); }
   span { color: var(--text-secondary); }
 }
-
-.datepicker-container {
-  padding: $spacing-md;
-
-  .date-input {
-    width: 100%;
-    padding: $spacing-md;
-    border: 1px solid var(--border-color);
-    border-radius: $radius;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: inherit;
-
-    &:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
-    }
-  }
-}
-
-.exceptions-list, .records-list {
-  @include flex-column;
-  gap: $spacing-md;
-  max-height: 60vh;
-  overflow-y: auto;
-  padding: $spacing-sm;
-}
-.no-exceptions, .no-records {
-  @include flex-center;
-  flex-direction: column;
-  gap: $spacing-md;
-  padding: $spacing-2xl;
-  color: var(--text-secondary);
-  text-align: center;
-  i { font-size: 3rem; color: var(--text-tertiary); }
-  p { margin: 0; }
-}
-.exception-item, .record-item {
-  padding: $spacing-md;
-  background: var(--bg-secondary);
-  border-radius: $radius;
-  border-left: 3px solid var(--warning);
-}
-.record-item { border-left-color: var(--primary); }
-.exception-header, .record-header {
-  @include flex-between;
-  margin-bottom: $spacing-sm;
-}
-.exception-type, .record-time {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-}
-.exception-type i { color: var(--warning); }
-.record-time i { color: var(--primary); }
-.exception-type-name { font-weight: $font-weight-semibold; color: var(--text-primary); }
-.record-time .time-value {
-  font-weight: $font-weight-semibold;
-  color: var(--text-primary);
-  font-size: $font-size-lg;
-  font-family: 'Courier New', monospace;
-}
-.exception-date, .record-date { font-size: $font-size-sm; color: var(--text-secondary); }
-.record-date { font-size: $font-size-xs; }
-.exception-description {
-  margin-bottom: $spacing-sm;
-  color: var(--text-secondary);
-  font-size: $font-size-sm;
-  line-height: 1.5;
-}
-.exception-times, .record-details { @include flex-column; gap: $spacing-xs; }
-.exception-time, .record-detail-item { display: flex; gap: $spacing-sm; font-size: $font-size-sm; }
-.time-label, .detail-label { color: var(--text-secondary); font-weight: $font-weight-medium; }
-.detail-label { min-width: 80px; }
-.exception-time .time-value { color: var(--text-primary); font-weight: $font-weight-semibold; font-family: 'Courier New', monospace; }
-.detail-value { color: var(--text-primary); }

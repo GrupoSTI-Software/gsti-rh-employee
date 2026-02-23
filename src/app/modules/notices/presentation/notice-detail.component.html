@@ -1,0 +1,49 @@
+<div class="notice-detail-container" [@fadeIn]>
+  <div class="notice-detail-wrapper">
+    <!-- Botón de regreso -->
+    <div class="back-button-section" [@fadeInUp]>
+      <button type="button" class="back-button" (click)="goBack()">
+        <i class="pi pi-arrow-left"></i>
+        {{ 'notices.back' | translate }}
+      </button>
+    </div>
+
+    <!-- Estado de carga -->
+    @if (loading()) {
+      <div class="loading-container" [@fadeInUp]>
+        <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        <p>{{ 'notices.loading' | translate }}</p>
+      </div>
+    }
+
+    <!-- Error -->
+    @if (error() && !loading()) {
+      <div class="error-container" [@fadeInUp]>
+        <i class="pi pi-exclamation-triangle"></i>
+        <p>{{ error() }}</p>
+        <button type="button" class="retry-button" (click)="loadNotice()">
+          {{ 'notices.retry' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- Detalle del aviso -->
+    @if (!loading() && !error() && notice()) {
+      <div class="notice-detail-card" [@fadeInUp]>
+        <!-- Encabezado -->
+        <div class="notice-header">
+          <h1 class="notice-title">{{ notice()!.noticeSubject }}</h1>
+          <div class="notice-meta">
+            <span class="notice-date">
+              <i class="pi pi-calendar"></i>
+              {{ formatDate(notice()!.noticeCreatedAt) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Contenido HTML -->
+        <div class="notice-content" [innerHTML]="getSafeHtml(notice()!.noticeDescription)"></div>
+      </div>
+    }
+  </div>
+</div>

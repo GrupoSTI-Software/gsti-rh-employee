@@ -7,6 +7,8 @@ import {
   ChangeDetectionStrategy,
   Input,
   effect,
+  ElementRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,10 +25,14 @@ import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
 import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
 import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
+import { ExceptionRequestDrawerComponent } from '../exception-request-drawer/exception-request-drawer.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { GetAttendanceUseCase } from '@modules/attendance/application/get-attendance.use-case';
 import { IAttendance } from '@modules/attendance/domain/attendance.port';
 import { GetWorkDisabilitiesUseCase } from '../../application/get-work-disabilities.use-case';
+import { GetExceptionRequestsUseCase } from '../../application/get-exception-requests.use-case';
 
 /**
  * Tipo de evento en el calendario
@@ -37,6 +43,15 @@ export enum ECalendarEventType {
   BIRTHDAY = 'birthday',
   ANNIVERSARY = 'anniversary',
   SHIFT = 'shift',
+}
+
+/**
+ * Modo de visualización del calendario
+ */
+export enum ECalendarViewMode {
+  MONTHLY = 'monthly',
+  WEEKLY = 'weekly',
+  DAILY = 'daily',
 }
 
 /**
@@ -70,8 +85,10 @@ interface ICalendarDay {
     FormsModule,
     TranslatePipe,
     TooltipModule,
+    ToastModule,
     VacationDetailDrawerComponent,
     VacationSignatureComponent,
+    ExceptionRequestDrawerComponent,
   ],
   templateUrl: './vacation-calendar.component.html',
   styleUrl: './vacation-calendar.component.scss',
@@ -83,10 +100,21 @@ export class VacationCalendarComponent implements OnInit {
   private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly getWorkDisabilitiesUseCase = inject(GetWorkDisabilitiesUseCase);
+  private readonly getExceptionRequestsUseCase = inject(GetExceptionRequestsUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly translateService = inject(TranslateService);
   private readonly logger = inject(LoggerService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly messageService = inject(MessageService);
+
+  // Exponer el enum para usar en el template
+  readonly ECalendarViewMode = ECalendarViewMode;
+
+  // ViewChild para el contenedor semanal
+  @ViewChild('weeklyContainer') weeklyContainer?: ElementRef<HTMLDivElement>;
+
+  // Signal para controlar cuándo hacer scroll a la vista semanal
+  private readonly shouldScrollToToday = signal(false);
 
   // Inputs opcionales para hacer el componente reutilizable
   /**
@@ -120,6 +148,9 @@ export class VacationCalendarComponent implements OnInit {
   readonly selectedYear = signal(new Date().getFullYear());
   readonly selectedMonth = signal(new Date().getMonth());
 
+  // Modo de visualización del calendario (por defecto: vista diaria del día actual)
+  readonly viewMode = signal<ECalendarViewMode>(ECalendarViewMode.DAILY);
+
   // Datos de años trabajados
   readonly yearsWorked = signal<IYearWorked[]>([]);
 
@@ -147,8 +178,18 @@ export class VacationCalendarComponent implements OnInit {
   // Mapa de incapacidades por fecha (formato: YYYY-MM-DD -> boolean)
   readonly disabilityMap = signal<Map<string, boolean>>(new Map());
 
+  // Mapa de turnos por fecha (formato: YYYY-MM-DD -> string)
+  readonly shiftMap = signal<Map<string, string>>(new Map());
+
   // Diálogo de firma
   readonly showSignatureDialog = signal(false);
+
+  // Drawer de solicitud de excepciones
+  readonly showExceptionRequestDrawer = signal(false);
+  readonly selectionMode = signal(false);
+  readonly selectedDaysForException = signal<Date[]>([]);
+  // Fechas con excepciones (cualquier estado) - formato: YYYY-MM-DD
+  readonly exceptionDatesSet = signal<Set<string>>(new Set());
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -184,8 +225,25 @@ export class VacationCalendarComponent implements OnInit {
     return years;
   });
 
-  // Días del calendario para el mes actual
+  // Días del calendario según el modo de visualización
   readonly calendarDays = computed(() => {
+    const mode = this.viewMode();
+    switch (mode) {
+      case ECalendarViewMode.MONTHLY:
+        return this.getMonthlyDays();
+      case ECalendarViewMode.WEEKLY:
+        return this.getWeeklyDays();
+      case ECalendarViewMode.DAILY:
+        return this.getDailyDays();
+      default:
+        return this.getMonthlyDays();
+    }
+  });
+
+  /**
+   * Obtiene los días para la vista mensual
+   */
+  private getMonthlyDays(): ICalendarDay[] {
     const year = this.selectedYear();
     const month = this.selectedMonth();
     const vacationDays = this.vacationDaysSet();
@@ -193,11 +251,12 @@ export class VacationCalendarComponent implements OnInit {
     const birthday = this.employeeBirthday();
     const anniversary = this.employeeAnniversary();
     const disabilityMap = this.disabilityMap();
+    const shiftMap = this.shiftMap();
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+    const startingDayOfWeek = firstDay.getDay();
 
     const days: ICalendarDay[] = [];
 
@@ -205,80 +264,176 @@ export class VacationCalendarComponent implements OnInit {
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       const date = new Date(year, month - 1, prevMonthLastDay - i);
-      const dateKey = this.formatDateKey(date);
-      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
-      const isBday = this.isBirthday(date, birthday);
-      const isAnniv = this.isAnniversary(date, anniversary);
-      const hasDisability = disabilityMap.get(dateKey) === true;
-
-      days.push({
-        date,
-        dayNumber: prevMonthLastDay - i,
-        isCurrentMonth: false,
-        isVacation: false,
-        holidays: dayHolidays,
-        isBirthday: isBday,
-        isAnniversary: isAnniv,
-        shiftName: null,
-        hasDisability,
-      });
+      days.push(
+        this.createCalendarDay(
+          date,
+          false,
+          vacationDays,
+          holidaysList,
+          birthday,
+          anniversary,
+          disabilityMap,
+          shiftMap,
+        ),
+      );
     }
 
     // Agregar días del mes actual
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const dateKey = this.formatDateKey(date);
-      const isVacation = vacationDays.has(dateKey);
-      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
-      const isBday = this.isBirthday(date, birthday);
-      const isAnniv = this.isAnniversary(date, anniversary);
-      const hasDisability = disabilityMap.get(dateKey) === true;
-
-      // Buscar datos de vacación si existe
-      let vacationData: IVacationUsed | undefined;
-      if (isVacation) {
-        vacationData = this.findVacationData(date);
-      }
-
-      days.push({
-        date,
-        dayNumber: day,
-        isCurrentMonth: true,
-        isVacation,
-        vacationData,
-        holidays: dayHolidays,
-        isBirthday: isBday,
-        isAnniversary: isAnniv,
-        shiftName: null, // Se puede obtener del attendance si es necesario
-        hasDisability,
-      });
+      days.push(
+        this.createCalendarDay(
+          date,
+          true,
+          vacationDays,
+          holidaysList,
+          birthday,
+          anniversary,
+          disabilityMap,
+          shiftMap,
+        ),
+      );
     }
 
     // Agregar días del mes siguiente para completar la última semana
-    const remainingDays = 42 - days.length; // 6 semanas * 7 días
+    const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       const date = new Date(year, month + 1, day);
-      const dateKey = this.formatDateKey(date);
-      const dayHolidays = this.getHolidaysForDate(date, holidaysList);
-      const isBday = this.isBirthday(date, birthday);
-      const isAnniv = this.isAnniversary(date, anniversary);
-      const hasDisability = disabilityMap.get(dateKey) === true;
-
-      days.push({
-        date,
-        dayNumber: day,
-        isCurrentMonth: false,
-        isVacation: false,
-        holidays: dayHolidays,
-        isBirthday: isBday,
-        isAnniversary: isAnniv,
-        shiftName: null,
-        hasDisability,
-      });
+      days.push(
+        this.createCalendarDay(
+          date,
+          false,
+          vacationDays,
+          holidaysList,
+          birthday,
+          anniversary,
+          disabilityMap,
+          shiftMap,
+        ),
+      );
     }
 
     return days;
-  });
+  }
+
+  /**
+   * Fecha actual para las vistas semanal y diaria
+   * Si no hay fecha seleccionada, usa la fecha actual (hoy)
+   */
+  private getCurrentViewDate(): Date {
+    const selected = this.selectedDate();
+    if (selected) {
+      return selected;
+    }
+    // Retornar la fecha actual para mostrar el día de hoy por defecto
+    return new Date();
+  }
+
+  /**
+   * Obtiene los días para la vista semanal
+   */
+  private getWeeklyDays(): ICalendarDay[] {
+    const currentDate = this.getCurrentViewDate();
+    const vacationDays = this.vacationDaysSet();
+    const holidaysList = this.holidays();
+    const birthday = this.employeeBirthday();
+    const anniversary = this.employeeAnniversary();
+    const disabilityMap = this.disabilityMap();
+    const shiftMap = this.shiftMap();
+
+    const days: ICalendarDay[] = [];
+
+    // Obtener el primer día de la semana (domingo)
+    const weekStart = new Date(currentDate);
+    weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+
+    // Generar los 7 días de la semana
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      const isCurrentMonth = date.getMonth() === this.selectedMonth();
+      days.push(
+        this.createCalendarDay(
+          date,
+          isCurrentMonth,
+          vacationDays,
+          holidaysList,
+          birthday,
+          anniversary,
+          disabilityMap,
+          shiftMap,
+        ),
+      );
+    }
+
+    return days;
+  }
+
+  /**
+   * Obtiene el día para la vista diaria
+   */
+  private getDailyDays(): ICalendarDay[] {
+    const currentDate = this.getCurrentViewDate();
+    const vacationDays = this.vacationDaysSet();
+    const holidaysList = this.holidays();
+    const birthday = this.employeeBirthday();
+    const anniversary = this.employeeAnniversary();
+    const disabilityMap = this.disabilityMap();
+    const shiftMap = this.shiftMap();
+
+    return [
+      this.createCalendarDay(
+        currentDate,
+        true,
+        vacationDays,
+        holidaysList,
+        birthday,
+        anniversary,
+        disabilityMap,
+        shiftMap,
+      ),
+    ];
+  }
+
+  /**
+   * Crea un objeto ICalendarDay para una fecha específica
+   */
+  private createCalendarDay(
+    date: Date,
+    isCurrentMonth: boolean,
+    vacationDays: Set<string>,
+    holidaysList: IHoliday[],
+    birthday: { month: number; day: number } | null,
+    anniversary: { month: number; day: number } | null,
+    disabilityMap: Map<string, boolean>,
+    shiftMap: Map<string, string>,
+  ): ICalendarDay {
+    const dateKey = this.formatDateKey(date);
+    const isVacation = vacationDays.has(dateKey);
+    const dayHolidays = this.getHolidaysForDate(date, holidaysList);
+    const isBday = this.isBirthday(date, birthday);
+    const isAnniv = this.isAnniversary(date, anniversary);
+    const hasDisability = disabilityMap.get(dateKey) === true;
+    const shiftName = shiftMap.get(dateKey) ?? null;
+
+    let vacationData: IVacationUsed | undefined;
+    if (isVacation) {
+      vacationData = this.findVacationData(date);
+    }
+
+    return {
+      date,
+      dayNumber: date.getDate(),
+      isCurrentMonth,
+      isVacation,
+      vacationData,
+      holidays: dayHolidays,
+      isBirthday: isBday,
+      isAnniversary: isAnniv,
+      shiftName,
+      hasDisability,
+    };
+  }
 
   // Nombre del mes actual (traducido)
   readonly monthName = computed(() => {
@@ -286,10 +441,71 @@ export class VacationCalendarComponent implements OnInit {
     return months[this.selectedMonth()]?.label ?? '';
   });
 
-  // Nombre del año y mes para mostrar
+  // Nombre del año y mes para mostrar según el modo de vista
   readonly monthYearLabel = computed(() => {
-    return `${this.monthName()} ${this.selectedYear()}`;
+    const mode = this.viewMode();
+
+    switch (mode) {
+      case ECalendarViewMode.MONTHLY:
+        return `${this.monthName()} ${this.selectedYear()}`;
+
+      case ECalendarViewMode.WEEKLY: {
+        const currentDate = this.getCurrentViewDate();
+        const weekStart = new Date(currentDate);
+        weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        const startMonth = this.translateService.instant(
+          `vacations.months.${this.getMonthKey(weekStart.getMonth())}`,
+        );
+        const endMonth = this.translateService.instant(
+          `vacations.months.${this.getMonthKey(weekEnd.getMonth())}`,
+        );
+
+        if (weekStart.getMonth() === weekEnd.getMonth()) {
+          return `${weekStart.getDate()} - ${weekEnd.getDate()} ${startMonth} ${weekStart.getFullYear()}`;
+        } else if (weekStart.getFullYear() === weekEnd.getFullYear()) {
+          return `${weekStart.getDate()} ${startMonth} - ${weekEnd.getDate()} ${endMonth} ${weekStart.getFullYear()}`;
+        } else {
+          return `${weekStart.getDate()} ${startMonth} ${weekStart.getFullYear()} - ${weekEnd.getDate()} ${endMonth} ${weekEnd.getFullYear()}`;
+        }
+      }
+
+      case ECalendarViewMode.DAILY: {
+        const currentDate = this.getCurrentViewDate();
+        const monthName = this.translateService.instant(
+          `vacations.months.${this.getMonthKey(currentDate.getMonth())}`,
+        );
+        const dayName = this.getDayName(currentDate.getDay());
+        return `${dayName}, ${currentDate.getDate()} ${monthName} ${currentDate.getFullYear()}`;
+      }
+
+      default:
+        return `${this.monthName()} ${this.selectedYear()}`;
+    }
   });
+
+  /**
+   * Obtiene la clave del mes para traducción
+   */
+  private getMonthKey(monthIndex: number): string {
+    const monthKeys = [
+      'january',
+      'february',
+      'march',
+      'april',
+      'may',
+      'june',
+      'july',
+      'august',
+      'september',
+      'october',
+      'november',
+      'december',
+    ];
+    return monthKeys[monthIndex] ?? 'january';
+  }
 
   /**
    * Efecto para actualizar meses cuando cambia el idioma
@@ -304,6 +520,19 @@ export class VacationCalendarComponent implements OnInit {
     }
   });
 
+  /**
+   * Efecto para hacer scroll al día actual en vista semanal
+   */
+  private readonly scrollEffect = effect(() => {
+    if (this.shouldScrollToToday() && this.viewMode() === ECalendarViewMode.WEEKLY) {
+      // Usar setTimeout para asegurar que el DOM esté renderizado
+      setTimeout(() => {
+        this.scrollToTodayInWeeklyView();
+        this.shouldScrollToToday.set(false);
+      }, 100);
+    }
+  });
+
   ngOnInit(): void {
     // Cargar todas las vacaciones sin filtrar por año al iniciar el componente
     if (this.autoLoad) {
@@ -311,6 +540,7 @@ export class VacationCalendarComponent implements OnInit {
       void this.loadHolidays();
       this.loadEmployeeDates();
       void this.loadDisabilitiesForMonth();
+      void this.loadShiftsForMonth();
     }
   }
 
@@ -419,9 +649,53 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
-   * Navega al mes anterior
+   * Navega al período anterior según el modo de vista
    */
   previousMonth(): void {
+    const mode = this.viewMode();
+
+    switch (mode) {
+      case ECalendarViewMode.MONTHLY:
+        this.previousMonthView();
+        break;
+      case ECalendarViewMode.WEEKLY:
+        this.previousWeek();
+        break;
+      case ECalendarViewMode.DAILY:
+        this.previousDay();
+        break;
+    }
+
+    void this.loadDisabilitiesForMonth();
+    void this.loadShiftsForMonth();
+  }
+
+  /**
+   * Navega al período siguiente según el modo de vista
+   */
+  nextMonth(): void {
+    const mode = this.viewMode();
+
+    switch (mode) {
+      case ECalendarViewMode.MONTHLY:
+        this.nextMonthView();
+        break;
+      case ECalendarViewMode.WEEKLY:
+        this.nextWeek();
+        break;
+      case ECalendarViewMode.DAILY:
+        this.nextDay();
+        break;
+    }
+
+    void this.loadDisabilitiesForMonth();
+    void this.loadShiftsForMonth();
+  }
+
+  /**
+   * Navega al mes anterior
+   */
+  private previousMonthView(): void {
     const month = this.selectedMonth();
     const year = this.selectedYear();
 
@@ -431,15 +705,12 @@ export class VacationCalendarComponent implements OnInit {
     } else {
       this.selectedMonth.set(month - 1);
     }
-
-    // Al cambiar de mes, cargar las incapacidades del nuevo mes
-    void this.loadDisabilitiesForMonth();
   }
 
   /**
    * Navega al mes siguiente
    */
-  nextMonth(): void {
+  private nextMonthView(): void {
     const month = this.selectedMonth();
     const year = this.selectedYear();
 
@@ -449,9 +720,142 @@ export class VacationCalendarComponent implements OnInit {
     } else {
       this.selectedMonth.set(month + 1);
     }
+  }
 
-    // Al cambiar de mes, cargar las incapacidades del nuevo mes
-    void this.loadDisabilitiesForMonth();
+  /**
+   * Navega a la semana anterior
+   */
+  private previousWeek(): void {
+    const currentDate = this.getCurrentViewDate();
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() - 7);
+    this.selectedDate.set(newDate);
+    this.updateMonthYear(newDate);
+    this.shouldScrollToToday.set(true);
+  }
+
+  /**
+   * Navega a la semana siguiente
+   */
+  private nextWeek(): void {
+    const currentDate = this.getCurrentViewDate();
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() + 7);
+    this.selectedDate.set(newDate);
+    this.updateMonthYear(newDate);
+    this.shouldScrollToToday.set(true);
+  }
+
+  /**
+   * Navega al día anterior
+   */
+  private previousDay(): void {
+    const currentDate = this.getCurrentViewDate();
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() - 1);
+    this.selectedDate.set(newDate);
+    this.updateMonthYear(newDate);
+  }
+
+  /**
+   * Navega al día siguiente
+   */
+  private nextDay(): void {
+    const currentDate = this.getCurrentViewDate();
+    const newDate = new Date(currentDate);
+    newDate.setDate(currentDate.getDate() + 1);
+    this.selectedDate.set(newDate);
+    this.updateMonthYear(newDate);
+  }
+
+  /**
+   * Actualiza el mes y año seleccionados según una fecha
+   */
+  private updateMonthYear(date: Date): void {
+    this.selectedMonth.set(date.getMonth());
+    this.selectedYear.set(date.getFullYear());
+  }
+
+  /**
+   * Cambia el modo de visualización del calendario
+   */
+  setViewMode(mode: ECalendarViewMode): void {
+    // Al salir de vista mensual, cancelar modo selección (solo disponible en mensual)
+    if (
+      (mode === ECalendarViewMode.WEEKLY || mode === ECalendarViewMode.DAILY) &&
+      this.selectionMode()
+    ) {
+      this.cancelSelectionMode();
+    }
+
+    this.viewMode.set(mode);
+
+    // Al cambiar a vista semanal o diaria, establecer la fecha seleccionada al día actual si no hay fecha
+    if (
+      (mode === ECalendarViewMode.WEEKLY || mode === ECalendarViewMode.DAILY) &&
+      !this.selectedDate()
+    ) {
+      this.selectedDate.set(new Date());
+    }
+
+    // Si se cambia a vista semanal, activar el scroll al día actual
+    if (mode === ECalendarViewMode.WEEKLY) {
+      this.shouldScrollToToday.set(true);
+    }
+  }
+
+  /**
+   * Hace scroll para centrar el día actual o seleccionado en la vista semanal
+   */
+  private scrollToTodayInWeeklyView(): void {
+    if (!this.weeklyContainer) {
+      return;
+    }
+
+    const container = this.weeklyContainer.nativeElement;
+
+    // Primero intentar encontrar el día de hoy, si no existe, centrar el primer día de la semana
+    let targetColumn = container.querySelector('.weekly-column.today-column') as HTMLElement;
+
+    // Si no hay día de hoy visible, usar la primera columna (centro de la semana actual)
+    if (!targetColumn) {
+      const allColumns = container.querySelectorAll('.weekly-column');
+      // Centrar en la columna del medio (día 3 de 7)
+      if (allColumns.length > 0) {
+        const middleIndex = Math.floor(allColumns.length / 2);
+        targetColumn = allColumns[middleIndex] as HTMLElement;
+      }
+    }
+
+    if (targetColumn) {
+      const containerWidth = container.offsetWidth;
+      const columnLeft = targetColumn.offsetLeft;
+      const columnWidth = targetColumn.offsetWidth;
+
+      // Calcular la posición para centrar el elemento
+      const scrollPosition = columnLeft - containerWidth / 1.5 + columnWidth / 1.5;
+
+      // Hacer scroll suave a la posición calculada
+      container.scrollTo({
+        left: Math.max(0, scrollPosition),
+        behavior: 'smooth',
+      });
+    }
+  }
+
+  /**
+   * Navega a hoy
+   */
+  goToToday(): void {
+    const today = new Date();
+    this.selectedDate.set(today);
+    this.selectedMonth.set(today.getMonth());
+    this.selectedYear.set(today.getFullYear());
+
+    // Si está en vista semanal, hacer scroll al día actual
+    if (this.viewMode() === ECalendarViewMode.WEEKLY) {
+      this.shouldScrollToToday.set(true);
+    }
   }
 
   /**
@@ -610,10 +1014,26 @@ export class VacationCalendarComponent implements OnInit {
    */
   onYearChange(year: number): void {
     this.selectedYear.set(year);
+
+    // Si está en vista semanal o diaria, cambiar al día 1 del mes actual
+    if (
+      this.viewMode() === ECalendarViewMode.WEEKLY ||
+      this.viewMode() === ECalendarViewMode.DAILY
+    ) {
+      const newDate = new Date(year, this.selectedMonth(), 1);
+      this.selectedDate.set(newDate);
+
+      // Si está en vista semanal, activar scroll al día
+      if (this.viewMode() === ECalendarViewMode.WEEKLY) {
+        this.shouldScrollToToday.set(true);
+      }
+    }
+
     // Cuando el usuario cambia el año, cargar las vacaciones de ese año específico
     void this.loadYearsWorked(year);
     void this.loadHolidays();
     void this.loadDisabilitiesForMonth();
+    void this.loadShiftsForMonth();
   }
 
   /**
@@ -621,8 +1041,24 @@ export class VacationCalendarComponent implements OnInit {
    */
   onMonthChange(month: number): void {
     this.selectedMonth.set(month);
-    // Al cambiar el mes, cargar las incapacidades del nuevo mes
+
+    // Si está en vista semanal o diaria, cambiar al día 1 del mes seleccionado
+    if (
+      this.viewMode() === ECalendarViewMode.WEEKLY ||
+      this.viewMode() === ECalendarViewMode.DAILY
+    ) {
+      const newDate = new Date(this.selectedYear(), month, 1);
+      this.selectedDate.set(newDate);
+
+      // Si está en vista semanal, activar scroll al día
+      if (this.viewMode() === ECalendarViewMode.WEEKLY) {
+        this.shouldScrollToToday.set(true);
+      }
+    }
+
+    // Al cambiar el mes, cargar las incapacidades y turnos del nuevo mes
     void this.loadDisabilitiesForMonth();
+    void this.loadShiftsForMonth();
   }
 
   /**
@@ -676,6 +1112,13 @@ export class VacationCalendarComponent implements OnInit {
 
     // Permitir click en cualquier día del mes actual
     if (!day.isCurrentMonth) {
+      return;
+    }
+
+    // Si está en modo selección y vista mensual, alternar la selección del día (solo disponible en mensual)
+    if (this.selectionMode() && this.viewMode() === ECalendarViewMode.MONTHLY) {
+      // toggleDaySelection ya maneja la validación y muestra el mensaje
+      this.toggleDaySelection(day.date);
       return;
     }
 
@@ -787,6 +1230,50 @@ export class VacationCalendarComponent implements OnInit {
   }
 
   /**
+   * Carga la información de turnos para todos los días del mes actual
+   */
+  private async loadShiftsForMonth(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const year = this.selectedYear();
+      const month = this.selectedMonth();
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDateKey = this.formatDateKey(firstDay);
+      const endDateKey = this.formatDateKey(lastDay);
+
+      const attendance = await this.getAttendanceUseCase.execute(
+        startDateKey,
+        endDateKey,
+        user.employeeId,
+      );
+
+      const newShiftMap = new Map<string, string>();
+
+      // Si hay información de turno, aplicarla a todos los días del mes
+      if (attendance?.shiftName) {
+        const currentDate = new Date(year, month, 1);
+        const totalDays = lastDay.getDate();
+
+        for (let day = 1; day <= totalDays; day++) {
+          currentDate.setDate(day);
+          const dateKey = this.formatDateKey(currentDate);
+          newShiftMap.set(dateKey, attendance.shiftName);
+        }
+      }
+
+      this.shiftMap.set(newShiftMap);
+    } catch (error) {
+      this.logger.error('Error al cargar turnos del mes:', error);
+    }
+  }
+
+  /**
    * Busca la configuración de vacaciones por ID
    */
   private findVacationSetting(vacationSettingId: number | null): IVacationSetting | null {
@@ -856,5 +1343,137 @@ export class VacationCalendarComponent implements OnInit {
     } else {
       this.logger.error('Error al firmar la vacación');
     }
+  }
+
+  /**
+   * Verifica si un día tiene una excepción registrada
+   */
+  hasExceptionForDate(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.exceptionDatesSet().has(dateKey);
+  }
+
+  /**
+   * Alterna la selección de un día para solicitudes de excepción
+   */
+  toggleDaySelection(date: Date): void {
+    // No permitir seleccionar días que ya tienen excepciones
+    if (this.hasExceptionForDate(date)) {
+      this.translateService.get('exceptionRequest.dayHasException').subscribe((message) => {
+        this.messageService.add({
+          severity: 'warn',
+          summary: this.translateService.instant('exceptionRequest.warning'),
+          detail: message,
+          life: 5000,
+        });
+      });
+      return;
+    }
+
+    const selectedDays = [...this.selectedDaysForException()];
+    const dateKey = this.formatDateKey(date);
+    const index = selectedDays.findIndex((d) => this.formatDateKey(d) === dateKey);
+
+    if (index === -1) {
+      selectedDays.push(date);
+    } else {
+      selectedDays.splice(index, 1);
+    }
+
+    this.selectedDaysForException.set(selectedDays);
+  }
+
+  /**
+   * Verifica si un día está seleccionado
+   */
+  isDaySelected(date: Date): boolean {
+    const dateKey = this.formatDateKey(date);
+    return this.selectedDaysForException().some((d) => this.formatDateKey(d) === dateKey);
+  }
+
+  /**
+   * Carga las excepciones para validación en modo selección
+   */
+  private async loadExceptionDates(): Promise<void> {
+    const user = this.authPort.getCurrentUser();
+    if (typeof user?.employeeId !== 'number') {
+      return;
+    }
+
+    try {
+      const requests = await this.getExceptionRequestsUseCase.execute(
+        user.employeeId,
+        '',
+        undefined,
+        undefined,
+        'all',
+      );
+      // Crear un Set con todas las fechas que tienen excepciones (cualquier estado)
+      const exceptionDates = new Set<string>();
+      requests.forEach((request) => {
+        if (request.requestedDate) {
+          // Usar parseDateString para normalizar la fecha y evitar problemas de zona horaria
+          const requestDate = this.parseDateString(request.requestedDate);
+          const dateKey = this.formatDateKey(requestDate);
+          exceptionDates.add(dateKey);
+        }
+      });
+      this.exceptionDatesSet.set(exceptionDates);
+    } catch (error) {
+      this.logger.error('Error al cargar excepciones para validación:', error);
+    }
+  }
+
+  /**
+   * Alterna el modo de selección de días (solo disponible en vista mensual)
+   */
+  toggleSelectionMode(): void {
+    // Solo permitir activar el modo selección en vista mensual
+    if (!this.selectionMode() && this.viewMode() !== ECalendarViewMode.MONTHLY) {
+      return;
+    }
+
+    const newMode = !this.selectionMode();
+    this.selectionMode.set(newMode);
+
+    // Si se activa el modo selección, cargar las excepciones
+    if (newMode) {
+      void this.loadExceptionDates();
+    }
+  }
+
+  /**
+   * Cancela el modo de selección y limpia los días seleccionados
+   */
+  cancelSelectionMode(): void {
+    this.selectionMode.set(false);
+    this.selectedDaysForException.set([]);
+  }
+
+  /**
+   * Abre el drawer de solicitud de excepciones
+   */
+  openExceptionRequestDrawer(): void {
+    // Abrir el drawer con los días seleccionados (si hay)
+    this.showExceptionRequestDrawer.set(true);
+  }
+
+  /**
+   * Cierra el drawer de solicitud de excepciones
+   */
+  closeExceptionRequestDrawer(): void {
+    this.showExceptionRequestDrawer.set(false);
+    // No desactivar el modo selección automáticamente
+  }
+
+  /**
+   * Maneja cuando se crea una solicitud de excepción
+   */
+  onExceptionRequestCreated(): void {
+    this.selectedDaysForException.set([]);
+    this.selectionMode.set(false);
+    // Limpiar el set de excepciones ya que se desactivó el modo selección
+    // Se recargarán automáticamente cuando se active el modo selección de nuevo
+    this.exceptionDatesSet.set(new Set());
   }
 }

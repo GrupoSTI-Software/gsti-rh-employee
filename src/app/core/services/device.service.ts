@@ -23,16 +23,16 @@ export class DeviceService {
    */
   getOrCreateDeviceToken(): string {
     if (!isPlatformBrowser(this.platformId)) {
-      return this.generateUUID();
+      const token = this.generateUUID();
+      this.secureStorage.setItem(DEVICE_TOKEN_KEY, token);
+      return token;
     }
-
     let token = this.secureStorage.getItem(DEVICE_TOKEN_KEY);
 
     if (token === null || token.length === 0) {
       token = this.generateUUID();
-      this.secureStorage.setItem(DEVICE_TOKEN_KEY, token);
     }
-
+    this.secureStorage.setItem(DEVICE_TOKEN_KEY, token);
     return token;
   }
 
@@ -46,7 +46,7 @@ export class DeviceService {
         deviceModel: 'Unknown',
         deviceOs: 'Unknown',
         deviceType: null,
-        deviceToken: this.generateUUID(),
+        deviceToken: '',
       };
     }
 

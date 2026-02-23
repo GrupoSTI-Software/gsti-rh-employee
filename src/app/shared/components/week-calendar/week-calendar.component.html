@@ -1,0 +1,50 @@
+<div class="week-calendar">
+  <!-- Navegación y título -->
+  <div class="calendar-header">
+    <button
+      type="button"
+      class="nav-button"
+      (click)="previousWeek()"
+      [attr.aria-label]="'weekCalendar.previousWeek' | translate"
+    >
+      <i class="pi pi-chevron-left"></i>
+    </button>
+
+    <span class="month-year">{{ currentMonthYear() }}</span>
+
+    <button
+      type="button"
+      class="nav-button"
+      (click)="nextWeek()"
+      [attr.aria-label]="'weekCalendar.nextWeek' | translate"
+    >
+      <i class="pi pi-chevron-right"></i>
+    </button>
+
+    <button
+      type="button"
+      class="today-button"
+      (click)="goToToday()"
+      [attr.aria-label]="'weekCalendar.goToToday' | translate"
+    >
+      {{ 'weekCalendar.today' | translate }}
+    </button>
+  </div>
+
+  <!-- Días de la semana -->
+  <div class="week-days">
+    @for (day of weekDays(); track day.date.getTime()) {
+      <button
+        type="button"
+        class="day-item"
+        [class.today]="day.isToday"
+        [class.selected]="day.isSelected"
+        (click)="onDayClick(day)"
+        [attr.aria-label]="(day.dayNameKey | translate) + ' ' + day.dayNumber"
+      >
+        <span class="day-name">{{ day.dayNameKey | translate }}</span>
+        <span class="day-number">{{ day.dayNumber }}</span>
+      </button>
+    }
+  </div>
+</div>

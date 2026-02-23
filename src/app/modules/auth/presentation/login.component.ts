@@ -14,12 +14,16 @@ import { PasskeyDemoService } from '../infrastructure/passkey-demo.service';
 import { PasswordlessWebAuthnAdapter } from '../infrastructure/passwordless-webauthn.adapter';
 import packageJson from '../../../../../package.json';
 
+import { PushNotificationsService } from '@core/services/push-notifications.service';
+import { environment } from '../../../../environments/environment';
+
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
+  providers: [PushNotificationsService],
 })
 export class LoginComponent implements OnInit {
   private readonly loginUseCase = inject(LoginUseCase);
@@ -99,6 +103,8 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  readonly pushService = inject(PushNotificationsService);
+  readonly apiUrl = environment.API_URL;
   togglePasswordVisibility(): void {
     this.showPassword.update((value) => !value);
   }
@@ -128,35 +134,34 @@ export class LoginComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
-      return;
-    }
+    if (this.loginForm.invalid || this.loading()) return;
 
     this.loading.set(true);
     this.error.set(null);
-
     const { email, password } = this.loginForm.value;
 
     try {
       const result = await this.loginUseCase.execute(email, password);
 
       if (result.success) {
-        // Redirigir al dashboard
+        await this.pushService.requestPermission();
+
+        void this.pushService.listen();
         await this.router.navigate(['/dashboard/checkin']);
       } else {
-        const errorMessage =
-          result.error !== undefined && result.error.length > 0
+        this.error.set(
+          result.error?.length
             ? result.error
-            : this.translateService.instant('auth.invalidCredentials');
-        this.error.set(errorMessage);
+            : this.translateService.instant('auth.invalidCredentials'),
+        );
       }
-    } catch (_err) {
-      this.error.set(this.translateService.instant('auth.error'));
+    } catch (error) {
+      this.error.set(this.translateService.instant('auth.error' + error));
     } finally {
       this.loading.set(false);
     }
   }
+
   async forgotPassword(): Promise<void> {
     await this.router.navigate(['/forgot-password']);
   }

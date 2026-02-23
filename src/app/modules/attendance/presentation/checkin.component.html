@@ -1,9 +1,17 @@
 <div class="checkin-container" [@fadeIn]>
   <div class="checkin-wrapper">
     <!-- Título y subtítulo -->
-    <div class="checkin-title-section">
+    <div class="page-header">
       <h1 class="page-title">{{ 'attendance.title' | translate }}</h1>
       <p class="page-subtitle">{{ 'attendance.subtitle' | translate }}</p>
+    </div>
+
+    <div class="checkin-card" [@fadeInUp]>
+      <!-- Calendario semanal -->
+      <app-week-calendar
+        [selectedDate]="selectedDate()"
+        (dateSelected)="onWeekCalendarDateSelected($event)"
+      ></app-week-calendar>
     </div>
 
     <div class="checkin-card" [@fadeInUp]>
@@ -11,6 +19,7 @@
       @if (holidayIconHtml()) {
         <div  [pTooltip]="attendance()?.workHoliday?.holidayName ?? ''" class="holiday-icon-container" [innerHTML]="holidayIconHtml()"></div>
       }
+
       <!-- Header -->
       <div class="checkin-header">
         <div class="header-actions">
@@ -40,7 +49,9 @@
           </button>
         </div>
       </div>
+    </div>
 
+    <div class="checkin-card" [@fadeInUp]>
       <!-- Icono de reloj circular con botón de registro -->
       <button
         type="button"
@@ -65,49 +76,6 @@
             {{ attendance()?.shiftName }}
           </div>
         }
-      </div>
-
-      <!-- Navegación de fechas -->
-      <div class="date-navigation" [@fadeInUp]>
-        <div class="date-nav-group">
-          <button
-            type="button"
-            class="date-nav-button"
-            (click)="previousMonth()"
-            [attr.aria-label]="'attendance.previousMonth' | translate"
-          >
-            <i class="pi pi-angle-double-left"></i>
-          </button>
-          <button
-            type="button"
-            class="date-nav-button"
-            (click)="previousDay()"
-            [attr.aria-label]="'attendance.previousDay' | translate"
-          >
-            <i class="pi pi-chevron-left"></i>
-          </button>
-        </div>
-        <span class="date-display">{{ formattedDate() }}</span>
-        <div class="date-nav-group">
-          <button
-            type="button"
-            class="date-nav-button"
-            (click)="nextDay()"
-            [disabled]="!canNavigateForward()"
-            [attr.aria-label]="'attendance.nextDay' | translate"
-          >
-            <i class="pi pi-chevron-right"></i>
-          </button>
-          <button
-            type="button"
-            class="date-nav-button"
-            (click)="nextMonth()"
-            [disabled]="!canNavigateForward()"
-            [attr.aria-label]="'attendance.nextMonth' | translate"
-          >
-            <i class="pi pi-angle-double-right"></i>
-          </button>
-        </div>
       </div>
 
       <!-- Estados de asistencia -->
@@ -251,24 +219,80 @@
   </div>
 </div>
 
-<!-- Datepicker Dialog -->
-<p-dialog
-  [(visible)]="showDatePicker"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '400px' }"
-  [header]="'attendance.selectDate' | translate"
-  (onHide)="showDatePicker = false"
->
-  <div class="datepicker-container">
-    <input
-      type="date"
-      [(ngModel)]="datePickerValue"
-      [max]="maxDate.toISOString().split('T')[0]"
-      (change)="onDateSelect($event)"
-      class="date-input"
-    />
+<!-- Datepicker Drawer -->
+@if (showDatePicker) {
+  <div
+    class="drawer-overlay"
+    [@fadeIn]
+    (click)="closeDatePicker()"
+    (keydown.escape)="closeDatePicker()"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="'attendance.close' | translate"
+  >
+    <div
+      class="drawer-container"
+      [@slideUpDrawer]
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      role="dialog"
+      [attr.aria-label]="'attendance.selectDate' | translate"
+    >
+      <!-- Header del drawer -->
+      <div class="drawer-header drawer-calendar">
+        <button type="button" class="drawer-cancel-button" (click)="closeDatePicker()">
+          {{ 'attendance.cancel' | translate }}
+        </button>
+      </div>
+
+      <!-- Navegación del mes -->
+      <div class="calendar-month-navigation">
+        <button type="button" class="calendar-nav-button" (click)="previousCalendarMonth()">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <span class="calendar-month-label">{{ formatCalendarMonth(calendarDate()) }}</span>
+        <button type="button" class="calendar-nav-button" (click)="nextCalendarMonth()">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- Calendario -->
+      <div class="calendar-grid">
+        @if (calendarLoading()) {
+          <!-- Loader mientras se cargan los datos -->
+          <div class="calendar-loader">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ 'attendance.loading' | translate }}</span>
+          </div>
+        } @else {
+          <!-- Días de la semana -->
+          <div class="calendar-weekdays">
+            @for (day of weekDays(); track day) {
+              <div class="calendar-weekday">{{ day }}</div>
+            }
+          </div>
+
+          <!-- Días del mes -->
+          <div class="calendar-days">
+            @for (day of calendarDays(); track day.date) {
+              <button
+                type="button"
+                class="calendar-day"
+                [class.calendar-day-other-month]="!day.isCurrentMonth"
+                [class.calendar-day-selected]="day.isSelected"
+                [class.calendar-day-today]="day.isToday"
+                [class.calendar-day-in-range]="day.isInRange"
+                (click)="selectCalendarDate(day.date)"
+              >
+                {{ day.day }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
   </div>
-</p-dialog>
+}
 
 <!-- Exceptions Dialog -->
 <p-dialog

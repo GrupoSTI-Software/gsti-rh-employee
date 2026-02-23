@@ -41,6 +41,10 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/firebase-messaging-sw.js"
               }
             ],
             "styles": [
@@ -66,7 +70,8 @@
                   "maximumError": "20kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
@@ -109,6 +114,9 @@
             ]
           },
           "builder": "@angular/build:dev-server",
+          "options": {
+            "host": "0.0.0.0"
+          },
           "configurations": {
             "production": {
               "buildTarget": "gsti-pwa-empleado:build:production"
