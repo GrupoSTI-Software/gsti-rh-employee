@@ -34,6 +34,14 @@ export const routes: Routes = [
     canActivate: [pwaGuard],
   },
   {
+    path: 'register-passkey',
+    loadComponent: () =>
+      import('@modules/auth/presentation/register-passkey.component').then(
+        (m) => m.RegisterPasskeyComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>

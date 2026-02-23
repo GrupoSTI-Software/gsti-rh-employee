@@ -50,7 +50,23 @@
     "darkMode": "Modo Oscuro",
     "lightMode": "Modo Claro",
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "or": "o",
+    "loginWithPasskey": "Iniciar con Biometría",
+    "passkeyAuthError": "Error al autenticar con biometría",
+    "passkeyNotSupported": "Biometría no disponible",
+    "passkeyNotSupportedDescription": "Tu navegador o dispositivo no soporta autenticación biométrica. Por favor, actualiza tu navegador o dispositivo para usar esta funcionalidad.",
+    "registerPasskeyTitle": "Configura tu Biometría",
+    "registerPasskeyDescription": "Usa tu huella digital o reconocimiento facial para acceder más rápido a tu cuenta sin necesidad de contraseña.",
+    "deviceName": "Nombre del Dispositivo",
+    "deviceNamePlaceholder": "Ej: iPhone de Juan, Laptop Personal",
+    "deviceNameRequired": "El nombre del dispositivo es requerido",
+    "passkeyRegisterError": "Error al registrar la biometría",
+    "registerPasskey": "Configurar Biometría",
+    "skipForNow": "Omitir por ahora",
+    "passkeyRegisteredSuccess": "¡Biometría configurada exitosamente!",
+    "noUserAuthenticated": "No hay usuario autenticado",
+    "continue": "Continuar"
   },
   "validation": {
     "required": "Este campo es requerido",
@@ -193,6 +209,10 @@
     "languageOption": {
       "title": "Idioma",
       "description": "Cambiar el idioma de la aplicación"
+    },
+    "passkeyOption": {
+      "title": "Autenticación Biométrica",
+      "description": "Configura tu huella o Face ID para acceso rápido"
     },
     "profileOption": {
       "title": "Perfil",

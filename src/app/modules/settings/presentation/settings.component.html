@@ -54,6 +54,20 @@
           </div>
         </div>
 
+        <!-- Opción de Passkeys / Biometría -->
+        <button type="button" class="option-card" (click)="navigateToPasskeySetup()">
+          <div class="option-left">
+            <div class="icon-container">
+              <i class="pi pi-id-card"></i>
+            </div>
+            <div class="option-content">
+              <h3>{{ 'settings.passkeyOption.title' | translate }}</h3>
+              <p>{{ 'settings.passkeyOption.description' | translate }}</p>
+            </div>
+          </div>
+          <i class="pi pi-chevron-right"></i>
+        </button>
+
         <!-- Opción de Perfil -->
         <button type="button" class="option-card" (click)="navigateToProfile()">
           <div class="option-left">
