@@ -1,0 +1,131 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+  ></div>
+  <aside class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">{{ 'vacationsModule.requestVacation' | translate }}</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <p class="drawer-subtitle">{{ 'vacationsModule.requestVacationSubtitle' | translate }}</p>
+      <p class="drawer-hint">{{ 'vacationsModule.availableDays' | translate }}: {{ availableDays }}</p>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="request-form">
+        @if (errorMessage(); as messageKey) {
+          <div class="error-alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>{{ messageKey | translate:translateParams }}</span>
+            <button
+              type="button"
+              class="close-error-button"
+              (click)="errorMessage.set(null)"
+              [attr.aria-label]="'menu.close' | translate"
+            >
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+        }
+
+        <div class="form-group">
+          <label for="exceptionRequestDescription" class="form-label">
+            {{ 'vacationsModule.comments' | translate }}
+          </label>
+          <textarea
+            id="exceptionRequestDescription"
+            formControlName="exceptionRequestDescription"
+            class="form-textarea"
+            rows="3"
+            [placeholder]="'vacationsModule.commentsPlaceholder' | translate"
+            [maxlength]="255"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <div class="dates-header">
+            <span class="form-label">
+              {{ 'vacationsModule.selectedDates' | translate }}
+              <span class="required">*</span>
+            </span>
+            <button
+              type="button"
+              class="add-date-button"
+              (click)="addDate()"
+              [disabled]="selectedDatesList().length >= availableDays"
+              [attr.aria-label]="'vacationsModule.addDate' | translate"
+            >
+              <i class="pi pi-plus"></i>
+              {{ 'vacationsModule.addDate' | translate }}
+            </button>
+          </div>
+
+          @if (selectedDatesList().length === 0) {
+            <div class="no-dates-message">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ 'vacationsModule.noDatesSelected' | translate }}</span>
+            </div>
+          } @else {
+            <div class="dates-list">
+              @for (date of selectedDatesList(); track $index) {
+                <div class="date-item">
+                  <div class="date-input-wrapper">
+                    <input
+                      type="date"
+                      [value]="formatDateForInput(date)"
+                      (change)="updateDate($index, $event)"
+                      class="date-input"
+                      [class.invalid]="dateErrors().has($index)"
+                    />
+                    @if (dateErrors().has($index)) {
+                      <span class="date-error-message">
+                        {{ dateErrors().get($index) ?? '' | translate:translateParams }}
+                      </span>
+                    }
+                  </div>
+                  <button
+                    type="button"
+                    class="remove-date-button"
+                    (click)="removeDate($index)"
+                    [attr.aria-label]="'vacationsModule.removeDate' | translate"
+                  >
+                    <i class="pi pi-times"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="close()">
+            {{ 'vacationDetail.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            class="btn-submit"
+            [disabled]="!submitEnabled || form.invalid || selectedDatesList().length === 0 || selectedDatesList().length > availableDays"
+            [attr.title]="!submitEnabled ? ('vacationsModule.submitDisabled' | translate) : null"
+          >
+            <i class="pi pi-send"></i>
+            {{ 'vacationsModule.submitRequest' | translate }}
+          </button>
+        </div>
+        @if (!submitEnabled) {
+          <p class="submit-disabled-hint">{{ 'vacationsModule.submitDisabled' | translate }}</p>
+        }
+      </form>
+    </div>
+  </aside>
+}

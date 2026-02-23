@@ -133,4 +133,8 @@ export class SettingsComponent implements OnInit, OnDestroy {
   navigateToProfile(): void {
     void this.router.navigate(['/dashboard/profile']);
   }
+
+  navigateToPasskeySetup(): void {
+    void this.router.navigate(['/register-passkey']);
+  }
 }

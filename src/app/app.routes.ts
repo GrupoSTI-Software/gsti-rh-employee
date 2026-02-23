@@ -34,6 +34,14 @@ export const routes: Routes = [
     canActivate: [pwaGuard],
   },
   {
+    path: 'register-passkey',
+    loadComponent: () =>
+      import('@modules/auth/presentation/register-passkey.component').then(
+        (m) => m.RegisterPasskeyComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -54,7 +62,18 @@ export const routes: Routes = [
         path: 'vacations',
         data: {
           breadcrumb: 'vacations',
-          label: 'Calendario de Vacaciones',
+          label: 'Vacaciones',
+        },
+        loadComponent: () =>
+          import('@modules/vacations/presentation/vacations-page/vacations-page.component').then(
+            (m) => m.VacationsPageComponent,
+          ),
+      },
+      {
+        path: 'calendar',
+        data: {
+          breadcrumb: 'calendar',
+          label: 'Calendario general',
         },
         loadComponent: () =>
           import('@modules/vacation-calendar/presentation/vacation-calendar/vacation-calendar.component').then(

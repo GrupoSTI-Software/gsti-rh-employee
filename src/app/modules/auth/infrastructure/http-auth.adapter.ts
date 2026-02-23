@@ -9,11 +9,14 @@ import {
   IPerson,
   IEmployee,
   IDeviceInfo,
+  IPasskeyRegistrationOptions,
+  IPasskeyAuthenticationOptions,
 } from '../domain/auth.port';
 import { environment } from '@env/environment';
 import { SecureStorageService } from '@core/services/secure-storage.service';
 import { JwtService } from '@core/services/jwt.service';
 import { LoggerService } from '@core/services/logger.service';
+import { WebAuthnAdapter } from './webauthn.adapter';
 
 /**
  * Constante para el nombre de la cookie del token de autenticación
@@ -108,6 +111,7 @@ export class HttpAuthAdapter implements IAuthPort {
   private readonly secureStorage = inject(SecureStorageService);
   private readonly jwtService = inject(JwtService);
   private readonly logger = inject(LoggerService);
+  private readonly webAuthnAdapter = inject(WebAuthnAdapter);
   private readonly apiUrl = environment.API_URL;
   private currentUser: IUser | null = null;
   private userInitialized = false;
@@ -572,5 +576,277 @@ export class HttpAuthAdapter implements IAuthPort {
     };
 
     return user;
+  }
+
+  /**
+   * Solicita las opciones de registro de Passkey desde el servidor
+   */
+  async requestPasskeyRegistrationOptions(email: string): Promise<IPasskeyRegistrationOptions> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<IPasskeyRegistrationOptions>(
+          `${this.apiUrl}/auth/passkey/register/options`,
+          { email },
+        ),
+      );
+      return response;
+    } catch (error: unknown) {
+      this.logger.error('Error al solicitar opciones de registro de Passkey');
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        throw new Error(errorBody?.message ?? 'Error al obtener opciones de registro de Passkey');
+      }
+      throw new Error('Error al obtener opciones de registro de Passkey');
+    }
+  }
+
+  /**
+   * Completa el registro de una Passkey en el servidor
+   */
+  async completePasskeyRegistration(
+    email: string,
+    credential: PublicKeyCredential,
+    deviceName?: string,
+  ): Promise<IAuthResult> {
+    try {
+      // Serializar la credencial para enviarla al servidor
+      const serializedCredential =
+        this.webAuthnAdapter.serializeCredentialForRegistration(credential);
+
+      const payload = {
+        email,
+        credential: serializedCredential,
+        deviceName: deviceName ?? 'Dispositivo sin nombre',
+      };
+
+      const response = await firstValueFrom(
+        this.http.post<{ type: string; message: string }>(
+          `${this.apiUrl}/auth/passkey/register/complete`,
+          payload,
+        ),
+      );
+
+      if (response.type === 'success') {
+        return {
+          success: true,
+        };
+      }
+
+      return {
+        success: false,
+        error: response.message ?? 'Error al registrar la Passkey',
+      };
+    } catch (error: unknown) {
+      this.logger.error('Error al completar el registro de Passkey');
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        return {
+          success: false,
+          error: errorBody?.message ?? 'Error al registrar la Passkey',
+        };
+      }
+      return {
+        success: false,
+        error: 'Error al registrar la Passkey',
+      };
+    }
+  }
+
+  /**
+   * Solicita las opciones de autenticación con Passkey desde el servidor
+   */
+  async requestPasskeyAuthenticationOptions(
+    email?: string,
+  ): Promise<IPasskeyAuthenticationOptions> {
+    try {
+      const payload = email ? { email } : {};
+      const response = await firstValueFrom(
+        this.http.post<IPasskeyAuthenticationOptions>(
+          `${this.apiUrl}/auth/passkey/login/options`,
+          payload,
+        ),
+      );
+      return response;
+    } catch (error: unknown) {
+      this.logger.error('Error al solicitar opciones de autenticación con Passkey');
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        throw new Error(errorBody?.message ?? 'Error al autenticar con Passkey');
+      }
+      throw new Error('Error al autenticar con Passkey');
+    }
+  }
+
+  /**
+   * Completa la autenticación con Passkey
+   */
+  async completePasskeyAuthentication(
+    credential: PublicKeyCredential,
+    deviceInfo?: IDeviceInfo,
+    email?: string,
+  ): Promise<IAuthResult> {
+    try {
+      // Serializar la credencial para enviarla al servidor
+      const serializedCredential =
+        this.webAuthnAdapter.serializeCredentialForAuthentication(credential);
+
+      const payload: {
+        credential: ReturnType<
+          InstanceType<
+            typeof HttpAuthAdapter
+          >['webAuthnAdapter']['serializeCredentialForAuthentication']
+        >;
+        email?: string;
+        deviceToken?: string;
+        deviceBrand?: string | null;
+        deviceModel?: string;
+        deviceOs?: string;
+        deviceType?: string | null;
+      } = {
+        credential: serializedCredential,
+      };
+
+      // Agregar email si está disponible (para vincular con el challenge)
+      if (email) {
+        payload.email = email;
+      }
+
+      // Agregar información del dispositivo si está disponible
+      if (deviceInfo) {
+        payload.deviceToken = deviceInfo.deviceToken;
+        payload.deviceBrand = deviceInfo.deviceBrand;
+        payload.deviceModel = deviceInfo.deviceModel;
+        payload.deviceOs = deviceInfo.deviceOs;
+        payload.deviceType = deviceInfo.deviceType;
+      }
+
+      const loginResponse = await firstValueFrom(
+        this.http.post<ILoginResponse>(`${this.apiUrl}/auth/passkey/login/complete`, payload),
+      );
+
+      // Verificar que la respuesta sea exitosa
+      if (
+        loginResponse?.type === 'success' &&
+        loginResponse?.data?.token !== undefined &&
+        loginResponse?.data?.user !== undefined
+      ) {
+        const token = loginResponse.data.token;
+
+        // Validar formato del token antes de guardarlo
+        if (!this.jwtService.isValidFormat(token)) {
+          this.logger.error('Token recibido con formato inválido');
+          return {
+            success: false,
+            error: 'Error de autenticación: token inválido',
+          };
+        }
+
+        // Verificar que el token no esté expirado
+        if (this.jwtService.isExpired(token)) {
+          this.logger.error('Token recibido ya expirado');
+          return {
+            success: false,
+            error: 'Error de autenticación: sesión expirada',
+          };
+        }
+
+        // Guardar token en cookie segura
+        if (isPlatformBrowser(this.platformId)) {
+          // Calcular días hasta expiración para la cookie
+          const daysUntilExpiry = Math.max(
+            1,
+            Math.floor(this.jwtService.getTimeUntilExpiry(token) / 86400),
+          );
+          this.secureStorage.setSecureCookie(AUTH_TOKEN_COOKIE, token, daysUntilExpiry);
+        }
+
+        // Obtener información completa del usuario desde /auth/session
+        try {
+          const sessionResponse = await this.getSessionData();
+          const user = this.mapSessionToUser(sessionResponse);
+
+          this.currentUser = user;
+
+          // Guardar datos del usuario cifrados (sin datos ultra-sensibles)
+          this.storeUserDataSecurely(user);
+
+          return {
+            success: true,
+            token: token,
+            user: user,
+          };
+        } catch (_sessionError) {
+          this.logger.warn('Error al obtener sesión completa, usando datos del login');
+          // Si falla la sesión, usar solo los datos del login
+          const userData = loginResponse.data.user;
+          const user: IUser = {
+            id: userData.userId?.toString() ?? '',
+            email: userData.userEmail ?? '',
+            name: userData.userEmail ?? '',
+          };
+          this.currentUser = user;
+          this.storeUserDataSecurely(user);
+
+          return {
+            success: true,
+            token: token,
+            user: user,
+          };
+        }
+      }
+
+      // Si la respuesta no es exitosa, devolver error
+      return {
+        success: false,
+        error: loginResponse?.message ?? 'Error al autenticar con Passkey',
+      };
+    } catch (error: unknown) {
+      this.logger.error('Error en autenticación con Passkey');
+
+      // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          return {
+            success: false,
+            error: errorBody.message,
+          };
+        }
+      }
+
+      if (error instanceof Error && error.message.length > 0) {
+        return {
+          success: false,
+          error: error.message,
+        };
+      }
+
+      return {
+        success: false,
+        error: 'Error al autenticar con Passkey. Intenta nuevamente.',
+      };
+    }
+  }
+
+  /**
+   * Verifica si el navegador soporta Passkeys (WebAuthn)
+   */
+  isPasskeySupported(): boolean {
+    return this.webAuthnAdapter.isWebAuthnSupported();
+  }
+
+  /**
+   * Verifica si el usuario tiene Passkeys registradas
+   */
+  async hasPasskeys(email: string): Promise<boolean> {
+    try {
+      const response = await firstValueFrom(
+        this.http.post<{ hasPasskeys: boolean }>(`${this.apiUrl}/auth/passkey/check`, { email }),
+      );
+      return response.hasPasskeys;
+    } catch {
+      // Si hay error, asumir que no tiene passkeys
+      return false;
+    }
   }
 }

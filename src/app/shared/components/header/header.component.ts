@@ -66,10 +66,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
       translationKey: 'menu.attendance',
     },
     {
-      label: 'Calendario',
+      label: 'Vacaciones',
       route: '/dashboard/vacations',
+      icon: 'pi-briefcase',
+      translationKey: 'menu.vacations',
+    },
+    {
+      label: 'Calendario general',
+      route: '/dashboard/calendar',
       icon: 'pi-calendar',
-      translationKey: 'menu.calendar',
+      translationKey: 'menu.calendarGeneral',
     },
     {
       label: 'Avisos',

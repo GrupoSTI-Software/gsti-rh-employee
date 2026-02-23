@@ -67,3 +67,34 @@
   color: var(--text-secondary);
   opacity: 0.5;
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: $padding-md 0;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  span {
+    padding: 0 $padding-sm;
+  }
+}
+
+.passkey-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $gap-sm;
+
+  i {
+    font-size: $font-size-lg;
+  }
+}
