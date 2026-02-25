@@ -1,10 +1,13 @@
 {
-  "name": "gsti-pwa-empleado",
-  "short_name": "gsti-pwa-empleado",
+  "name": "GSTI Empleado",
+  "short_name": "GSTI",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
+  "theme_color": "#093057",
+  "background_color": "#093057",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

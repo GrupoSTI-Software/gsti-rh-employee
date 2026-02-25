@@ -8,7 +8,8 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  @include safe-area-vertical($spacing-lg);
+  padding: $spacing-lg;
+  @include safe-area-bottom($spacing-lg);
   @include safe-area-horizontal($spacing-lg);
 }
 

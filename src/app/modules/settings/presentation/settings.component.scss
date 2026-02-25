@@ -3,7 +3,8 @@
 
 .settings-container {
   width: 100%;
-  @include safe-area-vertical($spacing-md, $spacing-md);
+  padding: $spacing-md;
+  @include safe-area-bottom($spacing-md);
   @include safe-area-horizontal($spacing-md);
 }
 

@@ -52,6 +52,7 @@ export const routes: Routes = [
         data: {
           breadcrumb: 'checkin',
           label: 'Asistencia',
+          subtitle: 'Registro y monitorización de asistencia',
         },
         loadComponent: () =>
           import('@modules/attendance/presentation/checkin.component').then(

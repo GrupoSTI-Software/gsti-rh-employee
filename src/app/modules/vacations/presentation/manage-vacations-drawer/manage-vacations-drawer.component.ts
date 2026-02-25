@@ -15,6 +15,7 @@ import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import type { IPeriodSummary } from '../vacations-page/vacations-page.component';
 import { IVacationUsed } from '@modules/vacations/domain/entities/vacation-used.interface';
+import { parseLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Sidebar para gestionar vacaciones de un periodo.
@@ -66,7 +67,7 @@ export class ManageVacationsDrawerComponent {
    */
   formatVacationDate(dateStr: string): string {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
+    const d = parseLocalDate(dateStr);
     return d.toLocaleDateString('es-MX', {
       year: 'numeric',
       month: 'long',

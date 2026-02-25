@@ -22,7 +22,7 @@ export interface IAttendance {
   isWorkDisabilityDate: boolean;
   isVacationDate: boolean;
   isHoliday: boolean;
-  workHoliday: IWorkHoliday | null;
+  holiday: IWorkHoliday | null;
   assistFlatList: IAssistance[];
   exceptions: IException[];
 }

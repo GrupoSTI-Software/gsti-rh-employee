@@ -28,6 +28,7 @@ import { IExceptionRequestDetail } from '../../domain/entities/exception-request
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
+import { parseLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Componente drawer para crear solicitudes de excepciones de turno
@@ -275,7 +276,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
    * Formatea una fecha para mostrar
    */
   formatRequestDate(dateString: string): string {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const currentLang = this.translateService.currentLang || 'es';
     const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
     return date.toLocaleDateString(locale, {
@@ -466,8 +467,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     return this.allRequests().some((request) => {
       if (!request.requestedDate) return false;
 
-      // Parsear la fecha de la solicitud
-      const requestDate = new Date(request.requestedDate);
+      const requestDate = parseLocalDate(request.requestedDate);
       if (isNaN(requestDate.getTime())) return false;
 
       const requestYear = requestDate.getFullYear();
@@ -563,7 +563,7 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
    */
   updateDate(index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const newDate = new Date(input.value);
+    const newDate = parseLocalDate(input.value);
 
     // Validar que la fecha no tenga una solicitud
     if (this.hasRequestForDate(newDate)) {

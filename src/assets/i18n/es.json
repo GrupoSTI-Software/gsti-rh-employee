@@ -120,7 +120,7 @@
   "attendance": {
     "title": "Registro de Asistencia",
     "subtitle": "Registra tu entrada y salida",
-    "register": "Registrar",
+    "register": "Iniciar Turno",
     "checkIn": "Entrada",
     "checkOut": "Salida",
     "checkEatIn": "Entrada a Comer",
@@ -156,7 +156,8 @@
     "previousMonth": "Mes anterior",
     "nextMonth": "Mes siguiente",
     "more": "Más",
-    "done": "Listo"
+    "done": "Listo",
+    "restDay": "Día de descanso"
   },
   "profile": {
     "title": "Mi Perfil",

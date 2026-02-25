@@ -7,6 +7,8 @@
     "ssl": "ng serve --host 0.0.0.0 --ssl --ssl-key ssl/localhost-key.pem --ssl-cert ssl/localhost.pem",
     "prestart": "node scripts/load-env.js",
     "start": "concurrently --names \"DEV,LINT\" --prefix-colors \"cyan,yellow\" \"ng serve\" \"npm run lint:watch\"",
+    "predev": "node scripts/load-env.js",
+    "dev": "ng serve --open",
     "start:dev-only": "ng serve",
     "prebuild": "node scripts/load-env.js",
     "build": "ng build",

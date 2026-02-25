@@ -17,6 +17,7 @@ import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { INotice, INoticesPaginatedResponse } from '../domain/notices.port';
 import { LoggerService } from '@core/services/logger.service';
+import { parseLocalDate } from '@shared/utils/date.utils';
 
 @Component({
   selector: 'app-notices-list',
@@ -156,7 +157,7 @@ export class NoticesListComponent implements OnInit {
    * Formatea la fecha del aviso
    */
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const currentLang = this.translateService.currentLang || 'es';
     const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
     return date.toLocaleDateString(locale, {

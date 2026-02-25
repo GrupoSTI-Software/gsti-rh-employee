@@ -37,6 +37,7 @@ import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
+import { formatLocalDate, parseLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -203,6 +204,32 @@ export class CheckinComponent implements OnInit, OnDestroy {
     });
   });
 
+  /**
+   * Nombre del turno formateado para mostrar: prefijo "De"/"From", solo la parte antes del primer "-",
+   * en español la palabra "to" se reemplaza por "a", y sufijo " Hrs".
+   */
+  readonly displayShiftName = computed(() => {
+    const raw = this.attendance()?.shiftName?.trim();
+    if (!raw) return '';
+    const beforeDash = raw.includes('-') ? raw.split('-')[0].trim() : raw;
+    const lang = this.translateService.currentLang || 'es';
+    const name = lang === 'es' ? beforeDash.replace(/\bto\b/gi, 'a') : beforeDash;
+    const prefix = lang === 'es' ? 'De ' : 'From ';
+    return prefix + name + ' Hrs';
+  });
+
+  /**
+   * Nombre del feriado truncado a 20 caracteres con "..." si es demasiado largo.
+   */
+  readonly displayHolidayName = computed(() => {
+    const holidayName = this.attendance()?.holiday?.holidayName ?? '';
+    const maxLength = 20;
+    if (holidayName.length > maxLength) {
+      return holidayName.substring(0, maxLength) + '...';
+    }
+    return holidayName;
+  });
+
   private updateCurrentTime(): void {
     const now = new Date();
     const currentLang = this.translateService.currentLang || 'es';
@@ -211,6 +238,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     });
     this.currentTime.set(timeString);
   }
@@ -237,10 +265,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
   });
 
   /**
+   * Indica si la fecha seleccionada es el día de hoy (mismo día calendario).
+   * Se usa para ocultar timer y botones de checks cuando se consulta otro día.
+   */
+  readonly isSelectedDateToday = computed(() => {
+    const selected = this.selectedDate();
+    const today = new Date();
+    return (
+      selected.getFullYear() === today.getFullYear() &&
+      selected.getMonth() === today.getMonth() &&
+      selected.getDate() === today.getDate()
+    );
+  });
+
+  /**
    * Obtiene el HTML sanitizado del icono del día festivo trabajado
    */
   readonly holidayIconHtml = computed((): SafeHtml | null => {
-    const icon = this.attendance()?.workHoliday?.holidayIcon;
+    const icon = this.attendance()?.holiday?.holidayIcon;
     if (!icon) {
       return null;
     }
@@ -393,7 +435,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     try {
       const date = this.selectedDate();
-      const dateStart = date.toISOString().split('T')[0];
+      const dateStart = formatLocalDate(date);
       const dateEnd = dateStart;
 
       const attendance = await this.getAttendanceUseCase.execute(
@@ -1644,7 +1686,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   onDateSelect(event: Event): void {
     const target = event.target as HTMLInputElement;
     if (target?.value) {
-      const selectedDate = new Date(target.value);
+      const selectedDate = parseLocalDate(target.value);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       selectedDate.setHours(0, 0, 0, 0);
@@ -1683,7 +1725,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * Formatea la fecha de la excepción
    */
   formatExceptionDate(dateString: string): string {
-    const date = new Date(dateString);
+    const date = parseLocalDate(dateString);
     const currentLang = this.translateService.currentLang || 'es';
     const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
     return date.toLocaleDateString(locale, {
@@ -1732,6 +1774,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     });
 
     return `${dateStr} ${timeStr}`;
@@ -1749,6 +1792,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     });
   }
 

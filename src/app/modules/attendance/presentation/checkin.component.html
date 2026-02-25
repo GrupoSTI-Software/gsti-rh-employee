@@ -1,11 +1,5 @@
 <div class="checkin-container" [@fadeIn]>
   <div class="checkin-wrapper">
-    <!-- Título y subtítulo -->
-    <div class="page-header">
-      <h1 class="page-title">{{ 'attendance.title' | translate }}</h1>
-      <p class="page-subtitle">{{ 'attendance.subtitle' | translate }}</p>
-    </div>
-
     <div class="checkin-card" [@fadeInUp]>
       <!-- Calendario semanal -->
       <app-week-calendar
@@ -15,65 +9,222 @@
     </div>
 
     <div class="checkin-card" [@fadeInUp]>
-      <!-- Icono de día festivo trabajado -->
-      @if (holidayIconHtml()) {
-        <div  [pTooltip]="attendance()?.workHoliday?.holidayName ?? ''" class="holiday-icon-container" [innerHTML]="holidayIconHtml()"></div>
-      }
 
       <!-- Header -->
       <div class="checkin-header">
         <div class="header-actions">
           <button
             type="button"
-            class="action-icon-button"
+            class="action-icon-button bg-class"
             (click)="openExceptionsDialog()"
             [attr.aria-label]="'attendance.exceptions' | translate"
           >
-            <i class="pi pi-file-check"></i>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M12.5 21h-6.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v3" />
+              <path d="M16 3v4" />
+              <path d="M8 3v4" />
+              <path d="M4 11h12" />
+              <path d="M20 14l2 2h-3" />
+              <path d="M20 18l2 -2" />
+              <path d="M19 16a3 3 0 1 0 2 5.236" />
+            </svg>
           </button>
           <button
             type="button"
-            class="action-icon-button"
+            class="action-icon-button bg-class"
             (click)="openRecordsDialog()"
             [attr.aria-label]="'attendance.records' | translate"
           >
-            <i class="pi pi-list"></i>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M3 12a9 9 0 0 0 5.998 8.485m12.002 -8.485a9 9 0 1 0 -18 0" />
+              <path d="M12 7v5" />
+              <path d="M12 15h2a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-1a1 1 0 0 0 -1 1v1a1 1 0 0 0 1 1h2" />
+              <path d="M18 15v2a1 1 0 0 0 1 1h1" />
+              <path d="M21 15v6" />
+            </svg>
           </button>
           <button
             type="button"
-            class="action-icon-button"
+            class="action-icon-button bg-class"
             (click)="openDatePicker()"
             [attr.aria-label]="'attendance.selectDate' | translate"
           >
-            <i class="pi pi-calendar"></i>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+              <path d="M16 3v4" />
+              <path d="M8 3v4" />
+              <path d="M4 11h16" />
+              <path d="M7 14h.013" />
+              <path d="M10.01 14h.005" />
+              <path d="M13.01 14h.005" />
+              <path d="M16.015 14h.005" />
+              <path d="M13.015 17h.005" />
+              <path d="M7.01 17h.005" />
+              <path d="M10.01 17h.005" />
+            </svg>
           </button>
         </div>
       </div>
     </div>
 
     <div class="checkin-card" [@fadeInUp]>
-      <!-- Icono de reloj circular con botón de registro -->
-      <button
-        type="button"
-        class="clock-icon-container"
-        [@fadeInUp]
-        (click)="handleRegisterCheckIn()"
-        [disabled]="!canCheckIn() || loading()"
-        [attr.aria-label]="'attendance.register' | translate"
-      >
-        <div class="clock-icon-circle">
-          <app-check-in-icon [size]="40" [color]="'white'"></app-check-in-icon>
-          <span class="register-label">{{ 'attendance.register' | translate }}</span>
-        </div>
-      </button>
-
-      <!-- Información de fecha y hora -->
-      <div class="time-info-card" [@fadeInUp]>
-        <div class="time-display">{{ currentTime() }}</div>
-        <div class="date-display">{{ formattedDate() }}</div>
+      <!-- Zona azul: Información del turno -->
+      <div class="shift-info-section" [@fadeInUp]>
         @if (attendance()?.shiftInfo) {
-          <div class="shift-display">
-            {{ attendance()?.shiftName }}
+          <div class="shift-info-content">
+            <div class="shift-name">{{ displayShiftName() }}</div>
+          </div>
+        } @else {
+          <div class="shift-info-content">
+            <div class="shift-name">Sin turno asignado</div>
+          </div>
+        }
+        @if (getExceptions().length > 0) {
+          <div class="shift-exceptions">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ getExceptions().length }} excepción(es)</span>
+          </div>
+        }
+      </div>
+
+      <div class="main-layout" [class.main-layout--timer-only]="!isSelectedDateToday()">
+        <div class="time-info-section" [@fadeInUp]>
+            <div class="time-display">{{ currentTime() }}</div>
+            <div class="date-display">{{ formattedDate() }}</div>
+            @if (attendance()?.isRestDay) {
+              <div class="day-badge">
+                <div class="day-badge-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--info)"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M4 12h6l-6 8h6" />
+                    <path d="M14 4h6l-6 8h6" />
+                  </svg>
+                </div>
+                <span>{{ 'attendance.restDay' | translate }}</span>
+              </div>
+            }
+            @if (attendance()?.isHoliday) {
+              <div class="day-badge">
+                @if (holidayIconHtml()) {
+                  <div class="day-badge-icon" [innerHTML]="holidayIconHtml()"></div>
+                }
+                <span>{{ displayHolidayName() }}</span>
+              </div>
+            }
+        </div>
+
+        @if (isSelectedDateToday()) {
+          <div class="action-column" [@fadeInUp]>
+            @if (!attendance()?.checkEatOutTime) {
+              @if (!attendance()?.checkInTime) {
+                <button
+                  type="button"
+                  class="checkin-button"
+                  (click)="handleRegisterCheckIn()"
+                  [disabled]="!canCheckIn() || loading()"
+                  [attr.aria-label]="'attendance.register' | translate"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                    <path d="M11.87 21.48a1.992 1.992 0 0 1 -1.283 -.58l-4.244 -4.243a8 8 0 1 1 13.355 -3.474" />
+                    <path d="M15 19l2 2l4 -4" />
+                  </svg>
+                  <span class="button-label">{{ 'attendance.register' | translate }}</span>
+                </button>
+              } @else if (!attendance()?.checkEatInTime) {
+                <button
+                  type="button"
+                  class="checkin-button checkin-button--warning"
+                  (click)="handleRegisterCheckIn()"
+                  [disabled]="!canCheckIn() || loading()"
+                  [attr.aria-label]="'attendance.checkEatIn' | translate"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#88a4bf"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    >
+                    <path d="M20.956 11.107a9 9 0 1 0 -9.579 9.871" />
+                    <path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" />
+                    <path d="M12 7v5l.5 .5" />
+                  </svg>
+                  <span class="button-label">{{ 'attendance.checkEatIn' | translate }}</span>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="checkin-button checkin-button--warning"
+                  (click)="handleRegisterCheckIn()"
+                  [disabled]="!canCheckIn() || loading()"
+                  [attr.aria-label]="'attendance.checkEatOut' | translate"
+                >
+                  <app-eat-out-icon [size]="32" [color]="'white'"></app-eat-out-icon>
+                  <span class="button-label">{{ 'attendance.checkEatOut' | translate }}</span>
+                </button>
+              }
+            }
+
+            @if (attendance()?.checkInTime) {
+              <button
+                type="button"
+                class="checkout-button"
+                (click)="handleRegisterCheckIn()"
+                [disabled]="!canCheckIn() || loading()"
+                [attr.aria-label]="'attendance.checkOut' | translate"
+              >
+                <app-check-out-icon [size]="32" [color]="'white'"></app-check-out-icon>
+                <span class="button-label">{{ 'attendance.checkOut' | translate }}</span>
+              </button>
+            }
           </div>
         }
       </div>

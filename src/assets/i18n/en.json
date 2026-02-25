@@ -120,7 +120,7 @@
   "attendance": {
     "title": "Attendance Check",
     "subtitle": "Register your check-in and check-out",
-    "register": "Register",
+    "register": "Start Shift",
     "checkIn": "Check In",
     "checkOut": "Check Out",
     "checkEatIn": "Lunch In",
@@ -156,7 +156,8 @@
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "more": "More",
-    "done": "Done"
+    "done": "Done",
+    "restDay": "Rest day"
   },
   "profile": {
     "title": "My Profile",

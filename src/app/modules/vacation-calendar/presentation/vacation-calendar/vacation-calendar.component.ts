@@ -33,6 +33,7 @@ import { GetAttendanceUseCase } from '@modules/attendance/application/get-attend
 import { IAttendance } from '@modules/attendance/domain/attendance.port';
 import { GetWorkDisabilitiesUseCase } from '../../application/get-work-disabilities.use-case';
 import { GetExceptionRequestsUseCase } from '../../application/get-exception-requests.use-case';
+import { parseLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Tipo de evento en el calendario
@@ -883,7 +884,7 @@ export class VacationCalendarComponent implements OnInit {
 
     // Obtener fecha de cumpleaños
     if (person?.personBirthday) {
-      const birthDate = new Date(person.personBirthday);
+      const birthDate = parseLocalDate(person.personBirthday);
       this.employeeBirthday.set({
         month: birthDate.getMonth(),
         day: birthDate.getDate(),
@@ -892,7 +893,7 @@ export class VacationCalendarComponent implements OnInit {
 
     // Obtener fecha de contratación (aniversario)
     if (person?.employee?.employeeHireDate) {
-      const hireDate = new Date(person.employee.employeeHireDate);
+      const hireDate = parseLocalDate(person.employee.employeeHireDate);
       this.employeeAnniversary.set({
         month: hireDate.getMonth(),
         day: hireDate.getDate(),

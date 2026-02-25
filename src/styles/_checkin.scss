@@ -231,7 +231,7 @@
     border-left: 3px solid var(--warning);
   }
 
-  .record-item { border-left-color: var(--primary); }
+  .record-item { border-left-color: var(--border-color); }
 
   .exception-header,
   .record-header {
@@ -247,7 +247,7 @@
   }
 
   .exception-type i { color: var(--warning); }
-  .record-time i { color: var(--primary); }
+  .record-time i { color: var(--text-secondary); }
   .exception-type-name { font-weight: $font-weight-semibold; color: var(--text-primary); }
   .record-time .time-value {
     font-weight: $font-weight-semibold;

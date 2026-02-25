@@ -109,18 +109,19 @@
         },
         "serve": {
           "options": {
-            "host": "localhost",
+            "host": "0.0.0.0",
             "port": 4200,
+            "liveReload": true,
+            "hmr": true,
             "allowedHosts": [
               "unmollified-kayla-refractively.ngrok-free.dev",
               "*.loca.lt",
-              "*.trycloudflare.com"
+              "*.trycloudflare.com",
+              "*.tunnelmole.net",
+              "mft5mf-ip-187-190-153-176.tunnelmole.net"
             ]
           },
           "builder": "@angular/build:dev-server",
-          "options": {
-            "host": "0.0.0.0"
-          },
           "configurations": {
             "production": {
               "buildTarget": "gsti-pwa-empleado:build:production"

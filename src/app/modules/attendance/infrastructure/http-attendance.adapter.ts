@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IAttendancePort, IAttendance, IAttendanceApiResponse } from '../domain/attendance.port';
+import { IWorkHoliday } from '../domain/entities/work-holiday.interface';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
 
@@ -50,6 +51,8 @@ export class HttpAttendanceAdapter implements IAttendancePort {
           return date.toLocaleTimeString('es-MX', {
             hour: '2-digit',
             minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
           });
         } catch {
           return null;
@@ -88,6 +91,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
           return startDate.toLocaleTimeString('es-MX', {
             hour: '2-digit',
             minute: '2-digit',
+            hour12: false,
           });
         } catch {
           return null;
@@ -127,7 +131,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
         isWorkDisabilityDate: assist.isWorkDisabilityDate,
         isVacationDate: assist.isVacationDate,
         isHoliday: assist.isHoliday,
-        workHoliday: assist.workHoliday ?? null,
+        holiday: assist.holiday as IWorkHoliday | null,
         assistFlatList: assist.assitFlatList ?? [],
         exceptions: (assist.exceptions ?? []).map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
