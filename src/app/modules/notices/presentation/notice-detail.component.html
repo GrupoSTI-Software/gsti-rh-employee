@@ -41,8 +41,38 @@
           </div>
         </div>
 
-        <!-- Contenido HTML -->
-        <div class="notice-content" [innerHTML]="getSafeHtml(notice()!.noticeDescription)"></div>
+        <!-- Contenido: imagen si la descripción es URL de imagen -->
+        @if (isImageUrl()) {
+          <div class="notice-image-container">
+            <img
+              [src]="notice()!.noticeDescription.trim()"
+              [alt]="notice()!.noticeSubject"
+              class="notice-image"
+              loading="lazy"
+            />
+          </div>
+        }
+
+        <!-- Contenido: tarjeta de descarga si la descripción es URL de PDF -->
+        @if (isPdfUrl()) {
+          <div class="notice-pdf-card" click="downloadPdf()">
+            <div class="pdf-icon-wrapper">
+              <i class="pi pi-file-pdf"></i>
+            </div>
+            <div class="pdf-info">
+              <span class="pdf-file-name">{{ pdfFileName() }}</span>
+              <span class="pdf-action">{{ 'notices.downloadPdf' | translate }}</span>
+            </div>
+            <div class="pdf-download-icon">
+              <i class="pi pi-download"></i>
+            </div>
+          </div>
+        }
+
+        <!-- Contenido HTML cuando no es URL de recurso -->
+        @if (isHtmlContent()) {
+          <div class="notice-content" [innerHTML]="getSafeHtml(notice()!.noticeDescription)"></div>
+        }
       </div>
     }
   </div>

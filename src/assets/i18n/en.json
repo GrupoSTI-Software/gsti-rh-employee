@@ -353,7 +353,8 @@
     "retry": "Retry",
     "filterAll": "All",
     "filterUnread": "Unread",
-    "filterRead": "Read"
+    "filterRead": "Read",
+    "downloadPdf": "Tap to download the file"
   },
   "vacationsModule": {
     "title": "Vacations",

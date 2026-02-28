@@ -1,4 +1,11 @@
-import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -11,6 +18,10 @@ import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { INotice } from '../domain/notices.port';
 import { LoggerService } from '@core/services/logger.service';
+
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
+const PDF_EXTENSION = /\.pdf(\?.*)?$/i;
+const URL_PATTERN = /^https?:\/\/.+/i;
 
 @Component({
   selector: 'app-notice-detail',
@@ -49,10 +60,52 @@ export class NoticeDetailComponent implements OnInit {
   readonly error = signal<string | null>(null);
 
   /**
+   * Determina si la descripción del aviso es una URL de imagen
+   */
+  readonly isImageUrl = computed(() => {
+    const description = this.notice()?.noticeDescription?.trim() ?? '';
+    return URL_PATTERN.test(description) && IMAGE_EXTENSIONS.test(description);
+  });
+
+  /**
+   * Determina si la descripción del aviso es una URL de PDF
+   */
+  readonly isPdfUrl = computed(() => {
+    const description = this.notice()?.noticeDescription?.trim() ?? '';
+    return URL_PATTERN.test(description) && PDF_EXTENSION.test(description);
+  });
+
+  /**
+   * Determina si la descripción es contenido HTML/texto plano (no es URL de recurso)
+   */
+  readonly isHtmlContent = computed(() => !this.isImageUrl() && !this.isPdfUrl());
+
+  /**
+   * Extrae el nombre del archivo PDF desde la URL
+   */
+  readonly pdfFileName = computed(() => {
+    const description = this.notice()?.noticeDescription?.trim() ?? '';
+    if (!this.isPdfUrl()) return '';
+    const segments = description.split('/');
+    const lastSegment = segments[segments.length - 1] ?? '';
+    return decodeURIComponent(lastSegment.split('?')[0]);
+  });
+
+  /**
    * Obtiene el contenido HTML sanitizado del aviso
    */
   getSafeHtml(content: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(content);
+  }
+
+  /**
+   * Descarga el archivo PDF abriendo la URL en una nueva pestaña
+   */
+  downloadPdf(): void {
+    const url = this.notice()?.noticeDescription?.trim();
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   }
 
   ngOnInit(): void {

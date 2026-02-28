@@ -115,6 +115,95 @@
   }
 }
 
+// Imagen del aviso
+.notice-image-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+
+  .notice-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: $radius-md;
+    object-fit: contain;
+  }
+}
+
+// Tarjeta de descarga de PDF
+.notice-pdf-card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  padding: $spacing-xl;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  background-color: var(--surface);
+  cursor: pointer;
+  transition:
+    background-color $transition-base,
+    border-color $transition-base,
+    box-shadow $transition-base;
+
+  &:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .pdf-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: $radius-md;
+    background-color: var(--danger);
+    flex-shrink: 0;
+
+    i {
+      font-size: $font-size-xl;
+      color: #fff;
+    }
+  }
+
+  .pdf-info {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    min-width: 0;
+    flex: 1;
+
+    .pdf-file-name {
+      font-size: $font-size-base;
+      font-weight: $font-weight-semibold;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pdf-action {
+      font-size: $font-size-sm;
+      color: var(--primary);
+      font-weight: $font-weight-medium;
+    }
+  }
+
+  .pdf-download-icon {
+    flex-shrink: 0;
+
+    i {
+      font-size: $font-size-xl;
+      color: var(--text-secondary);
+      transition: color $transition-base;
+    }
+  }
+
+  &:hover .pdf-download-icon i {
+    color: var(--primary);
+  }
+}
+
 // Contenido HTML del aviso
 .notice-content {
   color: var(--text-primary);
