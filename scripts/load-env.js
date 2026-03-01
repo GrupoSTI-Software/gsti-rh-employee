@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const envFile = path.join(__dirname, '..', '.env');
 const envDevPath = path.join(__dirname, '..', 'src', 'environments', 'environment.ts');
 const envProdPath = path.join(__dirname, '..', 'src', 'environments', 'environment.prod.ts');
+const swPath = path.join(__dirname, '..', 'src', 'assets', 'firebase-messaging-sw.js');
 
 /**
  * Convierte una cadena de camelCase o cualquier formato a UPPER_SNAKE_CASE.
@@ -112,6 +113,35 @@ ${properties.join(',\n')}
 `;
 };
 
+const injectEnvIntoServiceWorker = (envVars) => {
+  if (!fs.existsSync(swPath)) return;
+
+  let content = fs.readFileSync(swPath, 'utf-8');
+
+  const requiredKeys = [
+    'FIREBASE_VAPID_KEY',
+    'FIREBASE_API_KEY',
+    'FIREBASE_AUTH_DOMAIN',
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_STORAGE_BUCKET',
+    'FIREBASE_MESSAGING_SENDER_ID',
+    'FIREBASE_APP_ID'
+  ];
+
+  requiredKeys.forEach((key) => {
+    if (!envVars[key]) {
+      console.warn(`⚠️  ${key} no está definido en .env`);
+      return;
+    }
+
+    const value = envVars[key].value;
+    content = content.replaceAll(`__${key}__`, value);
+  });
+
+  fs.writeFileSync(swPath, content);
+  console.log('🔥 firebase-messaging-sw.js actualizado con variables de entorno');
+};
+
 // Leer variables de entorno desde .env
 const envVars = readEnvFile();
 
@@ -125,7 +155,7 @@ if (!envVars.PRODUCTION) {
 // Escribir archivos
 fs.writeFileSync(envDevPath, generateEnvironmentContent(envVars));
 fs.writeFileSync(envProdPath, generateEnvironmentContent(envVars));
-
+injectEnvIntoServiceWorker(envVars);
 console.log('✅ Archivos de entorno generados correctamente');
 console.log(`   📄 ${envDevPath}`);
 console.log(`   📄 ${envProdPath}`);

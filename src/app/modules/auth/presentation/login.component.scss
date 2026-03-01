@@ -11,11 +11,13 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
+  @include safe-area-vertical(0px, 0px);
+  @include safe-area-horizontal($spacing-md);
 }
 
 .login-header {
   position: fixed;
-  top: $padding-xl;
+  top: calc(env(safe-area-inset-top, 0px) + #{$padding-xl});
   margin-left: $padding-lg;
 
   .login-logo {
@@ -28,6 +30,7 @@
 }
 
 .login-card {
+  @include safe-area-bottom($padding);
   position: relative;
   width: 100%;
   padding: $padding-lg;
@@ -42,10 +45,56 @@
   gap: $gap-md;
 }
 
+.forgot-password-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: $padding-md;
+}
+
+.forgot-password-button {
+  margin-top: $padding-md;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
 .version-info {
   text-align: center;
   margin-top: $padding-md;
   font-size: $font-size-xs;
   color: var(--text-secondary);
   opacity: 0.5;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: $padding-md 0;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  span {
+    padding: 0 $padding-sm;
+  }
+}
+
+.passkey-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $gap-sm;
+
+  i {
+    font-size: $font-size-lg;
+  }
 }

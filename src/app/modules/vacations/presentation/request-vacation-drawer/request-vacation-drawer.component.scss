@@ -1,0 +1,282 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: $z-index-modal-backdrop;
+  backdrop-filter: blur(2px);
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 90vw;
+  max-width: 500px;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+  z-index: $z-index-modal;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  @include safe-area-horizontal($spacing-md);
+}
+
+.drawer-header {
+  @include safe-area-top($spacing-lg);
+  padding: $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  .drawer-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+  }
+
+  .close-button {
+    @include button-base;
+    background: var(--primary);
+    color: white;
+    padding: $spacing-sm;
+    min-width: 36px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: $radius-full;
+
+    i {
+      font-size: $font-size-lg;
+    }
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+.drawer-content {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+  @include flex-column;
+  gap: $spacing-xl;
+}
+
+.drawer-subtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.drawer-hint {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: $font-weight-medium;
+}
+
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: rgba(205, 54, 12, 0.1);
+  border: 1px solid var(--danger);
+  border-radius: $radius;
+  color: var(--danger);
+  font-size: $font-size-sm;
+  flex-wrap: wrap;
+
+  .close-error-button {
+    @include button-base;
+    margin-left: auto;
+    background: transparent;
+    color: var(--danger);
+    padding: $spacing-xs;
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+.form-label .required {
+  color: var(--danger);
+}
+
+.dates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+}
+
+.add-date-button {
+  @include button-base;
+  @include button-primary;
+  @include flex-center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-sm;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.no-dates-message {
+  @include flex-center;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  background: var(--bg-secondary);
+  border-radius: $radius-md;
+  color: var(--text-secondary);
+  text-align: center;
+
+  i {
+    font-size: $font-size-lg;
+  }
+}
+
+.dates-list {
+  @include flex-column;
+  gap: $spacing-sm;
+}
+
+.date-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+}
+
+.date-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  flex: 1;
+}
+
+.date-error-message {
+  font-size: $font-size-xs;
+  color: var(--danger);
+  margin-top: -$spacing-xs;
+}
+
+.date-input {
+  flex: 1;
+  @include input-base;
+  padding: $spacing-md;
+  font-size: $font-size-base;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+
+  &.invalid {
+    border-color: var(--danger);
+  }
+}
+
+.remove-date-button {
+  @include button-base;
+  background: transparent;
+  color: var(--danger);
+  padding: $spacing-sm;
+  min-width: 36px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--danger);
+
+  &:hover {
+    background: var(--danger);
+    color: var(--bg-primary);
+  }
+}
+
+.submit-disabled-hint {
+  font-size: $font-size-xs;
+  color: var(--text-tertiary);
+  margin: 0;
+  text-align: center;
+}
+
+.request-form {
+  @include flex-column;
+  gap: $spacing-lg;
+}
+
+.form-group {
+  @include form-group;
+}
+
+.form-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+}
+
+.form-input,
+.form-textarea {
+  @include input-base;
+  width: 100%;
+  padding: $spacing-md;
+  border: 1px solid var(--border-color);
+  border-radius: $radius;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: $font-size-base;
+
+  &.input-error {
+    border-color: var(--danger);
+  }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 4rem;
+}
+
+.error-text {
+  @include error-message;
+}
+
+.form-actions {
+  display: flex;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+  @include button-secondary;
+  flex: 1;
+}
+
+.btn-submit {
+  @include button-primary;
+  @include flex-center;
+  gap: $spacing-sm;
+  flex: 1;
+
+  i {
+    font-size: $font-size-base;
+  }
+}

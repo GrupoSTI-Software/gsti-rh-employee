@@ -2,8 +2,10 @@
 @use '../../../../styles/mixins' as *;
 
 .settings-container {
-  // Los estilos de padding y background se heredan del .main-content del dashboard
   width: 100%;
+  padding: $spacing-md;
+  @include safe-area-bottom($spacing-md);
+  @include safe-area-horizontal($spacing-md);
 }
 
 .settings-wrapper {

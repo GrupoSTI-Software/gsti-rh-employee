@@ -1,160 +1,183 @@
 @use '../../../../styles/variables' as *;
 @use '../../../../styles/mixins' as *;
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: $spacing-md $spacing-lg;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-color);
+.bottom-nav {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
+  bottom: $spacing-lg;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: $z-index-fixed;
-  box-shadow: var(--shadow-sm);
-  height: 64px; // Altura fija para calcular padding-top en otros componentes
+  width: calc(100% - #{$spacing-2xl});
+  max-width: 600px;
+  padding: 0 $spacing-md;
   box-sizing: border-box;
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px));
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-}
-
-.menu-button {
-  @include button-base;
+.bottom-nav-container {
+  position: relative;
   background: transparent;
-  color: var(--text-primary);
-  padding: $spacing-sm;
-  min-width: 40px;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 24px;
+  overflow: hidden;
 
-  i {
-    font-size: $font-size-xl;
-  }
-
-  &:hover {
-    background: var(--bg-hover);
+  // El contenido se posiciona dentro de .glass-content
+  .glass-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm $spacing-lg;
+    gap: $spacing-xs;
+    width: 100%;
   }
 }
 
-.navigation-buttons {
-  display: flex;
-  align-items: center;
-  gap: $spacing-xs;
-  margin-left: $spacing-xs;
-
-  @media (max-width: $breakpoint-sm) {
-    // Ocultar botones de navegación en pantallas muy pequeñas si es necesario
-    // display: none;
-  }
-}
-
-.nav-button {
+.nav-item {
   @include button-base;
-  width: 2rem;
-  height: 2rem;
-  min-width: 3rem;
-  padding: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: $radius;
-  transition: background-color $transition-fast, transform $transition-fast;
+  gap: 2px;
+  padding: $spacing-sm;
+  background: transparent;
+  color: rgba(60, 60, 67, 0.6);
+  border: none;
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 52px;
+  height: 52px;
+  flex: 1;
+  max-width: 70px;
+  position: relative;
+  text-decoration: none;
+  z-index: 1;
 
   i {
-    font-size: $font-size-lg;
+    font-size: 22px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
   }
 
-  &:hover:not(.disabled):not(:disabled) {
-    background: var(--bg-hover);
+  &:hover:not(.active) {
+    background: rgba(120, 120, 128, 0.18);
+    color: rgba(60, 60, 67, 0.85);
     transform: scale(1.05);
-  }
-
-  &:active:not(.disabled):not(:disabled) {
-    transform: scale(0.95);
-  }
-
-  &.disabled,
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    background: var(--bg-secondary);
-    
-    &:hover {
-      transform: none;
-      background: var(--bg-secondary);
-    }
-  }
-}
-
-.logo-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-
-  .logo {
-    max-height: 40px;
-    max-width: 120px;
-    object-fit: contain;
-  }
-
-  .logo-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 40px;
-    width: 40px;
 
     i {
-      font-size: $font-size-lg;
-      color: var(--text-secondary);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.active {
+    background: rgba(var(--primary-rgb), 0.75);
+    color: #ffffff;
+
+    i {
+      font-weight: 600;
+    }
+
+    &:hover {
+      background: var(--primary);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.96);
     }
   }
 }
 
-.user-info {
+.nav-item-menu {
+  // Botón del menú lateral - sin estado activo de ruta
+  &:hover {
+    background: rgba(120, 120, 128, 0.18);
+    color: rgba(60, 60, 67, 0.85);
+    transform: scale(1.05);
+
+    i {
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.nav-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #FF3B30;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: $font-weight-semibold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  line-height: 1;
+}
 
-  .user-name {
-    font-size: $font-size-sm;
-    color: var(--text-secondary);
-    display: none; // Ocultar en móvil, mostrar en tablet/desktop si es necesario
+// Responsive
+@media (max-width: $breakpoint-sm) {
+  .bottom-nav {
+    bottom: $spacing-md;
+    width: calc(100% - #{$spacing-xl});
+  }
 
-    @media (min-width: $breakpoint-md) {
-      display: block;
+  .bottom-nav-container {
+    border-radius: 20px;
+
+    .glass-content {
+      padding: $spacing-xs $spacing-md;
     }
   }
 
-  .logout-button {
-    @include button-base;
-    background: transparent;
-    color: var(--text-primary);
-    padding: $spacing-sm;
-    min-width: 40px;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .nav-item {
+    min-width: 44px;
+    height: 44px;
+    padding: $spacing-xs;
 
     i {
-      font-size: $font-size-lg;
+      font-size: 20px;
     }
+  }
 
-    &:hover {
-      background: var(--bg-hover);
-      color: var(--danger);
+  .nav-badge {
+    top: 4px;
+    right: 4px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+}
+
+// Efecto de profundidad en dispositivos grandes
+@media (min-width: $breakpoint-md) {
+  .bottom-nav-container {
+    .glass-content {
+      padding: $spacing-md $spacing-xl;
+    }
+  }
+
+  .nav-item {
+    min-width: 60px;
+    height: 60px;
+
+    i {
+      font-size: 24px;
     }
   }
 }

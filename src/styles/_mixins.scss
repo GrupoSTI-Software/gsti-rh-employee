@@ -55,6 +55,16 @@
   font-weight: $font-weight-medium;
   cursor: pointer;
   transition: background-color $transition-base;
+  box-shadow: var(--shadow-sm);
+
+  svg {
+    width: 0.75rem;
+    opacity: 0.8;
+
+    path {
+      stroke: var(--text-tertiary);
+    }
+  }
 }
 
 @mixin button-primary {
@@ -88,8 +98,8 @@
 // Card styles
 @mixin card {
   background: var(--bg-primary);
-  border-radius: $radius;
-  padding: $spacing-3xl;
+  // border-radius: $radius;
+  padding: 0.75rem;
 }
 
 // Form group
@@ -115,6 +125,16 @@
   text-align: center;
 }
 
+// Success alert
+@mixin success-alert {
+  padding: $spacing-md;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--success);
+  border-radius: $radius;
+  color: var(--success);
+  font-size: $font-size-sm;
+  text-align: center;
+}
 // Glassmorphism effect
 @mixin glass-effect {
   background: rgba(255, 255, 255, 0.1);
@@ -128,4 +148,31 @@
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   }
+}
+
+// Safe area mixins
+@mixin safe-area-top($extra: 0px) {
+  padding-top: calc(env(safe-area-inset-top, 0px) + #{$extra});
+}
+
+@mixin safe-area-bottom($extra: 0px) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + #{$extra});
+}
+
+@mixin safe-area-left($extra: 0px) {
+  padding-left: calc(env(safe-area-inset-left, 0px) + #{$extra});
+}
+
+@mixin safe-area-right($extra: 0px) {
+  padding-right: calc(env(safe-area-inset-right, 0px) + #{$extra});
+}
+
+@mixin safe-area-horizontal($extra: 0px) {
+  @include safe-area-left($extra);
+  @include safe-area-right($extra);
+}
+
+@mixin safe-area-vertical($extra-top: 0px, $extra-bottom: 0px) {
+  @include safe-area-top($extra-top);
+  @include safe-area-bottom($extra-bottom);
 }

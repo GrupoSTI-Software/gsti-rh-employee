@@ -1,20 +1,68 @@
 @use '../../../../styles/variables' as *;
 @use '../../../../styles/mixins' as *;
 
+$head-top-height: 7rem;
+
 .dashboard-container {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-secondary);
-  padding-top: 64px; // Altura del header fijo
+  background: var(--bg-primary);
+  position: relative;
+}
+
+.head-top {
+  height: calc(#{$head-top-height} + env(safe-area-inset-top, 0px));
+  width: 100%;
+  background: var(--bg-primary);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 0;
+  padding-left: max($spacing-xl, env(safe-area-inset-left, $spacing-xl));
+  padding-right: max($spacing-xl, env(safe-area-inset-right, $spacing-xl));
+  border-bottom: 1px solid var(--border-color);
+
+  .page-header {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+    background-color: transparent;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  .page-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .page-subtitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-normal;
+    color: var(--text-secondary);
+    margin: 0;
+  }
 }
 
 .main-content {
   flex: 1;
-  padding: $spacing-lg;
-  padding-top: calc(6px + $spacing-sm); // Padding mínimo después del header (muy pegado)
   overflow-y: auto;
-  background: var(--bg-secondary);
-  min-height: calc(100vh - 64px); // Altura total menos el header
-}
+  background: var(--bg-primary);
+  min-height: calc(100dvh - 64px);
+  margin-top: calc($head-top-height + env(safe-area-inset-top, 0px));
 
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE y Edge */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
+}

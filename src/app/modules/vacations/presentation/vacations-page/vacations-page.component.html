@@ -1,0 +1,114 @@
+<div class="vacations-page">
+  <header class="page-header">
+    <h1 class="page-title">{{ 'vacationsModule.title' | translate }}</h1>
+    <p class="page-subtitle">{{ 'vacationsModule.subtitle' | translate }}</p>
+  </header>
+
+  @if (loading() && !employeeId()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>{{ 'vacationsModule.loading' | translate }}</span>
+    </div>
+  } @else if (loadError()) {
+    <p class="empty-message">{{ (loadError() ?? '') | translate }}</p>
+  } @else if (employeeId() !== null) {
+    <!-- Tarjeta: Días disponibles (encima de las tarjetas de periodos) -->
+    <button
+      type="button"
+      class="card card-available-days"
+      (click)="openRequestVacation()"
+    >
+      <div class="card-available-header">
+        <i class="pi pi-calendar-plus"></i>
+        <span class="card-available-title">{{ 'vacationsModule.availableDays' | translate }}</span>
+      </div>
+      <div class="card-available-value">
+        <span class="days-number">{{ totalDaysAvailable() }}</span>
+        <span class="days-label">{{ 'vacationsModule.days' | translate }}</span>
+      </div>
+      <span class="card-available-hint">{{ 'vacationsModule.clickToRequest' | translate }}</span>
+    </button>
+
+    <!-- Información del empleado (referencia visual del prototipo) -->
+    <div class="employee-card">
+      <app-avatar size="large" [showBorder]="true" />
+      <div class="employee-info">
+        <h2 class="employee-name">{{ employeeName() }}</h2>
+        @if (employeeInfo().empId) {
+          <p class="employee-meta">{{ employeeInfo().empId }}</p>
+        }
+        @if (employeeInfo().department) {
+          <p class="employee-meta">{{ employeeInfo().department }} {{ 'vacationsModule.departmentPlaceholder' | translate }}</p>
+        }
+        @if (employeeInfo().position) {
+          <p class="employee-meta">{{ employeeInfo().position }} {{ 'vacationsModule.positionPlaceholder' | translate }}</p>
+        }
+      </div>
+    </div>
+
+    <h2 class="section-title">{{ 'vacationsModule.employeeVacations' | translate }}</h2>
+
+    <!-- Tarjetas por periodo -->
+    <div class="period-cards">
+      @for (period of periodSummaries(); track period.year) {
+        <article
+          class="card period-card"
+          role="button"
+          tabindex="0"
+          (click)="openManageVacations(period)"
+          (keydown.enter)="openManageVacations(period)"
+          (keydown.space)="$event.preventDefault(); openManageVacations(period)"
+        >
+          <div class="period-dates">{{ period.periodLabel }}</div>
+          <div class="period-badges">
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.yearsActive' | translate }}</span>
+              <span class="badge-value">{{ period.yearsPassed | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysCorresponding' | translate }}</span>
+              <span class="badge-value">{{ period.daysCorresponding | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysUsed' | translate }}</span>
+              <span class="badge-value">{{ period.daysUsed | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysAvailable' | translate }}</span>
+              <span class="badge-value">{{ period.daysAvailable | number: '2.0-0' }}</span>
+            </span>
+            @if (period.previousPeriodDaysAvailable !== null && period.previousPeriodDaysAvailable > 0) {
+              <span class="badge">
+                <span class="badge-label">{{ 'vacationsModule.previousDaysAvailable' | translate }}</span>
+                <span class="badge-value">{{ period.previousPeriodDaysAvailable }}</span>
+              </span>
+            }
+          </div>
+          <button type="button" class="btn-manage" (click)="openManageVacations(period); $event.stopPropagation()">
+            <i class="pi pi-file-edit"></i>
+            {{ 'vacationsModule.manageSignatures' | translate }}
+          </button>
+        </article>
+      }
+    </div>
+
+    @if (periodSummaries().length === 0 && !loading()) {
+      <p class="empty-message">{{ 'vacationsModule.noPeriods' | translate }}</p>
+    }
+  } @else {
+    <p class="empty-message">{{ 'vacationsModule.noEmployee' | translate }}</p>
+  }
+
+  <app-manage-vacations-drawer
+    [visible]="manageDrawerVisible()"
+    [period]="selectedPeriod()"
+    [drawerVacationsUsedList]="drawerVacationsUsedList()"
+    [drawerVacationsLoading]="drawerVacationsLoading()"
+    (visibleChange)="onManageDrawerVisibleChange($event)"
+  />
+  <app-request-vacation-drawer
+    [visible]="requestDrawerVisible()"
+    [availableDays]="totalDaysAvailable()"
+    (visibleChange)="requestDrawerVisible.set($event)"
+  />
+</div>

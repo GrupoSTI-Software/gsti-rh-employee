@@ -1,5 +1,6 @@
 import { IAssistance } from './assistance.interface';
 import { IException } from './exception.interface';
+import { IWorkHoliday } from './work-holiday.interface';
 
 /**
  * Modelo de asistencia del día
@@ -21,6 +22,7 @@ export interface IAttendance {
   isWorkDisabilityDate: boolean;
   isVacationDate: boolean;
   isHoliday: boolean;
+  holiday: IWorkHoliday | null;
   assistFlatList: IAssistance[];
   exceptions: IException[];
 }

@@ -1,49 +1,59 @@
-<header class="header">
-  <div class="header-left">
-    <button type="button" class="menu-button" (click)="toggleSidebar()" [attr.aria-label]="'header.menu' | translate">
-      <i class="pi pi-bars"></i>
-    </button>
-
-    <div class="navigation-buttons">
-      <button 
-        type="button" 
-        class="nav-button" 
-        [class.disabled]="!canGoBack()"
-        [disabled]="!canGoBack()"
-        (click)="goBack()" 
-        [attr.aria-label]="'header.back' | translate"
-        [attr.title]="'header.back' | translate">
-        <i class="pi pi-arrow-left"></i>
-      </button>
-      <button 
-        type="button" 
-        class="nav-button" 
-        [class.disabled]="!canGoForward()"
-        [disabled]="!canGoForward()"
-        (click)="goForward()" 
-        [attr.aria-label]="'header.forward' | translate"
-        [attr.title]="'header.forward' | translate">
-        <i class="pi pi-arrow-right"></i>
+<nav class="bottom-nav">
+  <div class="bottom-nav-container bg-glass">
+    <!-- Capas del efecto liquid glass -->
+    <div class="glass-filter"></div>
+    <div class="glass-overlay"></div>
+    <div class="glass-specular"></div>
+    
+    <!-- Contenido sobre las capas de vidrio -->
+    <div class="glass-content">
+      @for (item of menuItems; track item.route) {
+        <a
+          [routerLink]="[item.route]"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="nav-item"
+          [attr.aria-label]="item.translationKey | translate"
+        >
+          <i [class]="'pi ' + item.icon"></i>
+          @if (item.badgeCount && item.badgeCount() > 0) {
+            <span class="nav-badge">{{ item.badgeCount() }}</span>
+          }
+        </a>
+      }
+      <button
+        type="button"
+        class="nav-item nav-item-menu"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="'menu.menu' | translate"
+      >
+        <i class="pi pi-bars"></i>
       </button>
     </div>
   </div>
+</nav>
 
-  <div class="logo-container">
-    @if (showLogo()) {
-      <img [src]="logoUrl()" [alt]="'header.appName' | translate" class="logo" />
-    } @else {
-      <div class="logo-placeholder">
-        <i class="pi pi-spin pi-spinner"></i>
-      </div>
-    }
-  </div>
-
-  <div class="user-info">
-    <app-avatar size="small" />
-    <span class="user-name">{{ userName() }}</span>
-    <button type="button" class="logout-button" (click)="logout()" [attr.aria-label]="'header.logout' | translate">
-      <i class="pi pi-sign-out"></i>
-    </button>
-  </div>
-</header>
-
+<!-- Filtro SVG para el efecto de distorsión de vidrio líquido -->
+<!-- Este filtro debe estar presente una sola vez en la aplicación -->
+<svg style="position: absolute; width: 0; height: 0; visibility: hidden;">
+  <defs>
+    <filter id="lg-dist">
+      <!-- Generador de turbulencia para crear el patrón de distorsión -->
+      <feTurbulence
+        type="turbulence"
+        baseFrequency="0.008 0.004"
+        numOctaves="2"
+        result="turbulence"
+        seed="2"
+      />
+      <!-- Mapa de desplazamiento para aplicar la distorsión -->
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="turbulence"
+        scale="15"
+        xChannelSelector="R"
+        yChannelSelector="B"
+      />
+    </filter>
+  </defs>
+</svg>

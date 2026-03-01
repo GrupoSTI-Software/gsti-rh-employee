@@ -1,0 +1,139 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.week-calendar {
+  width: 100%;
+  @include flex-column;
+  gap: $spacing-md;
+  padding: $spacing-md 0;
+}
+
+.calendar-header {
+  @include flex-between;
+  padding: 0 $spacing-sm;
+  gap: $spacing-md;
+
+  .nav-button {
+    @include button-base;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    @include flex-center;
+    background: transparent;
+    color: var(--text-primary);
+    transition: background-color $transition-fast, transform $transition-fast;
+
+    i {
+      font-size: $font-size-base;
+    }
+
+    &:hover {
+      background: var(--bg-hover);
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .today-button {
+    @include button-base;
+    height: 2rem;
+    padding: 0 $spacing-md;
+    @include flex-center;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    border-radius: $radius;
+    transition: background-color $transition-fast, transform $transition-fast;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  .month-year {
+    flex: 1;
+    text-align: center;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    text-transform: capitalize;
+  }
+}
+
+.week-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: $spacing-xs;
+  padding: 0 $spacing-xs;
+}
+
+.day-item {
+  @include flex-column;
+  @include flex-center;
+  gap: $spacing-xs;
+  padding: $spacing-sm;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: $radius;
+  cursor: pointer;
+  transition: all $transition-fast;
+  min-height: 3.5rem;
+
+  .day-name {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .day-number {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &.today {
+    border-color: transparent;
+    background: var(--bg-active);
+
+    .day-name {
+      color: var(--primary);
+    }
+
+    .day-number {
+      color: var(--primary);
+    }
+  }
+
+  &.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+
+    .day-name,
+    .day-number {
+      color: white;
+    }
+
+    &:hover {
+      background: var(--primary-dark);
+    }
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}

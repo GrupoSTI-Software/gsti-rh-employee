@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
+import { parseLocalDate } from '@shared/utils/date.utils';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { AvatarComponent } from '@shared/components/avatar/avatar.component';
 import { LoggerService } from '@core/services/logger.service';
@@ -143,7 +144,7 @@ export class ProfileComponent implements OnInit {
   formatDate(dateString: string | undefined): string {
     if (dateString === null || dateString === undefined || dateString.length === 0) return '---';
     try {
-      const date = new Date(dateString);
+      const date = parseLocalDate(dateString);
       const currentLang = this.translateService.currentLang ?? 'es';
       const isEnglish = currentLang === 'en';
 

@@ -1,0 +1,144 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    (click)="close()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+  ></div>
+  <aside class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">{{ 'vacationsModule.manageVacations' | translate }}</h2>
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <div class="drawer-content">
+      <!-- Información del empleado -->
+      <div class="employee-card">
+        <app-avatar size="large" [showBorder]="true" />
+        <div class="employee-info">
+          <h3 class="employee-name">{{ employeeName() }}</h3>
+          @if (employeeInfo().empId) {
+            <p class="employee-meta">{{ employeeInfo().empId }}</p>
+          }
+          @if (employeeInfo().department) {
+            <p class="employee-meta">{{ employeeInfo().department }} {{ 'vacationsModule.departmentPlaceholder' | translate }}</p>
+          }
+          @if (employeeInfo().position) {
+            <p class="employee-meta">{{ employeeInfo().position }} {{ 'vacationsModule.positionPlaceholder' | translate }}</p>
+          }
+        </div>
+      </div>
+
+      <!-- Detalles del periodo -->
+      @if (period) {
+        <div class="period-card">
+          <div class="period-dates">{{ periodLabel() }}</div>
+          <div class="period-badges">
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.yearsActive' | translate }}</span>
+              <span class="badge-value">{{ period.yearsPassed | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysCorresponding' | translate }}</span>
+              <span class="badge-value">{{ period.daysCorresponding | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysUsed' | translate }}</span>
+              <span class="badge-value">{{ period.daysUsed | number: '2.0-0' }}</span>
+            </span>
+            <span class="badge">
+              <span class="badge-label">{{ 'vacationsModule.daysAvailable' | translate }}</span>
+              <span class="badge-value">{{ period.daysAvailable | number: '2.0-0' }}</span>
+            </span>
+          </div>
+        </div>
+      }
+
+      <!-- Lista de vacaciones tomadas en este periodo (consultadas por año al abrir el drawer) -->
+      <div class="vacations-list-section">
+        <h4 class="section-label">{{ 'vacationsModule.vacationsTaken' | translate }}</h4>
+        @if (drawerVacationsLoading) {
+          <div class="vacations-loading">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ 'vacationsModule.loading' | translate }}</span>
+          </div>
+        } @else if (drawerVacationsUsedList.length > 0) {
+          <ul class="vacations-list">
+            @for (v of drawerVacationsUsedList; track v.shiftExceptionId) {
+              <li class="vacation-item">
+                <div class="vacation-item-main">
+                  <i class="pi pi-calendar"></i>
+                  <span class="vacation-date">{{ formatVacationDate(v.shiftExceptionsDate) }}</span>
+                  @if (v.employeeSignature) {
+                    <button
+                      type="button"
+                      class="btn-view-signature"
+                      (click)="showSignature(v.employeeSignature!)"
+                      [attr.aria-label]="'vacationsModule.viewSignature' | translate"
+                    >
+                      <i class="pi pi-eye"></i>
+                      {{ 'vacationsModule.viewSignature' | translate }}
+                    </button>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="no-vacations">{{ 'vacationsModule.noVacationsTaken' | translate }}</p>
+        }
+      </div>
+
+      <!-- Modal de firma -->
+      @if (signatureToShow()) {
+        <div
+          class="signature-overlay"
+          (click)="closeSignature()"
+          (keydown.escape)="closeSignature()"
+          (keydown.enter)="closeSignature()"
+          (keydown.space)="$event.preventDefault(); closeSignature()"
+          role="button"
+          tabindex="0"
+        >
+          <div
+            class="signature-modal"
+            (click)="$event.stopPropagation()"
+            (keydown.enter)="$event.stopPropagation()"
+            (keydown.space)="$event.preventDefault(); $event.stopPropagation()"
+            role="dialog"
+            tabindex="0"
+          >
+            <div class="signature-modal-header">
+              <span>{{ 'vacationsModule.signature' | translate }}</span>
+              <button
+                type="button"
+                class="signature-close"
+                (click)="closeSignature()"
+                [attr.aria-label]="'menu.close' | translate"
+              >
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+            <img [src]="signatureToShow()!" alt="" class="signature-image" />
+          </div>
+        </div>
+      }
+
+      <!-- Acciones -->
+      <div class="drawer-actions">
+        <button type="button" class="btn-sign" (click)="onSign()">
+          <i class="pi pi-pencil"></i>
+          {{ 'vacationsModule.sign' | translate }}
+        </button>
+      </div>
+    </div>
+  </aside>
+}

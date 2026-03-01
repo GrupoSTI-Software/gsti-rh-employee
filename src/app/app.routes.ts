@@ -10,6 +10,38 @@ export const routes: Routes = [
     canActivate: [pwaGuard],
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('@modules/forgot-password/presentation/forgot-password.component').then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+    canActivate: [pwaGuard],
+  },
+  {
+    path: 'pincode-password',
+    loadComponent: () =>
+      import('@modules/pincode-password/presentation/pincode-password.component').then(
+        (m) => m.PincodePasswordComponent,
+      ),
+    canActivate: [pwaGuard],
+  },
+  {
+    path: 'new-password/:token',
+    loadComponent: () =>
+      import('@modules/reset-password/presentation/reset-password.component').then(
+        (m) => m.ResetPasswordComponent,
+      ),
+    canActivate: [pwaGuard],
+  },
+  {
+    path: 'register-passkey',
+    loadComponent: () =>
+      import('@modules/auth/presentation/register-passkey.component').then(
+        (m) => m.RegisterPasskeyComponent,
+      ),
+    canActivate: [authGuard],
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -20,10 +52,33 @@ export const routes: Routes = [
         data: {
           breadcrumb: 'checkin',
           label: 'Asistencia',
+          subtitle: 'Registro y monitorización de asistencia',
         },
         loadComponent: () =>
           import('@modules/attendance/presentation/checkin.component').then(
             (m) => m.CheckinComponent,
+          ),
+      },
+      {
+        path: 'vacations',
+        data: {
+          breadcrumb: 'vacations',
+          label: 'Vacaciones',
+        },
+        loadComponent: () =>
+          import('@modules/vacations/presentation/vacations-page/vacations-page.component').then(
+            (m) => m.VacationsPageComponent,
+          ),
+      },
+      {
+        path: 'calendar',
+        data: {
+          breadcrumb: 'calendar',
+          label: 'Calendario general',
+        },
+        loadComponent: () =>
+          import('@modules/vacation-calendar/presentation/vacation-calendar/vacation-calendar.component').then(
+            (m) => m.VacationCalendarComponent,
           ),
       },
       {
@@ -45,6 +100,28 @@ export const routes: Routes = [
         },
         loadComponent: () =>
           import('@modules/profile/presentation/profile.component').then((m) => m.ProfileComponent),
+      },
+      {
+        path: 'notices',
+        data: {
+          breadcrumb: 'notices',
+          label: 'Avisos',
+        },
+        loadComponent: () =>
+          import('@modules/notices/presentation/notices-list.component').then(
+            (m) => m.NoticesListComponent,
+          ),
+      },
+      {
+        path: 'notices/:id',
+        data: {
+          breadcrumb: 'notices',
+          label: 'Detalle de Aviso',
+        },
+        loadComponent: () =>
+          import('@modules/notices/presentation/notice-detail.component').then(
+            (m) => m.NoticeDetailComponent,
+          ),
       },
       {
         path: '',

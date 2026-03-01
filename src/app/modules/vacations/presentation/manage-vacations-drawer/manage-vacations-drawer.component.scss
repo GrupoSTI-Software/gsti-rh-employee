@@ -1,0 +1,310 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: $z-index-modal-backdrop;
+  backdrop-filter: blur(2px);
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 90vw;
+  max-width: 500px;
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-lg);
+  z-index: $z-index-modal;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  @include safe-area-horizontal($spacing-md);
+}
+
+.drawer-header {
+  @include safe-area-top($spacing-lg);
+  padding: $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+
+  .drawer-title {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+  }
+
+  .close-button {
+    @include button-base;
+    background: var(--primary);
+    color: white;
+    padding: $spacing-sm;
+    min-width: 36px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: $radius-full;
+
+    i {
+      font-size: $font-size-lg;
+    }
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+}
+
+.drawer-content {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+  @include flex-column;
+  gap: $spacing-xl;
+}
+
+.employee-card {
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  border: 1px dashed var(--border-color);
+  border-radius: $radius-md;
+  background: var(--bg-secondary);
+}
+
+.employee-info {
+  @include flex-column;
+  gap: $spacing-xs;
+}
+
+.employee-name {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.employee-meta {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.period-card {
+  padding: $spacing-lg;
+  background: var(--bg-secondary);
+  border-radius: $radius-md;
+  border: 1px solid var(--border-color);
+  @include flex-column;
+  gap: $spacing-md;
+}
+
+.period-dates {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+}
+
+.period-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-primary);
+  border-radius: $radius;
+  min-width: 4rem;
+}
+
+.badge-label {
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-value {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+}
+
+.vacations-list-section {
+  @include flex-column;
+  gap: $spacing-sm;
+}
+
+.section-label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.vacations-loading {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+
+  i {
+    font-size: $font-size-lg;
+    color: var(--primary);
+  }
+}
+
+.vacations-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  @include flex-column;
+  gap: $spacing-sm;
+}
+
+.vacation-item {
+  padding: $spacing-md;
+  background: var(--bg-secondary);
+  border-radius: $radius;
+  border-left: 3px solid var(--primary);
+  font-size: $font-size-sm;
+  color: var(--text-primary);
+}
+
+.vacation-item-main {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+
+  i.pi-calendar {
+    color: var(--primary);
+  }
+}
+
+.vacation-date {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-view-signature {
+  @include button-base;
+  @include button-secondary;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-xs;
+
+  i {
+    font-size: $font-size-sm;
+  }
+}
+
+.signature-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: $z-index-modal + 10;
+  @include flex-center;
+  padding: $spacing-lg;
+}
+
+.signature-modal {
+  background: var(--bg-primary);
+  border-radius: $radius-md;
+  box-shadow: var(--shadow-lg);
+  max-width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+}
+
+.signature-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+}
+
+.signature-close {
+  @include button-base;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: $spacing-xs;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.signature-image {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  padding: $spacing-lg;
+}
+
+.no-vacations {
+  font-size: $font-size-sm;
+  color: var(--text-tertiary);
+  margin: 0;
+  padding: $spacing-md;
+}
+
+.drawer-actions {
+  display: flex;
+  gap: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-sign,
+.btn-add {
+  @include button-base;
+  flex: 1;
+  @include flex-center;
+  gap: $spacing-sm;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: $radius-md;
+
+  i {
+    font-size: $font-size-base;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+  }
+}
+
+.btn-add {
+  @include button-primary;
+}

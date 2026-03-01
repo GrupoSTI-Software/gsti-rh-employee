@@ -1,3 +1,5 @@
+import { ITolerance } from './tolerance.interface';
+
 /**
  * Modelo de datos para las configuraciones del sistema
  */
@@ -17,4 +19,5 @@ export interface ISystemSettings {
   systemSettingCreatedAt: string;
   systemSettingUpdatedAt: string;
   deletedAt: string | null;
+  systemSettingTolerances: ITolerance[];
 }

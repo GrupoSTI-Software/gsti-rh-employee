@@ -13,7 +13,8 @@ export default tseslint.config(
       '.angular/**',
       '**/*.spec.ts',
       'src/environments/**',
-      'scripts/**'
+      'scripts/**',
+      'src/assets/firebase-messaging-sw.js'
     ]
   },
   // Configuración base de JavaScript - solo para archivos .js
@@ -32,7 +33,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.ts'],
-    ignores: ['**/app.config.ts', '**/app.config.server.ts'],
+    ignores: ['**/app.config.ts', '**/app.config.server.ts', 'vite.config.ts'],
     plugins: {
       prettier
     },
@@ -123,6 +124,35 @@ export default tseslint.config(
       // Es el Composition Root donde se conectan las implementaciones
 
       // Reglas generales
+      'no-console': ['warn', { allow: ['error', 'warn'] }],
+      'prefer-const': 'error',
+      'no-var': 'error'
+    }
+  },
+  // Configuración específica para vite.config.ts (sin project para evitar errores)
+  {
+    files: ['vite.config.ts'],
+    plugins: {
+      prettier
+    },
+    languageOptions: {
+      parserOptions: {
+        // No usar project para vite.config.ts
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_'
+        }
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn', // Permitir any en vite.config.ts
       'no-console': ['warn', { allow: ['error', 'warn'] }],
       'prefer-const': 'error',
       'no-var': 'error'

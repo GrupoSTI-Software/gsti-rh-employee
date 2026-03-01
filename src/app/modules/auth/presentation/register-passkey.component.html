@@ -1,0 +1,69 @@
+<div class="register-passkey-container">
+  <div class="register-passkey-card">
+    @if (!passkeySupported()) {
+      <div class="unsupported-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        <h2>{{ 'auth.passkeyNotSupported' | translate }}</h2>
+        <p>{{ 'auth.passkeyNotSupportedDescription' | translate }}</p>
+        <button type="button" class="btn primary" (click)="skip()">
+          {{ 'auth.continue' | translate }}
+        </button>
+      </div>
+    } @else {
+      <div class="register-passkey-header">
+        <i class="pi pi-fingerprint header-icon"></i>
+        <h2>{{ 'auth.registerPasskeyTitle' | translate }}</h2>
+        <p>{{ 'auth.registerPasskeyDescription' | translate }}</p>
+      </div>
+
+      @if (success()) {
+        <div class="success-alert">
+          <i class="pi pi-check-circle"></i>
+          {{ 'auth.passkeyRegisteredSuccess' | translate }}
+        </div>
+      } @else {
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-passkey-form">
+          <div class="form-group">
+            <label for="deviceName">{{ 'auth.deviceName' | translate }}</label>
+            <input
+              id="deviceName"
+              type="text"
+              formControlName="deviceName"
+              [placeholder]="'auth.deviceNamePlaceholder' | translate"
+              [class.error]="
+                registerForm.get('deviceName')?.invalid && registerForm.get('deviceName')?.touched
+              "
+            />
+            @if (registerForm.get('deviceName')?.invalid && registerForm.get('deviceName')?.touched) {
+              <span class="error-message">
+                @if (registerForm.get('deviceName')?.hasError('required')) {
+                  {{ 'auth.deviceNameRequired' | translate }}
+                }
+              </span>
+            }
+          </div>
+
+          @if (error()) {
+            <div class="error-alert">
+              {{ error() }}
+            </div>
+          }
+
+          <button type="submit" class="btn primary" [disabled]="loading() || registerForm.invalid">
+            @if (loading()) {
+              <i class="pi pi-spin pi-spinner"></i>
+              {{ 'auth.loading' | translate }}
+            } @else {
+              <i class="pi pi-fingerprint"></i>
+              {{ 'auth.registerPasskey' | translate }}
+            }
+          </button>
+
+          <button type="button" class="btn secondary" [disabled]="loading()" (click)="skip()">
+            {{ 'auth.skipForNow' | translate }}
+          </button>
+        </form>
+      }
+    }
+  </div>
+</div>

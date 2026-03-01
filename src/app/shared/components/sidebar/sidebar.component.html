@@ -9,7 +9,12 @@
   ></div>
   <aside class="sidebar" [@slideInOut]>
     <div class="sidebar-header">
-      <button type="button" class="close-button" (click)="close()" [attr.aria-label]="'menu.close' | translate">
+      <button
+        type="button"
+        class="close-button"
+        (click)="close()"
+        [attr.aria-label]="'menu.close' | translate"
+      >
         <i class="pi pi-times"></i>
       </button>
 
@@ -33,6 +38,15 @@
             >
               <i [class]="'pi ' + item.icon"></i>
               <span>{{ item.translationKey | translate }}</span>
+              @if (item.badgeCount && item.badgeCount() > 0) {
+                <span 
+                  class="menu-badge" 
+                  [class.single-digit]="item.badgeCount() < 10"
+                  [attr.data-count]="item.badgeCount()"
+                >
+                  {{ item.badgeCount() }}
+                </span>
+              }
             </a>
           </li>
         }

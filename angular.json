@@ -41,6 +41,10 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/firebase-messaging-sw.js"
               }
             ],
             "styles": [
@@ -50,33 +54,73 @@
             "outputMode": "server",
             "ssr": {
               "entry": "src/server.ts"
-            }
+            },
+            "allowedCommonJsDependencies": [
+              "encoding",
+              "node-fetch"
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "650kB",
                   "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kB",
-                  "maximumError": "10kB"
+                  "maximumWarning": "15kB",
+                  "maximumError": "20kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "ngrok": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.ngrok.ts"
+                }
+              ]
+            },
+            "localtunnel": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.localtunnel.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
+          "options": {
+            "host": "0.0.0.0",
+            "port": 4200,
+            "liveReload": true,
+            "hmr": true,
+            "allowedHosts": [
+              "unmollified-kayla-refractively.ngrok-free.dev",
+              "*.loca.lt",
+              "*.trycloudflare.com",
+              "*.tunnelmole.net",
+              "mft5mf-ip-187-190-153-176.tunnelmole.net"
+            ]
+          },
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
@@ -87,6 +131,12 @@
             },
             "development": {
               "buildTarget": "gsti-pwa-empleado:build:development"
+            },
+            "ngrok": {
+              "buildTarget": "gsti-pwa-empleado:build:ngrok"
+            },
+            "localtunnel": {
+              "buildTarget": "gsti-pwa-empleado:build:localtunnel"
             }
           },
           "defaultConfiguration": "development"
