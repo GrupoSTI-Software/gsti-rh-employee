@@ -354,7 +354,10 @@
     "filterAll": "Todos",
     "filterUnread": "No leídos",
     "filterRead": "Leídos",
-    "downloadPdf": "Toca para descargar el archivo"
+    "downloadPdf": "Toca para descargar el archivo",
+    "openInNewTab": "Abrir en nueva pestaña",
+    "downloadFile": "Descargar archivo",
+    "filesAttached": "Archivos adjuntos"
   },
   "vacationsModule": {
     "title": "Vacaciones",

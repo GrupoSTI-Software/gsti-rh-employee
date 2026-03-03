@@ -51,6 +51,7 @@ app.use((_req, res, next) => {
       "img-src 'self' data: https: http: blob:", // Permitir imágenes de APIs externas
       "font-src 'self' data:", // Fuentes locales
       `connect-src ${connectSrc}`, // APIs externas y WebSockets en desarrollo
+      "frame-src 'self' https://*.digitaloceanspaces.com", // Permitir iframes de DigitalOcean Spaces (PDFs)
       "frame-ancestors 'none'", // Prevenir embedding
       "base-uri 'self'",
       "form-action 'self'",

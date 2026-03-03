@@ -11,7 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml, SafeResourceUrl } from '@angular/platform-browser';
 import { GetNoticeByIdUseCase } from '../application/get-notice-by-id.use-case';
 import { MarkNoticeAsReadUseCase } from '../application/mark-notice-as-read.use-case';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
@@ -22,6 +22,10 @@ import { LoggerService } from '@core/services/logger.service';
 const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
 const PDF_EXTENSION = /\.pdf(\?.*)?$/i;
 const URL_PATTERN = /^https?:\/\/.+/i;
+const EXCEL_EXTENSION = /\.xlsx?(\?.*)?$/i;
+const DOC_EXTENSION = /\.docx?(\?.*)?$/i;
+const PPT_EXTENSION = /\.pptx?(\?.*)?$/i;
+const TXT_EXTENSION = /\.txt?(\?.*)?$/i;
 
 @Component({
   selector: 'app-notice-detail',
@@ -81,6 +85,15 @@ export class NoticeDetailComponent implements OnInit {
   readonly isHtmlContent = computed(() => !this.isImageUrl() && !this.isPdfUrl());
 
   /**
+   * URL sanitizada del PDF para usarla en el iframe
+   */
+  readonly safePdfUrl = computed<SafeResourceUrl | null>(() => {
+    const description = this.notice()?.noticeDescription?.trim() ?? '';
+    if (!this.isPdfUrl()) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(description);
+  });
+
+  /**
    * Extrae el nombre del archivo PDF desde la URL
    */
   readonly pdfFileName = computed(() => {
@@ -99,9 +112,9 @@ export class NoticeDetailComponent implements OnInit {
   }
 
   /**
-   * Descarga el archivo PDF abriendo la URL en una nueva pestaña
+   * Abre el PDF en una nueva pestaña
    */
-  downloadPdf(): void {
+  openPdfInNewTab(): void {
     const url = this.notice()?.noticeDescription?.trim();
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -134,7 +147,6 @@ export class NoticeDetailComponent implements OnInit {
     try {
       // Obtener el aviso
       const notice = await this.getNoticeByIdUseCase.execute(noticeId, user.employeeId);
-
       if (!notice) {
         this.error.set('Aviso no encontrado');
         return;
@@ -184,5 +196,64 @@ export class NoticeDetailComponent implements OnInit {
    */
   goBack(): void {
     void this.router.navigate(['/dashboard/notices']);
+  }
+
+  /**
+   * Determina si la descripción es una URL de imagen
+   */
+  isFileImageUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && IMAGE_EXTENSIONS.test(trimmed);
+  }
+
+  /**
+   * Determina si la descripción es una URL de PDF
+   */
+  isFilePdfUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && PDF_EXTENSION.test(trimmed);
+  }
+
+  /** validar este tipo de archivos excel, doc, ppt, pdf, imagen, txt */
+  isFileExcelUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && EXCEL_EXTENSION.test(trimmed);
+  }
+
+  isFileDocUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && DOC_EXTENSION.test(trimmed);
+  }
+
+  isFilePptUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && PPT_EXTENSION.test(trimmed);
+  }
+
+  isFileTxtUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && TXT_EXTENSION.test(trimmed);
+  }
+
+  isFileOtherUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return (
+      URL_PATTERN.test(trimmed) &&
+      !IMAGE_EXTENSIONS.test(trimmed) &&
+      !PDF_EXTENSION.test(trimmed) &&
+      !EXCEL_EXTENSION.test(trimmed) &&
+      !DOC_EXTENSION.test(trimmed) &&
+      !PPT_EXTENSION.test(trimmed) &&
+      !TXT_EXTENSION.test(trimmed)
+    );
+  }
+
+  /**
+   * Extrae el nombre del archivo desde una URL
+   */
+  getFileNameFromUrl(url: string): string {
+    const segments = url.trim().split('/');
+    const lastSegment = segments[segments.length - 1] ?? '';
+    return decodeURIComponent(lastSegment.split('?')[0]);
   }
 }

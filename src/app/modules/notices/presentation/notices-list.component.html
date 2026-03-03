@@ -94,19 +94,57 @@
             role="button"
             [attr.aria-label]="'notices.viewDetail' | translate"
           >
-            <div class="notice-header">
-              <h3 class="notice-title">{{ notice.noticeSubject }}</h3>
-              @if (!isNoticeRead(notice)) {
-                <span class="unread-badge">{{ 'notices.unread' | translate }}</span>
+            <!-- Miniatura cuando la descripción es URL de imagen -->
+            @if (isImageUrl(notice.noticeDescription)) {
+              <div class="notice-thumbnail">
+                <img
+                  [src]="notice.noticeDescription.trim()"
+                  [alt]="notice.noticeSubject"
+                  loading="lazy"
+                />
+              </div>
+            }
+
+            <!-- Icono de PDF cuando la descripción es URL de PDF -->
+            @if (isPdfUrl(notice.noticeDescription)) {
+              <div class="notice-thumbnail notice-thumbnail--pdf">
+                <i class="pi pi-file-pdf"></i>
+              </div>
+            }
+            @if (notice.files && notice.files.length > 0) {
+              <div class="notice-thumbnail notice-thumbnail--file">
+                <i class="pi pi-paperclip"></i>
+              </div>
+            } @else if (isNormalDescription(notice.noticeDescription)) {
+              <div class="notice-thumbnail notice-thumbnail--normal">
+                <i class="pi pi-align-left"></i>
+              </div>
+            }
+
+
+            <div class="notice-body">
+              <div class="notice-header">
+                <h3 class="notice-title">{{ notice.noticeSubject }}</h3>
+                @if (!isNoticeRead(notice)) {
+                  <span class="unread-badge">{{ 'notices.unread' | translate }}</span>
+                }
+              </div>
+              <div class="notice-meta">
+                <span class="notice-date">
+                  <i class="pi pi-calendar"></i>
+                  {{ formatDate(notice.noticeCreatedAt) }}
+                </span>
+                @if (isPdfUrl(notice.noticeDescription)) {
+                  <span class="notice-file-type">
+                    <i class="pi pi-file-pdf"></i>
+                    {{ getFileName(notice.noticeDescription) }}
+                  </span>
+                }
+              </div>
+              @if (isHtmlContent(notice.noticeDescription)) {
+                <div class="notice-preview" [innerHTML]="getPreviewHtml(notice.noticeDescription)"></div>
               }
             </div>
-            <div class="notice-meta">
-              <span class="notice-date">
-                <i class="pi pi-calendar"></i>
-                {{ formatDate(notice.noticeCreatedAt) }}
-              </span>
-            </div>
-            <div class="notice-preview" [innerHTML]="getPreviewHtml(notice.noticeDescription)"></div>
           </div>
         }
       </div>

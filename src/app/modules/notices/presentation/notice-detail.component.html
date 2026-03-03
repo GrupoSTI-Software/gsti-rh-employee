@@ -53,26 +53,80 @@
           </div>
         }
 
-        <!-- Contenido: tarjeta de descarga si la descripción es URL de PDF -->
-        @if (isPdfUrl()) {
-          <div class="notice-pdf-card" click="downloadPdf()">
-            <div class="pdf-icon-wrapper">
-              <i class="pi pi-file-pdf"></i>
+        <!-- Contenido: visor PDF embebido si la descripción es URL de PDF -->
+        @if (isPdfUrl() && safePdfUrl()) {
+          <div class="notice-pdf-section">
+            <div class="pdf-header">
+              <div class="pdf-header-info">
+                <i class="pi pi-file-pdf"></i>
+                <span class="pdf-file-name">{{ pdfFileName() }}</span>
+              </div>
+              <button type="button" class="pdf-open-button" (click)="openPdfInNewTab()">
+                <i class="pi pi-external-link"></i>
+                {{ 'notices.openInNewTab' | translate }}
+              </button>
             </div>
-            <div class="pdf-info">
-              <span class="pdf-file-name">{{ pdfFileName() }}</span>
-              <span class="pdf-action">{{ 'notices.downloadPdf' | translate }}</span>
-            </div>
-            <div class="pdf-download-icon">
-              <i class="pi pi-download"></i>
-            </div>
+            <iframe
+              class="pdf-viewer"
+              [src]="safePdfUrl()"
+              [title]="pdfFileName()"
+            ></iframe>
           </div>
         }
-
         <!-- Contenido HTML cuando no es URL de recurso -->
-        @if (isHtmlContent()) {
-          <div class="notice-content" [innerHTML]="getSafeHtml(notice()!.noticeDescription)"></div>
+        @if (notice(); as currentNotice) {
+
+          @if (isHtmlContent()) {
+            
+            <div class="notice-content"
+                 [innerHTML]="getSafeHtml(currentNotice.noticeDescription)">
+            </div>
+        
+            @if (currentNotice.files?.length) {
+              <div class="notice-files-section">
+                <h2 class="notice-files-title">
+                  {{ 'notices.filesAttached' | translate }}
+                </h2>
+
+                <div class="notice-files-grid">
+                  @for (file of currentNotice.files ?? []; track file.noticeFileId) {
+                    <a
+                      class="notice-file-card"
+                      [href]="file!.noticeFilePath"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <div class="file-preview">
+                        @if (isFileImageUrl(file!.noticeFilePath ?? '')) {
+                          <img [src]="file!.noticeFilePath" [alt]="getFileNameFromUrl(file!.noticeFilePath ?? '')" loading="lazy" />
+                        } @else if (isFilePdfUrl(file!.noticeFilePath ?? '')) {
+                          <i class="pi pi-file-pdf file-icon file-icon--pdf"></i>
+                        } @else if (isFileExcelUrl(file!.noticeFilePath ?? '')) {
+                          <i class="pi pi-file-excel file-icon file-icon--excel"></i>
+                        } @else if (isFileDocUrl(file!.noticeFilePath ?? '')) {
+                          <i class="pi pi-file file-icon file-icon--doc"></i>
+                        } @else if (isFilePptUrl(file!.noticeFilePath ?? '')) {
+                          <i class="pi pi-file file-icon file-icon--ppt"></i>
+                        } @else if (isFileTxtUrl(file!.noticeFilePath ?? '')) {
+                          <i class="pi pi-file file-icon file-icon--txt"></i>
+                        } @else {
+                          <i class="pi pi-file file-icon"></i>
+                        }
+                        <span class="file-download-badge">
+                          <i class="pi pi-cloud-download"></i>
+                        </span>
+                      </div>
+                      <span class="file-name">{{ getFileNameFromUrl(file!.noticeFilePath ?? '') }}</span>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+        
+          }
+        
         }
+       
       </div>
     }
   </div>

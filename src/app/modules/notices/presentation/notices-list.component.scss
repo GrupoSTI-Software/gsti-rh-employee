@@ -169,42 +169,110 @@
 // Lista de avisos
 .notices-list {
   @include flex-column;
-  gap: $spacing-md;
   width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  overflow: hidden;
+  background-color: white;
 }
 
 .notice-card {
-  @include card;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
   cursor: pointer;
-  transition: transform $transition-base, box-shadow $transition-base;
+  transition: background-color $transition-base;
   border-left: 4px solid transparent;
-  min-height: auto; // Permitir que la altura se ajuste al contenido
-  max-height: none; // Sin límite máximo, pero el preview está limitado
-  background-color: white; // Fondo blanco para las tarjetas
+  background-color: white;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--border-color);
+  }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: var(--surface-hover);
   }
 
   &.unread {
     border-left-color: var(--primary);
-    background-color: white; // Mantener blanco incluso cuando está no leído
   }
+}
+
+// Miniatura (imagen o icono PDF)
+.notice-thumbnail {
+  width: 4rem;
+  height: 4rem;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background-color: var(--surface);
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &--pdf {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--danger);
+
+    i {
+      font-size: $font-size-xl;
+      color: #fff;
+    }
+  }
+}
+
+.notice-thumbnail--file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--success);
+
+  i {
+    font-size: $font-size-xl;
+    color: #fff;
+  }
+}
+
+.notice-thumbnail--normal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary);
+  i {
+    font-size: $font-size-xl;
+    color: #fff;
+  }
+}
+// Cuerpo de la tarjeta
+.notice-body {
+  flex: 1;
+  min-width: 0;
+  @include flex-column;
+  gap: $spacing-xs;
 
   .notice-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: $spacing-md;
-    margin-bottom: $spacing-sm;
 
     .notice-title {
-      font-size: $font-size-xl;
+      font-size: $font-size-base;
       font-weight: $font-weight-semibold;
       color: var(--text-primary);
       margin: 0;
       flex: 1;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .unread-badge {
@@ -215,61 +283,68 @@
       font-size: $font-size-xs;
       font-weight: $font-weight-medium;
       white-space: nowrap;
+      flex-shrink: 0;
     }
   }
 
   .notice-meta {
     display: flex;
     align-items: center;
-    gap: $spacing-sm;
-    margin-bottom: $spacing-md;
+    gap: $spacing-md;
     color: var(--text-secondary);
     font-size: $font-size-sm;
+    flex-wrap: wrap;
 
     i {
       font-size: $font-size-sm;
+    }
+
+    .notice-file-type {
+      display: flex;
+      align-items: center;
+      gap: $spacing-xs;
+      color: var(--danger);
+      font-weight: $font-weight-medium;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 12rem;
     }
   }
 
   .notice-preview {
     color: var(--text-secondary);
-    font-size: $font-size-base;
+    font-size: $font-size-sm;
     line-height: 1.5;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-wrap: break-word;
-    max-height: 4.5rem; // Limitar altura máxima (3 líneas * 1.5 line-height)
 
-    // Estilos para el contenido HTML renderizado
     :deep(h1),
     :deep(h2),
     :deep(h3),
     :deep(h4),
     :deep(h5),
     :deep(h6) {
-      font-size: $font-size-base;
+      font-size: $font-size-sm;
       font-weight: $font-weight-semibold;
       margin: 0;
-      margin-bottom: $spacing-xs;
       line-height: 1.3;
     }
 
     :deep(p) {
       margin: 0;
-      margin-bottom: $spacing-xs;
     }
 
     :deep(ul),
     :deep(ol) {
       margin: 0;
       padding-left: $spacing-lg;
-      margin-bottom: $spacing-xs;
     }
 
     :deep(li) {
-      margin-bottom: $spacing-xs;
+      margin-bottom: 0;
     }
 
     :deep(a) {
@@ -277,12 +352,7 @@
       text-decoration: underline;
     }
 
-    // Ocultar imágenes en el preview para mantener consistencia
-    :deep(img) {
-      display: none;
-    }
-
-    // Ocultar también videos e iframes
+    :deep(img),
     :deep(video),
     :deep(iframe),
     :deep(embed),
