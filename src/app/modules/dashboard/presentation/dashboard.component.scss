@@ -51,6 +51,96 @@ $head-top-height: 7rem;
   }
 }
 
+// Banner de notificación push in-app
+.push-notification-banner {
+  position: fixed;
+  top: calc(#{$head-top-height} + env(safe-area-inset-top, 0px) + $spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - $spacing-xl * 2);
+  max-width: $container-max-width-sm;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background-color: var(--primary);
+  color: #fff;
+  border-radius: $radius-lg;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 9999;
+  animation: slideDown 0.3s ease-out;
+
+  .push-notification-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: $radius-full;
+    flex-shrink: 0;
+
+    i {
+      font-size: $font-size-lg;
+    }
+  }
+
+  .push-notification-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .push-notification-title {
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .push-notification-body {
+      font-size: $font-size-xs;
+      opacity: 0.85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .push-notification-close {
+    background: none;
+    border: none;
+    color: #fff;
+    opacity: 0.7;
+    cursor: pointer;
+    padding: $spacing-xs;
+    flex-shrink: 0;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    i {
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-1rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 .main-content {
   flex: 1;
   overflow-y: auto;

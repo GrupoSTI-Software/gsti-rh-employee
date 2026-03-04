@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { HeaderComponent } from '@shared/components/header/header.component';
 import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
+import { PushNotificationsService } from '@core/services/push-notifications.service';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
@@ -14,6 +15,7 @@ import { filter, Subscription } from 'rxjs';
 })
 export default class DashboardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  readonly pushService = inject(PushNotificationsService);
   private routerSubscription?: Subscription;
 
   readonly pageTitle = signal<string>('');
@@ -31,6 +33,7 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updatePageTitleFromRoute();
+    this.pushService.listen();
 
     this.routerSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))

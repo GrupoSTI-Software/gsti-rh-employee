@@ -145,7 +145,6 @@ export class LoginComponent implements OnInit {
 
       if (result.success) {
         await this.pushService.requestPermission();
-
         void this.pushService.listen();
         await this.router.navigate(['/dashboard/checkin']);
       } else {
