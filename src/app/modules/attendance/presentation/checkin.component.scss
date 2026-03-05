@@ -205,7 +205,7 @@
   }
 
   svg {
-    width: 4rem;
+    width: 2.5rem;
     opacity: 1;
 
     path {
@@ -255,6 +255,15 @@
 
   &:active:not(:disabled) { transform: translateY(0); }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  svg {
+    width: 2.5rem;
+    opacity: 1;
+
+    path {
+      stroke: #fff;
+    }
+  }
 }
 
 .date-navigation {

@@ -184,13 +184,23 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * en español la palabra "to" se reemplaza por "a", y sufijo " Hrs".
    */
   readonly displayShiftName = computed(() => {
-    const raw = this.attendance()?.shiftName?.trim();
-    if (!raw) return '';
-    const beforeDash = raw.includes('-') ? raw.split('-')[0].trim() : raw;
+    const shiftTimeStart = this.attendance()?.shiftTimeStart?.trim();
+    const shiftTimeEnd = this.attendance()?.shiftTimeEnd?.trim();
+
+    if (!shiftTimeStart || !shiftTimeEnd) return '';
+
+    const formatTime = (time: string): string => {
+      return time.length === 8 ? time.substring(0, 5) : time;
+    };
+
+    const formattedStart = formatTime(shiftTimeStart);
+    const formattedEnd = formatTime(shiftTimeEnd);
+
     const lang = this.translateService.currentLang || 'es';
-    const name = lang === 'es' ? beforeDash.replace(/\bto\b/gi, 'a') : beforeDash;
+    const separator = lang === 'es' ? 'a' : 'to';
     const prefix = lang === 'es' ? 'De ' : 'From ';
-    return prefix + name + ' Hrs';
+
+    return `${prefix}${formattedStart} ${separator} ${formattedEnd} Hrs`;
   });
 
   /**

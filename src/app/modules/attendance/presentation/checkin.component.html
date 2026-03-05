@@ -193,9 +193,9 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     >
-                    <path d="M20.956 11.107a9 9 0 1 0 -9.579 9.871" />
-                    <path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" />
-                    <path d="M12 7v5l.5 .5" />
+                    <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" />
+                    <path d="M8 7c1.657 0 3 -.895 3 -2s-1.343 -2 -3 -2s-3 .895 -3 2s1.343 2 3 2" />
+                    <path d="M11 5h9" />
                   </svg>
                   <span class="button-label">{{ 'attendance.checkEatIn' | translate }}</span>
                 </button>
@@ -207,7 +207,24 @@
                   [disabled]="!canCheckIn() || loading()"
                   [attr.aria-label]="'attendance.checkEatOut' | translate"
                 >
-                  <app-eat-out-icon [size]="32" [color]="'white'"></app-eat-out-icon>
+                  <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#88a4bf"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  >
+                  <path d="M9 4.55a8 8 0 0 1 6 14.9m0 -4.45v5h5" />
+                  <path d="M5.63 7.16l0 .01" />
+                  <path d="M4.06 11l0 .01" />
+                  <path d="M4.63 15.1l0 .01" />
+                  <path d="M7.16 18.37l0 .01" />
+                  <path d="M11 19.94l0 .01" />
+                  </svg>
                   <span class="button-label">{{ 'attendance.checkEatOut' | translate }}</span>
                 </button>
               }
@@ -221,7 +238,20 @@
                 [disabled]="!canCheckIn() || loading()"
                 [attr.aria-label]="'attendance.checkOut' | translate"
               >
-                <app-check-out-icon [size]="32" [color]="'white'"></app-check-out-icon>
+                <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#88a4bf"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                  <path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                  <path d="M4 17l5 1l.75 -1.5" />
+                  <path d="M15 21l0 -4l-4 -3l1 -6" />
+                  <path d="M7 12l0 -3l5 -1l3 3l3 1" />
+                </svg>
                 <span class="button-label">{{ 'attendance.checkOut' | translate }}</span>
               </button>
             }
