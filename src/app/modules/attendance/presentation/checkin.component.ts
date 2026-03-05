@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import {
   Component,
   inject,
@@ -38,8 +40,6 @@ import {
   ErrorModalComponent,
   ErrorModalType,
 } from '@shared/components/error-modal/error-modal.component';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
@@ -851,12 +851,32 @@ export class CheckinComponent implements OnInit, OnDestroy {
         throw new Error('La cámara no está disponible en este navegador');
       }
 
-      // Obtener acceso a la cámara
+      // Obtener acceso a la cámara frontal con flash si está disponible
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user', // Cámara frontal
+          facingMode: 'user',
+          // @ts-ignore - torch es una propiedad experimental pero soportada en muchos navegadores
+          advanced: [{ torch: true }],
         },
       });
+
+      // Intentar activar el flash si está disponible
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        try {
+          const capabilities = videoTrack.getCapabilities();
+          // @ts-ignore - torch es una propiedad experimental
+          if (capabilities.torch) {
+            await videoTrack.applyConstraints({
+              // @ts-ignore - torch es una propiedad experimental
+              advanced: [{ torch: true }],
+            });
+            this.logger.info('Flash activado correctamente');
+          }
+        } catch (error) {
+          this.logger.warn('No se pudo activar el flash (puede que no esté disponible):', error);
+        }
+      }
 
       // Crear contenedor principal con fondo blanco y safe areas
       const cameraContainer = document.createElement('div');
@@ -1196,8 +1216,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
       clearInterval(livenessCheckInterval);
     }
 
-    // Detener cámara
+    // Apagar el flash antes de detener la cámara
     if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        try {
+          const capabilities = videoTrack.getCapabilities();
+          // @ts-ignore - torch es una propiedad experimental
+          if (capabilities.torch) {
+            void videoTrack.applyConstraints({
+              // @ts-ignore - torch es una propiedad experimental
+              advanced: [{ torch: false }],
+            });
+            this.logger.info('Flash apagado correctamente');
+          }
+        } catch (error) {
+          this.logger.warn('No se pudo apagar el flash:', error);
+        }
+      }
       stream.getTracks().forEach((track) => track.stop());
     }
 
