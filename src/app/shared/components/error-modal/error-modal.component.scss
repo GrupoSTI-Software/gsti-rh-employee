@@ -1,0 +1,137 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: $z-index-modal-backdrop;
+  @include flex-center;
+  padding: $spacing-lg;
+}
+
+.modal-container {
+  max-width: 28rem;
+  width: 100%;
+  z-index: $z-index-modal;
+}
+
+.modal-content {
+  @include card;
+  @include flex-column;
+  align-items: center;
+  gap: $spacing-lg;
+  padding: $spacing-2xl;
+  border-radius: $radius-lg;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.modal-icon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: $radius-full;
+  @include flex-center;
+  flex-shrink: 0;
+
+  svg {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.modal-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.modal-message {
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.modal-close-button {
+  @include button-primary;
+  width: 100%;
+  padding: $spacing-md $spacing-2xl;
+  font-weight: $font-weight-semibold;
+  margin-top: $spacing-sm;
+}
+
+.modal-error {
+  .modal-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+  }
+
+  .modal-close-button {
+    background: var(--danger);
+
+    &:hover:not(:disabled) {
+      background: #dc2626;
+    }
+  }
+}
+
+.modal-warning {
+  .modal-icon {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+  }
+
+  .modal-close-button {
+    background: #f59e0b;
+
+    &:hover:not(:disabled) {
+      background: #d97706;
+    }
+  }
+}
+
+.modal-info {
+  .modal-icon {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+  }
+
+  .modal-close-button {
+    background: #3b82f6;
+
+    &:hover:not(:disabled) {
+      background: #2563eb;
+    }
+  }
+}
+
+.modal-success {
+  .modal-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+  }
+
+  .modal-close-button {
+    background: var(--success);
+
+    &:hover:not(:disabled) {
+      background: #059669;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-overlay {
+    background: rgba(0, 0, 0, 0.75);
+  }
+
+  .modal-content {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+}

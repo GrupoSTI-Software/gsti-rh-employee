@@ -430,3 +430,13 @@
   [title]="'attendance.records' | translate"
   [cancelButtonText]="'attendance.cancel' | translate"
 ></app-records-drawer>
+
+<!-- Error Modal -->
+<app-error-modal
+  [visible]="showErrorModal()"
+  (visibleChange)="showErrorModal.set($event)"
+  [type]="errorModalType()"
+  [title]="errorModalTitle()"
+  [message]="errorModalMessage()"
+  closeButtonText="Entendido"
+></app-error-modal>
