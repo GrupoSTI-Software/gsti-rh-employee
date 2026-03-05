@@ -130,7 +130,7 @@ export class BrandingService {
     this.updateMetaTags(settings);
 
     // Actualizar favicon (primero para que se cargue rápido)
-    this.updateFavicon(settings.systemSettingFavicon);
+    this.updateFavicon(this.getPWAApplicationIconUrl(settings));
 
     // Actualizar logo en el documento
     this.updateLogo(settings.systemSettingLogo);
@@ -224,6 +224,23 @@ export class BrandingService {
   }
 
   /**
+   * Obtiene la URL del icono de la aplicación PWA
+   */
+  getPWAApplicationIconUrl(settings: ISystemSettings): string {
+    if (
+      settings.systemSettingEmployeeAplicationIcon &&
+      settings.systemSettingEmployeeAplicationIcon.trim() !== ''
+    ) {
+      return settings.systemSettingEmployeeAplicationIcon;
+    }
+    if (settings.systemSettingFavicon && settings.systemSettingFavicon.trim() !== '') {
+      return settings.systemSettingFavicon;
+    }
+
+    return '/assets/gsti/icon.png';
+  }
+
+  /**
    * Actualiza el manifest de la PWA dinámicamente
    * Esto es crucial para que el favicon se use cuando se instala la PWA
    *
@@ -235,10 +252,7 @@ export class BrandingService {
       return;
     }
 
-    const faviconUrl =
-      settings.systemSettingFavicon.trim() !== ''
-        ? settings.systemSettingFavicon
-        : '/assets/gsti/icon.png';
+    const faviconUrl = this.getPWAApplicationIconUrl(settings);
     const logoUrl =
       settings.systemSettingLogo.trim() !== ''
         ? settings.systemSettingLogo
