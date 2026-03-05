@@ -126,6 +126,7 @@ export class HttpAuthAdapter implements IAuthPort {
         deviceModel?: string;
         deviceOs?: string;
         deviceType?: string | null;
+        deviceOrigin?: string;
       } = {
         userEmail: email,
         userPassword: password,
@@ -138,8 +139,8 @@ export class HttpAuthAdapter implements IAuthPort {
         payload.deviceModel = deviceInfo.deviceModel;
         payload.deviceOs = deviceInfo.deviceOs;
         payload.deviceType = deviceInfo.deviceType;
+        payload.deviceOrigin = 'app';
       }
-
       const loginResponse = await firstValueFrom(
         this.http.post<ILoginResponse>(`${this.apiUrl}/auth/login`, payload),
       );
@@ -264,6 +265,13 @@ export class HttpAuthAdapter implements IAuthPort {
 
   async logout(): Promise<void> {
     if (isPlatformBrowser(this.platformId)) {
+      const payload: {
+        deviceOrigin?: string;
+      } = { deviceOrigin: 'app' };
+      await firstValueFrom(
+        this.http.post<IFcmTokenResponse>(`${this.apiUrl}/auth/logout`, payload),
+      );
+
       // Limpiar todos los datos de forma segura
       const DEVICE_TOKEN_KEY = 'device_token';
       // Limpiar todos los datos de forma segura
