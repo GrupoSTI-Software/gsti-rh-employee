@@ -51,8 +51,8 @@ export const routes: Routes = [
         path: 'checkin',
         data: {
           breadcrumb: 'checkin',
-          label: 'Asistencia',
-          subtitle: 'Registro y monitorización de asistencia',
+          label: 'routes.checkin.label',
+          subtitle: 'routes.checkin.subtitle',
         },
         loadComponent: () =>
           import('@modules/attendance/presentation/checkin.component').then(
@@ -63,7 +63,8 @@ export const routes: Routes = [
         path: 'vacations',
         data: {
           breadcrumb: 'vacations',
-          label: 'Vacaciones',
+          label: 'routes.vacations.label',
+          subtitle: 'routes.vacations.subtitle',
         },
         loadComponent: () =>
           import('@modules/vacations/presentation/vacations-page/vacations-page.component').then(
@@ -74,7 +75,8 @@ export const routes: Routes = [
         path: 'calendar',
         data: {
           breadcrumb: 'calendar',
-          label: 'Calendario general',
+          label: 'routes.calendar.label',
+          subtitle: 'routes.calendar.subtitle',
         },
         loadComponent: () =>
           import('@modules/vacation-calendar/presentation/vacation-calendar/vacation-calendar.component').then(
@@ -85,7 +87,8 @@ export const routes: Routes = [
         path: 'settings',
         data: {
           breadcrumb: 'settings',
-          label: 'Configuración',
+          label: 'routes.settings.label',
+          subtitle: 'routes.settings.subtitle',
         },
         loadComponent: () =>
           import('@modules/settings/presentation/settings.component').then(
@@ -96,7 +99,8 @@ export const routes: Routes = [
         path: 'profile',
         data: {
           breadcrumb: 'profile',
-          label: 'Perfil',
+          label: 'routes.profile.label',
+          subtitle: 'routes.profile.subtitle',
         },
         loadComponent: () =>
           import('@modules/profile/presentation/profile.component').then((m) => m.ProfileComponent),
@@ -105,7 +109,8 @@ export const routes: Routes = [
         path: 'notices',
         data: {
           breadcrumb: 'notices',
-          label: 'Avisos',
+          label: 'routes.notices.label',
+          subtitle: 'routes.notices.subtitle',
         },
         loadComponent: () =>
           import('@modules/notices/presentation/notices-list.component').then(
@@ -116,7 +121,8 @@ export const routes: Routes = [
         path: 'notices/:id',
         data: {
           breadcrumb: 'notices',
-          label: 'Detalle de Aviso',
+          label: 'routes.noticeDetail.label',
+          subtitle: 'routes.noticeDetail.subtitle',
         },
         loadComponent: () =>
           import('@modules/notices/presentation/notice-detail.component').then(

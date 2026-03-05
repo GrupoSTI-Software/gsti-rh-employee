@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from '@shared/components/header/header.component';
 import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
 import { filter, Subscription } from 'rxjs';
@@ -14,6 +15,7 @@ import { filter, Subscription } from 'rxjs';
 })
 export default class DashboardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly translateService = inject(TranslateService);
   private routerSubscription?: Subscription;
 
   readonly pageTitle = signal<string>('');
@@ -44,7 +46,7 @@ export default class DashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Actualiza el título y subtítulo según la ruta actual
+   * Actualiza el título y subtítulo según la ruta activa, traduciendo las claves i18n
    */
   private updatePageTitleFromRoute(): void {
     let route = this.router.routerState.root;
@@ -54,10 +56,10 @@ export default class DashboardComponent implements OnInit, OnDestroy {
     }
 
     const routeData = route.snapshot.data;
-    const label = routeData['label'] as string;
-    const subtitle = routeData['subtitle'] as string;
+    const labelKey = routeData['label'] as string;
+    const subtitleKey = routeData['subtitle'] as string;
 
-    this.pageTitle.set(label || 'Dashboard');
-    this.pageSubtitle.set(subtitle || '');
+    this.pageTitle.set(labelKey ? this.translateService.instant(labelKey) : 'Dashboard');
+    this.pageSubtitle.set(subtitleKey ? this.translateService.instant(subtitleKey) : '');
   }
 }

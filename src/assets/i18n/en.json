@@ -468,6 +468,36 @@
     "dayHasException": "This day already has a registered exception and cannot be selected",
     "warning": "Warning"
   },
+  "routes": {
+    "checkin": {
+      "label": "Attendance",
+      "subtitle": "Attendance tracking and monitoring"
+    },
+    "vacations": {
+      "label": "Vacations",
+      "subtitle": "View your vacation periods and available days"
+    },
+    "calendar": {
+      "label": "General Calendar",
+      "subtitle": "View company events and records"
+    },
+    "settings": {
+      "label": "Settings",
+      "subtitle": "Manage application preferences"
+    },
+    "profile": {
+      "label": "Profile",
+      "subtitle": "Personal and professional information"
+    },
+    "notices": {
+      "label": "Notices",
+      "subtitle": "View important notices and announcements"
+    },
+    "noticeDetail": {
+      "label": "Notice Detail",
+      "subtitle": "Content of the selected notice"
+    }
+  },
   "weekCalendar": {
     "previousWeek": "Previous week",
     "nextWeek": "Next week",

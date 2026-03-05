@@ -468,6 +468,36 @@
     "dayHasException": "Este día ya tiene una excepción registrada y no puede ser seleccionado",
     "warning": "Advertencia"
   },
+  "routes": {
+    "checkin": {
+      "label": "Asistencia",
+      "subtitle": "Registro y monitorización de asistencia"
+    },
+    "vacations": {
+      "label": "Vacaciones",
+      "subtitle": "Consulta tus periodos y días disponibles"
+    },
+    "calendar": {
+      "label": "Calendario general",
+      "subtitle": "Consulta eventos y registros de la empresa"
+    },
+    "settings": {
+      "label": "Configuración",
+      "subtitle": "Gestiona las preferencias de la aplicación"
+    },
+    "profile": {
+      "label": "Perfil",
+      "subtitle": "Información personal y laboral"
+    },
+    "notices": {
+      "label": "Avisos",
+      "subtitle": "Consulta los avisos y comunicados importantes"
+    },
+    "noticeDetail": {
+      "label": "Detalle de Aviso",
+      "subtitle": "Contenido del aviso seleccionado"
+    }
+  },
   "weekCalendar": {
     "previousWeek": "Semana anterior",
     "nextWeek": "Semana siguiente",
