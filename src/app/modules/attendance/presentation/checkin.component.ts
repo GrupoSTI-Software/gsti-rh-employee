@@ -7,6 +7,7 @@ import {
   computed,
   PLATFORM_ID,
   DestroyRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,7 +15,6 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { Dialog } from 'primeng/dialog';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GetAttendanceUseCase } from '../application/get-attendance.use-case';
 import { StoreAssistUseCase } from '../application/store-assist.use-case';
@@ -31,13 +31,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { WeekCalendarComponent } from '@shared/components/week-calendar/week-calendar.component';
 import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
 import { SecureStorageService } from '@core/services/secure-storage.service';
+import { DatePickerDrawerComponent } from './date-picker-drawer/date-picker-drawer.component';
+import { ExceptionsDrawerComponent } from './exceptions-drawer/exceptions-drawer.component';
+import { RecordsDrawerComponent } from './records-drawer/records-drawer.component';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
-import { formatLocalDate, parseLocalDate } from '@shared/utils/date.utils';
+import { formatLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -64,13 +67,15 @@ interface IFaceDetectionWithLandmarks {
     CommonModule,
     FormsModule,
     TranslatePipe,
-    Dialog,
     CheckInIconComponent,
     CheckOutIconComponent,
     EatInIconComponent,
     EatOutIconComponent,
     TooltipModule,
     WeekCalendarComponent,
+    DatePickerDrawerComponent,
+    ExceptionsDrawerComponent,
+    RecordsDrawerComponent,
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
@@ -97,6 +102,13 @@ interface IFaceDetectionWithLandmarks {
       transition(':leave', [
         animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)', style({ transform: 'translateY(100%)' })),
       ]),
+    ]),
+    trigger('fadeOverlay', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('300ms ease-out', style({ opacity: 1 })),
+      ]),
+      transition(':leave', [animate('250ms ease-in', style({ opacity: 0 }))]),
     ]),
   ],
 })
@@ -148,49 +160,12 @@ export class CheckinComponent implements OnInit, OnDestroy {
   );
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
 
-  // Datepicker
+  // Drawers visibility
   showDatePicker = false;
-  datePickerValue = '';
-  maxDate = new Date(); // No permitir fechas futuras
+  showExceptionsDrawer = false;
+  showRecordsDrawer = false;
 
-  // Calendario drawer
-  readonly calendarDate = signal<Date>(new Date());
-  readonly calendarDays = signal<
-    {
-      date: Date;
-      day: number;
-      isCurrentMonth: boolean;
-      isSelected: boolean;
-      isToday: boolean;
-      isInRange: boolean;
-      isFuture: boolean;
-    }[]
-  >([]);
-  readonly calendarLoading = signal<boolean>(false);
-  readonly weekDays = computed(() => {
-    const currentLang = this.currentLang();
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-
-    // Generar las iniciales de los días de la semana (domingo a sábado)
-    const days: string[] = [];
-    const baseDate = new Date(2024, 0, 7); // Domingo 7 de enero de 2024
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(baseDate);
-      date.setDate(baseDate.getDate() + i);
-      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
-      // Tomar la primera letra y convertir a mayúscula
-      days.push(dayName.charAt(0).toUpperCase());
-    }
-
-    return days;
-  });
-
-  // Excepciones popup
-  showExceptionsDialog = false;
-
-  // Registros popup
-  showRecordsDialog = false;
+  @ViewChild(DatePickerDrawerComponent) datePickerDrawer?: DatePickerDrawerComponent;
 
   readonly formattedDate = computed(() => {
     const currentLang = this.translateService.currentLang || 'es';
@@ -1490,228 +1465,35 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el datepicker para seleccionar una fecha
+   * Abre el drawer del selector de fecha
    */
   openDatePicker(): void {
-    const date = this.selectedDate();
-    this.calendarDate.set(new Date(date));
     this.showDatePicker = true;
-    this.calendarLoading.set(true);
-
-    // Cargar los días del calendario de forma asíncrona para no bloquear la animación
     setTimeout(() => {
-      this.calendarDays.set(this.generateCalendarDays());
-      this.calendarLoading.set(false);
+      this.datePickerDrawer?.open();
     }, 0);
   }
 
   /**
-   * Cierra el drawer del calendario
+   * Maneja la selección de fecha desde el drawer
    */
-  closeDatePicker(): void {
-    this.showDatePicker = false;
-  }
-
-  /**
-   * Genera los días del calendario para el mes actual
-   */
-  private generateCalendarDays(): {
-    date: Date;
-    day: number;
-    isCurrentMonth: boolean;
-    isSelected: boolean;
-    isToday: boolean;
-    isInRange: boolean;
-    isFuture: boolean;
-  }[] {
-    const currentDate = this.calendarDate();
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    // Primer día del mes
-    const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-
-    // Día de la semana del primer día (0 = domingo, 1 = lunes, etc.)
-    const firstDayWeekday = firstDayOfMonth.getDay();
-
-    // Días del mes anterior que se muestran
-    const daysFromPrevMonth = firstDayWeekday;
-    const prevMonthLastDay = new Date(year, month, 0);
-
-    const days: {
-      date: Date;
-      day: number;
-      isCurrentMonth: boolean;
-      isSelected: boolean;
-      isToday: boolean;
-      isInRange: boolean;
-      isFuture: boolean;
-    }[] = [];
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const selectedDate = this.selectedDate();
-    selectedDate.setHours(0, 0, 0, 0);
-
-    // Agregar días del mes anterior
-    for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
-      const day = prevMonthLastDay.getDate() - i;
-      const date = new Date(year, month - 1, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    // Agregar días del mes actual
-    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-      const date = new Date(year, month, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: true,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    // Agregar días del mes siguiente para completar la última semana
-    const remainingDays = 42 - days.length; // 6 semanas * 7 días
-    for (let day = 1; day <= remainingDays; day++) {
-      const date = new Date(year, month + 1, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    return days;
-  }
-
-  /**
-   * Selecciona una fecha del calendario
-   */
-  selectCalendarDate(date: Date): void {
-    this.calendarDate.set(new Date(date));
-    this.selectedDate.set(new Date(date));
+  onDatePickerDateSelected(date: Date): void {
+    this.selectedDate.set(date);
     void this.loadAttendance();
-    this.closeDatePicker();
   }
 
   /**
-   * Limpia la selección de fecha (vuelve a hoy)
+   * Abre el drawer de excepciones
    */
-  clearDateSelection(): void {
-    this.calendarDate.set(new Date());
-    this.calendarDays.set(this.generateCalendarDays());
+  openExceptionsDrawer(): void {
+    this.showExceptionsDrawer = true;
   }
 
   /**
-   * Navega al mes anterior en el calendario
+   * Abre el drawer de registros
    */
-  previousCalendarMonth(): void {
-    const date = new Date(this.calendarDate());
-    date.setMonth(date.getMonth() - 1);
-    this.calendarDate.set(date);
-    this.calendarDays.set(this.generateCalendarDays());
-  }
-
-  /**
-   * Navega al mes siguiente en el calendario
-   */
-  nextCalendarMonth(): void {
-    const date = new Date(this.calendarDate());
-    date.setMonth(date.getMonth() + 1);
-    this.calendarDate.set(date);
-    this.calendarDays.set(this.generateCalendarDays());
-  }
-
-  /**
-   * Formatea el día del calendario para mostrar en el chip
-   */
-  formatCalendarDay(date: Date): string {
-    return date.getDate().toString().padStart(2, '0') + ' ' + this.getMonthAbbreviation(date);
-  }
-
-  /**
-   * Formatea el nombre del día para mostrar en el chip
-   */
-  formatCalendarDayName(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { weekday: 'short' });
-  }
-
-  /**
-   * Formatea el mes y año del calendario
-   */
-  formatCalendarMonth(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  }
-
-  /**
-   * Obtiene la abreviación del mes
-   */
-  private getMonthAbbreviation(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { month: 'short' });
-  }
-
-  /**
-   * Maneja la selección de fecha del datepicker
-   */
-  onDateSelect(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target?.value) {
-      const selectedDate = parseLocalDate(target.value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      selectedDate.setHours(0, 0, 0, 0);
-
-      // Solo permitir fechas menores a hoy
-      if (selectedDate < today) {
-        this.selectedDate.set(selectedDate);
-        void this.loadAttendance();
-      }
-    }
-    this.showDatePicker = false;
-  }
-
-  /**
-   * Abre el diálogo de excepciones
-   */
-  openExceptionsDialog(): void {
-    this.showExceptionsDialog = true;
-  }
-
-  /**
-   * Cierra el diálogo de excepciones
-   */
-  closeExceptionsDialog(): void {
-    this.showExceptionsDialog = false;
+  openRecordsDrawer(): void {
+    this.showRecordsDrawer = true;
   }
 
   /**
@@ -1722,78 +1504,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Formatea la fecha de la excepción
-   */
-  formatExceptionDate(dateString: string): string {
-    const date = parseLocalDate(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  /**
-   * Abre el diálogo de registros
-   */
-  openRecordsDialog(): void {
-    this.showRecordsDialog = true;
-  }
-
-  /**
-   * Cierra el diálogo de registros
-   */
-  closeRecordsDialog(): void {
-    this.showRecordsDialog = false;
-  }
-
-  /**
    * Obtiene los registros de asistencia del attendance actual
    */
   getRecords(): IAssistance[] {
     return this.attendance()?.assistFlatList ?? [];
-  }
-
-  /**
-   * Formatea la fecha y hora del registro
-   */
-  formatRecordDateTime(dateString: string): string {
-    const date = new Date(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-
-    const dateStr = date.toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-
-    const timeStr = date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-
-    return `${dateStr} ${timeStr}`;
-  }
-
-  /**
-   * Formatea solo la hora del registro
-   */
-  formatRecordTime(dateString: string): string {
-    const date = new Date(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-
-    return date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
   }
 
   /**

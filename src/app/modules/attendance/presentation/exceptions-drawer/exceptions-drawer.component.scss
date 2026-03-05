@@ -1,0 +1,85 @@
+// Estilos específicos del componente exceptions-drawer
+// Los estilos base de drawer están en src/styles/_drawer.scss (importados globalmente)
+
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.exceptions-list {
+  @include flex-column;
+  gap: $spacing-md;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: $spacing-sm;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.no-exceptions {
+  @include flex-center;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-2xl;
+  color: var(--text-secondary);
+  text-align: center;
+  i { font-size: 3rem; color: var(--text-tertiary); }
+  p { margin: 0; }
+}
+
+.exception-item {
+  padding: $spacing-md;
+  background: var(--bg-secondary);
+  border-radius: $radius;
+  border-left: 3px solid var(--warning);
+}
+
+.exception-header {
+  @include flex-between;
+  margin-bottom: $spacing-sm;
+}
+
+.exception-type {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  i { color: var(--warning); }
+}
+
+.exception-type-name {
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+}
+
+.exception-date {
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+}
+
+.exception-description {
+  margin-bottom: $spacing-sm;
+  color: var(--text-secondary);
+  font-size: $font-size-sm;
+  line-height: 1.5;
+}
+
+.exception-times {
+  @include flex-column;
+  gap: $spacing-xs;
+}
+
+.exception-time {
+  display: flex;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+}
+
+.time-label {
+  color: var(--text-secondary);
+  font-weight: $font-weight-medium;
+}
+
+.exception-time .time-value {
+  color: var(--text-primary);
+  font-weight: $font-weight-semibold;
+  font-family: 'Courier New', monospace;
+}

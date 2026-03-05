@@ -1,0 +1,53 @@
+<app-drawer
+  [(visible)]="visible"
+  [showHeader]="true"
+  [title]="''"
+  [cancelButtonText]="cancelButtonText"
+  [enableSwipe]="true"
+  (closed)="close()"
+>
+  <!-- Navegación del mes -->
+      <div class="calendar-month-navigation">
+        <button type="button" class="calendar-nav-button" (click)="previousCalendarMonth()">
+          <i class="pi pi-chevron-left"></i>
+        </button>
+        <span class="calendar-month-label">{{ formatCalendarMonth(calendarDate()) }}</span>
+        <button type="button" class="calendar-nav-button" (click)="nextCalendarMonth()">
+          <i class="pi pi-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- Calendario -->
+      <div class="calendar-grid">
+        @if (calendarLoading()) {
+          <div class="calendar-loader">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ 'attendance.loading' | translate }}</span>
+          </div>
+        } @else {
+          <!-- Días de la semana -->
+          <div class="calendar-weekdays">
+            @for (day of weekDays(); track day) {
+              <div class="calendar-weekday">{{ day }}</div>
+            }
+          </div>
+
+          <!-- Días del mes -->
+          <div class="calendar-days">
+            @for (day of calendarDays(); track day.date) {
+              <button
+                type="button"
+                class="calendar-day"
+                [class.calendar-day-other-month]="!day.isCurrentMonth"
+                [class.calendar-day-selected]="day.isSelected"
+                [class.calendar-day-today]="day.isToday"
+                [class.calendar-day-in-range]="day.isInRange"
+                (click)="selectCalendarDate(day.date)"
+              >
+                {{ day.day }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+</app-drawer>

@@ -16,7 +16,7 @@
           <button
             type="button"
             class="action-icon-button bg-class"
-            (click)="openExceptionsDialog()"
+            (click)="openExceptionsDrawer()"
             [attr.aria-label]="'attendance.exceptions' | translate"
           >
             <svg
@@ -40,7 +40,7 @@
           <button
             type="button"
             class="action-icon-button bg-class"
-            (click)="openRecordsDialog()"
+            (click)="openRecordsDrawer()"
             [attr.aria-label]="'attendance.records' | translate"
           >
             <svg
@@ -378,181 +378,25 @@
 </div>
 
 <!-- Datepicker Drawer -->
-@if (showDatePicker) {
-  <div
-    class="drawer-overlay"
-    [@fadeIn]
-    (click)="closeDatePicker()"
-    (keydown.escape)="closeDatePicker()"
-    role="button"
-    tabindex="0"
-    [attr.aria-label]="'attendance.close' | translate"
-  >
-    <div
-      class="drawer-container"
-      [@slideUpDrawer]
-      (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
-      role="dialog"
-      [attr.aria-label]="'attendance.selectDate' | translate"
-    >
-      <!-- Header del drawer -->
-      <div class="drawer-header drawer-calendar">
-        <button type="button" class="drawer-cancel-button" (click)="closeDatePicker()">
-          {{ 'attendance.cancel' | translate }}
-        </button>
-      </div>
+<app-date-picker-drawer
+  [(visible)]="showDatePicker"
+  [selectedDate]="selectedDate()"
+  [cancelButtonText]="'attendance.cancel' | translate"
+  (dateSelected)="onDatePickerDateSelected($event)"
+></app-date-picker-drawer>
 
-      <!-- Navegación del mes -->
-      <div class="calendar-month-navigation">
-        <button type="button" class="calendar-nav-button" (click)="previousCalendarMonth()">
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <span class="calendar-month-label">{{ formatCalendarMonth(calendarDate()) }}</span>
-        <button type="button" class="calendar-nav-button" (click)="nextCalendarMonth()">
-          <i class="pi pi-chevron-right"></i>
-        </button>
-      </div>
+<!-- Exceptions Drawer -->
+<app-exceptions-drawer
+  [(visible)]="showExceptionsDrawer"
+  [exceptions]="getExceptions()"
+  [title]="'attendance.exceptions' | translate"
+  [cancelButtonText]="'attendance.cancel' | translate"
+></app-exceptions-drawer>
 
-      <!-- Calendario -->
-      <div class="calendar-grid">
-        @if (calendarLoading()) {
-          <!-- Loader mientras se cargan los datos -->
-          <div class="calendar-loader">
-            <i class="pi pi-spin pi-spinner"></i>
-            <span>{{ 'attendance.loading' | translate }}</span>
-          </div>
-        } @else {
-          <!-- Días de la semana -->
-          <div class="calendar-weekdays">
-            @for (day of weekDays(); track day) {
-              <div class="calendar-weekday">{{ day }}</div>
-            }
-          </div>
-
-          <!-- Días del mes -->
-          <div class="calendar-days">
-            @for (day of calendarDays(); track day.date) {
-              <button
-                type="button"
-                class="calendar-day"
-                [class.calendar-day-other-month]="!day.isCurrentMonth"
-                [class.calendar-day-selected]="day.isSelected"
-                [class.calendar-day-today]="day.isToday"
-                [class.calendar-day-in-range]="day.isInRange"
-                (click)="selectCalendarDate(day.date)"
-              >
-                {{ day.day }}
-              </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Exceptions Dialog -->
-<p-dialog
-  [(visible)]="showExceptionsDialog"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '600px' }"
-  [header]="'attendance.exceptions' | translate"
-  (onHide)="closeExceptionsDialog()"
->
-  <div class="exceptions-list">
-    @if (getExceptions().length === 0) {
-      <div class="no-exceptions">
-        <i class="pi pi-info-circle"></i>
-        <p>{{ 'attendance.noExceptions' | translate }}</p>
-      </div>
-    } @else {
-      @for (exception of getExceptions(); track exception.shiftExceptionId) {
-        <div class="exception-item">
-          <div class="exception-header">
-            <div class="exception-type">
-              <i class="pi pi-info-circle"></i>
-              <span class="exception-type-name">{{
-                exception.exceptionType.exceptionTypeTypeName
-              }}</span>
-            </div>
-            <span class="exception-date">{{
-              formatExceptionDate(exception.shiftExceptionsDate)
-            }}</span>
-          </div>
-          @if (exception.shiftExceptionsDescription) {
-            <div class="exception-description">
-              {{ exception.shiftExceptionsDescription }}
-            </div>
-          }
-          <div class="exception-times">
-            @if (exception.shiftExceptionCheckInTime) {
-              <div class="exception-time">
-                <span class="time-label">{{ 'attendance.checkIn' | translate }}:</span>
-                <span class="time-value">{{ exception.shiftExceptionCheckInTime }}</span>
-              </div>
-            }
-            @if (exception.shiftExceptionCheckOutTime) {
-              <div class="exception-time">
-                <span class="time-label">{{ 'attendance.checkOut' | translate }}:</span>
-                <span class="time-value">{{ exception.shiftExceptionCheckOutTime }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    }
-  </div>
-</p-dialog>
-
-<!-- Records Dialog -->
-<p-dialog
-  [(visible)]="showRecordsDialog"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '600px' }"
-  [header]="'attendance.records' | translate"
-  (onHide)="closeRecordsDialog()"
->
-  <div class="records-list">
-    @if (getRecords().length === 0) {
-      <div class="no-records">
-        <i class="pi pi-info-circle"></i>
-        <p>{{ 'attendance.noRecords' | translate }}</p>
-      </div>
-    } @else {
-      @for (record of getRecords(); track record.assistId) {
-        <div class="record-item">
-          <div class="record-header">
-            <div class="record-time">
-              <i class="pi pi-clock"></i>
-              <span class="time-value">{{ formatRecordTime(record.assistPunchTime) }}</span>
-            </div>
-            <span class="record-date">{{ formatRecordDateTime(record.assistPunchTime) }}</span>
-          </div>
-          <div class="record-details">
-            @if (record.assistTerminalAlias) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.terminal' | translate }}:</span>
-                <span class="detail-value">{{ record.assistTerminalAlias }}</span>
-              </div>
-            }
-            @if (record.assistAreaAlias) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.area' | translate }}:</span>
-                <span class="detail-value">{{ record.assistAreaAlias }}</span>
-              </div>
-            }
-            @if (record.assistLatitude && record.assistLongitude) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.location' | translate }}:</span>
-                <span class="detail-value"
-                  >{{ record.assistLatitude }}, {{ record.assistLongitude }}</span
-                >
-              </div>
-            }
-          </div>
-        </div>
-      }
-    }
-  </div>
-</p-dialog>
+<!-- Records Drawer -->
+<app-records-drawer
+  [(visible)]="showRecordsDrawer"
+  [records]="getRecords()"
+  [title]="'attendance.records' | translate"
+  [cancelButtonText]="'attendance.cancel' | translate"
+></app-records-drawer>

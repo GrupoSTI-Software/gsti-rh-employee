@@ -1,0 +1,77 @@
+// Estilos compartidos para todos los componentes drawer del proyecto
+// Este archivo se importa globalmente en styles.scss
+
+@use './variables' as *;
+@use './mixins' as *;
+
+// Estilos base para drawers (overlay + container)
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  @include flex-center;
+  align-items: flex-end;
+}
+
+.drawer-container {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-primary);
+  border-radius: $radius-lg $radius-lg 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-y;
+  user-select: none;
+  &::-webkit-scrollbar { display: none; }
+
+  // Indicador de swipe (barra superior)
+  &::before {
+    content: '';
+    position: absolute;
+    top: $spacing-sm;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: $radius-lg;
+    opacity: 0.5;
+    z-index: 10;
+  }
+}
+
+.drawer-header {
+  @include flex-between;
+  padding: $spacing-xl $spacing-xl $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  z-index: 1;
+  &.drawer-calendar { justify-content: flex-end; }
+}
+
+.drawer-cancel-button {
+  @include button-base;
+  color: var(--danger);
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  padding: $spacing-xs $spacing-sm;
+  background: transparent;
+  &:hover { background: var(--bg-hover); }
+}
+
+.drawer-title {
+  font-size: $font-size;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.drawer-spacer { width: 80px; }

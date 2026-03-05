@@ -57,7 +57,7 @@
     transition: background-color $transition-fast, transform $transition-fast;
 
     svg {
-      width: 1.75rem;
+      width: 1.35rem;
     }
 
     &:hover { background: var(--bg-hover); transform: scale(1.05); }
