@@ -1,6 +1,6 @@
-import { inject, Injectable, NgZone, signal } from '@angular/core';
+import { inject, Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported } from 'firebase/messaging';
 import { initializeApp } from 'firebase/app';
 import { SecureStorageService } from './secure-storage.service';
 import { LoggerService } from './logger.service';
@@ -13,6 +13,13 @@ export interface IPushNotification {
   title: string;
   body: string;
   noticeId: string;
+}
+
+/**
+ * Verifica si las APIs de push están disponibles en el navegador actual
+ */
+function isPushSupported(): boolean {
+  return typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,21 +38,39 @@ export class PushNotificationsService {
     appId: environment.FIREBASE_APP_ID,
   });
 
-  private messaging = getMessaging(this.firebaseApp);
-
-  /** Notificación activa visible en la UI (null = sin notificación) */
-  readonly activeNotification = signal<IPushNotification | null>(null);
+  private messaging: ReturnType<typeof getMessaging> | null = null;
   private listening = false;
+
+  /**
+   * Obtiene la instancia de messaging solo si el navegador lo soporta
+   */
+  private async getMessagingInstance(): Promise<ReturnType<typeof getMessaging> | null> {
+    if (this.messaging) return this.messaging;
+
+    const supported = await isSupported();
+    if (!supported) {
+      this.logger.warn('Firebase Messaging no es soportado en este navegador');
+      return null;
+    }
+
+    this.messaging = getMessaging(this.firebaseApp);
+    return this.messaging;
+  }
 
   /**
    * Obtiene el token FCM y lo almacena en el secure storage
    */
   async getToken(): Promise<string | null> {
+    if (!isPushSupported()) return null;
+
     try {
+      const messaging = await this.getMessagingInstance();
+      if (!messaging) return null;
+
       const registration = await navigator.serviceWorker.register(
         'assets/firebase-messaging-sw.js',
       );
-      const token = await getToken(this.messaging, {
+      const token = await getToken(messaging, {
         vapidKey: environment.FIREBASE_VAPID_KEY,
         serviceWorkerRegistration: registration,
       });
@@ -61,36 +86,34 @@ export class PushNotificationsService {
    * Solicita permiso de notificaciones al usuario
    */
   async requestPermission(): Promise<boolean | void> {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
-    return true;
+    if (!isPushSupported()) return;
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return false;
+      return true;
+    } catch (error) {
+      this.logger.error('Error al solicitar permiso de notificaciones:', error);
+      return;
+    }
   }
 
   /**
-   * Navega al detalle del aviso y limpia la notificación activa
+   * Navega al detalle del aviso
    */
   goToNotice(noticeId: string): void {
-    this.activeNotification.set(null);
     void this.router.navigate(['/dashboard/notices', noticeId]);
   }
 
   /**
-   * Cierra la notificación activa sin navegar
-   */
-  dismissNotification(): void {
-    this.activeNotification.set(null);
-  }
-
-  /**
-   * Escucha mensajes push en primer plano y mensajes del SW (segundo plano).
-   * En primer plano muestra una notificación in-app via signal.
-   * En segundo plano el SW maneja el click y envía postMessage para navegar.
+   * Escucha mensajes del SW cuando el usuario hace click en una notificación.
    */
   listen(): void {
     if (this.listening) return;
     this.listening = true;
 
-    // Mensajes del SW cuando el usuario hace click en una notificación de segundo plano
+    if (!isPushSupported()) return;
+
     navigator.serviceWorker.addEventListener('message', (event) => {
       const noticeId = event.data?.noticeId;
       if (event.data?.type === 'NOTIFICATION_CLICK' && noticeId) {
@@ -98,17 +121,6 @@ export class PushNotificationsService {
           void this.router.navigate(['/dashboard/notices', noticeId]);
         });
       }
-    });
-
-    // Mensajes push en primer plano: mostrar notificación in-app
-    onMessage(this.messaging, (payload) => {
-      const noticeId = payload.data?.['noticeId'] ?? '';
-      const title = payload.notification?.title ?? 'Nuevo aviso';
-      const body = payload.notification?.body ?? '';
-
-      this.ngZone.run(() => {
-        this.activeNotification.set({ title, body, noticeId });
-      });
     });
   }
 }

@@ -33,8 +33,7 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updatePageTitleFromRoute();
-    this.pushService.listen();
-
+    void this.listenNotifications();
     this.routerSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -62,5 +61,14 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
     this.pageTitle.set(label || 'Dashboard');
     this.pageSubtitle.set(subtitle || '');
+  }
+
+  /**
+   * Escucha notificaciones push
+   */
+  private async listenNotifications(): Promise<void> {
+    if (await this.pushService.requestPermission()) {
+      void this.pushService.listen();
+    }
   }
 }

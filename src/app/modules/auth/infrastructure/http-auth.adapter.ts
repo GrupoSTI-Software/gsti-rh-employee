@@ -189,21 +189,23 @@ export class HttpAuthAdapter implements IAuthPort {
           await this.pushNotificationsService.getToken();
           // Guardar datos del usuario cifrados (sin datos ultra-sensibles)
           this.storeUserDataSecurely(user);
-          const fcmTokenPayload: {
-            userId: number;
-            userFcmToken: string;
-            userFcmActive: number;
-            userFcmTokenPlatform?: string;
-          } = {
-            userId: Number(this.currentUser?.id) ?? 0,
-            userFcmToken: this.secureStorage.getItem('fcmToken') ?? '',
-            userFcmActive: 1,
-            userFcmTokenPlatform: 'app',
-          };
-          await firstValueFrom(
-            this.http.post<IFcmTokenResponse>(`${this.apiUrl}/user-fcm-tokens`, fcmTokenPayload),
-          );
-
+          const fcmToken = this.secureStorage.getItem('fcmToken');
+          if (fcmToken) {
+            const fcmTokenPayload: {
+              userId: number;
+              userFcmToken: string;
+              userFcmActive: number;
+              userFcmTokenPlatform?: string;
+            } = {
+              userId: Number(this.currentUser?.id) ?? 0,
+              userFcmToken: this.secureStorage.getItem('fcmToken') ?? '',
+              userFcmActive: 1,
+              userFcmTokenPlatform: 'app',
+            };
+            await firstValueFrom(
+              this.http.post<IFcmTokenResponse>(`${this.apiUrl}/user-fcm-tokens`, fcmTokenPayload),
+            );
+          }
           return {
             success: true,
             token: token,

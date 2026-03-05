@@ -4,8 +4,10 @@ import {
   signal,
   computed,
   OnInit,
+  DestroyRef,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -121,8 +123,12 @@ export class NoticeDetailComponent implements OnInit {
     }
   }
 
+  private readonly destroyRef = inject(DestroyRef);
+
   ngOnInit(): void {
-    void this.loadNotice();
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      void this.loadNotice();
+    });
   }
 
   /**

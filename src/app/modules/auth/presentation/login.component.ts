@@ -144,8 +144,10 @@ export class LoginComponent implements OnInit {
       const result = await this.loginUseCase.execute(email, password);
 
       if (result.success) {
-        await this.pushService.requestPermission();
-        void this.pushService.listen();
+        const permission = await this.pushService.requestPermission();
+        if (permission) {
+          void this.pushService.listen();
+        }
         await this.router.navigate(['/dashboard/checkin']);
       } else {
         this.error.set(

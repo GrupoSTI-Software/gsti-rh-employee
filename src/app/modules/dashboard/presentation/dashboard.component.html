@@ -1,29 +1,3 @@
-<!-- Notificación push in-app (fuera del container para evitar problemas de z-index) -->
-@if (pushService.activeNotification(); as notification) {
-  <div
-    class="push-notification-banner"
-    (click)="pushService.goToNotice(notification.noticeId)"
-    (keydown.enter)="pushService.goToNotice(notification.noticeId)"
-    tabindex="0"
-    role="button"
-  >
-    <div class="push-notification-icon">
-      <i class="pi pi-bell"></i>
-    </div>
-    <div class="push-notification-content">
-      <strong class="push-notification-title">{{ notification.title }}</strong>
-      <span class="push-notification-body">{{ notification.body }}</span>
-    </div>
-    <button
-      type="button"
-      class="push-notification-close"
-      (click)="pushService.dismissNotification(); $event.stopPropagation()"
-    >
-      <i class="pi pi-times"></i>
-    </button>
-  </div>
-}
-
 <div class="dashboard-container">
   <div class="head-top">
     <div class="page-header">
