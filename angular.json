@@ -114,11 +114,7 @@
             "liveReload": true,
             "hmr": true,
             "allowedHosts": [
-              "unmollified-kayla-refractively.ngrok-free.dev",
-              "*.loca.lt",
-              "*.trycloudflare.com",
-              "*.tunnelmole.net",
-              "mft5mf-ip-187-190-153-176.tunnelmole.net"
+              "xowp1g-ip-187-190-153-176.tunnelmole.net"
             ]
           },
           "builder": "@angular/build:dev-server",

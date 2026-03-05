@@ -24,10 +24,6 @@ import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { IAttendance, IException, IAssistance } from '../domain/attendance.port';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { CheckInIconComponent } from '@shared/components/icons/check-in-icon/check-in-icon.component';
-import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/check-out-icon.component';
-import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
-import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { WeekCalendarComponent } from '@shared/components/week-calendar/week-calendar.component';
@@ -71,10 +67,6 @@ interface IFaceDetectionWithLandmarks {
     CommonModule,
     FormsModule,
     TranslatePipe,
-    CheckInIconComponent,
-    CheckOutIconComponent,
-    EatInIconComponent,
-    EatOutIconComponent,
     TooltipModule,
     WeekCalendarComponent,
     DatePickerDrawerComponent,
@@ -424,8 +416,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (typeof user?.employeeId !== 'number') {
       this.showErrorModalWithMessage(
         'error',
-        'Error de autenticación',
-        'No se encontró el ID del empleado. Por favor, inicia sesión nuevamente.',
+        this.translateService.instant('attendance.faceRecognition.authenticationError'),
+        this.translateService.instant('attendance.faceRecognition.noEmployeeId'),
       );
       return;
     }
@@ -445,7 +437,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       );
       this.attendance.set(attendance);
     } catch (err) {
-      this.error.set('Error al cargar la asistencia');
+      this.error.set(this.translateService.instant('attendance.error'));
       this.logger.error('Error al cargar la asistencia:', err);
     } finally {
       this.loading.set(false);
@@ -547,8 +539,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (typeof user?.employeeId !== 'number') {
       this.showErrorModalWithMessage(
         'error',
-        'Error de autenticación',
-        'No se encontró el ID del empleado. Por favor, inicia sesión nuevamente.',
+        this.translateService.instant('attendance.faceRecognition.authenticationError'),
+        this.translateService.instant('attendance.faceRecognition.noEmployeeId'),
       );
       return;
     }
@@ -564,8 +556,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (!employeeBiometricFaceId) {
       this.showErrorModalWithMessage(
         'error',
-        'Configuración incompleta',
-        'No se encontró la fotografía del rostro del empleado. Por favor, contacta al administrador.',
+        this.translateService.instant('attendance.faceRecognition.incompleteSetup'),
+        this.translateService.instant('attendance.faceRecognition.noFacePhoto'),
       );
       this.starting.set(false);
       return;
@@ -594,15 +586,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
         await this.loadFaceApiModels();
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : 'Error desconocido al cargar modelos';
-        if (errorMessage.includes('reconocimiento facial')) {
+          error instanceof Error
+            ? error.message
+            : this.translateService.instant('attendance.faceRecognition.modelsLoadError');
+        if (
+          errorMessage.includes('reconocimiento facial') ||
+          errorMessage.includes('facial recognition')
+        ) {
           this.showErrorModalWithMessage(
             'error',
-            'Error al cargar modelos',
-            'No se pudieron cargar los modelos de reconocimiento facial. Por favor, verifica tu conexión a internet.',
+            this.translateService.instant('attendance.faceRecognition.modelsLoadError'),
+            this.translateService.instant('attendance.faceRecognition.modelsLoadErrorMessage'),
           );
         } else {
-          this.showErrorModalWithMessage('error', 'Error inesperado', errorMessage);
+          this.showErrorModalWithMessage(
+            'error',
+            this.translateService.instant('attendance.faceRecognition.unexpectedError'),
+            errorMessage,
+          );
         }
         this.loading.set(false);
         return;
@@ -617,15 +618,19 @@ export class CheckinComponent implements OnInit, OnDestroy {
           livenessError instanceof Error ? livenessError.message : 'Error desconocido';
         this.logger.error('Error en verificación de liveness:', livenessError);
 
+        this.loading.set(false);
+
         // Si el error es de liveness (movimiento insuficiente), mostrar mensaje específico
         if (
           livenessErrorMessage.includes('movimiento') ||
           livenessErrorMessage.includes('liveness') ||
-          livenessErrorMessage.includes('persona real')
+          livenessErrorMessage.includes('persona real') ||
+          livenessErrorMessage.includes('movement') ||
+          livenessErrorMessage.includes('real person')
         ) {
           this.showErrorModalWithMessage(
             'warning',
-            'Verificación de liveness',
+            this.translateService.instant('attendance.faceRecognition.livenessVerification'),
             livenessErrorMessage,
           );
         } else if (
@@ -634,44 +639,47 @@ export class CheckinComponent implements OnInit, OnDestroy {
         ) {
           this.showErrorModalWithMessage(
             'error',
-            'Permiso de cámara requerido',
-            'Se necesita acceso a la cámara para registrar asistencia. Por favor, habilita el permiso en la configuración de tu navegador.',
+            this.translateService.instant('attendance.faceRecognition.cameraPermissionRequired'),
+            this.translateService.instant('attendance.faceRecognition.cameraPermissionMessage'),
           );
-        } else if (livenessErrorMessage.includes('Captura cancelada')) {
+        } else if (
+          livenessErrorMessage.includes('Captura cancelada') ||
+          livenessErrorMessage.includes('Capture cancelled')
+        ) {
           this.showErrorModalWithMessage(
             'info',
-            'Captura cancelada',
-            'La captura de fotografía fue cancelada. Intenta nuevamente cuando estés listo.',
+            this.translateService.instant('attendance.faceRecognition.captureCancelled'),
+            this.translateService.instant('attendance.faceRecognition.captureCancelledMessage'),
           );
         } else {
           this.showErrorModalWithMessage(
             'error',
-            'Error al capturar fotografía',
+            this.translateService.instant('attendance.faceRecognition.captureError'),
             livenessErrorMessage,
           );
         }
-        this.loading.set(false);
         return;
       }
       const storedPhotoBase64 = this.getStoredPhotoBase64();
       if (!storedPhotoBase64) {
+        this.loading.set(false);
         this.showErrorModalWithMessage(
           'error',
-          'Datos no encontrados',
-          'No se encontró la fotografía del empleado guardada. Por favor, contacta al administrador.',
+          this.translateService.instant('attendance.faceRecognition.dataNotFound'),
+          this.translateService.instant('attendance.faceRecognition.noStoredPhoto'),
         );
-        this.loading.set(false);
         return;
       }
+
       // Comparar las fotografías usando face-api.js
       const isMatch = await this.compareFaces(storedPhotoBase64, capturedPhotoBase64);
       if (!isMatch) {
+        this.loading.set(false);
         this.showErrorModalWithMessage(
           'error',
-          'Verificación facial fallida',
-          'La fotografía capturada no coincide con la del empleado registrado. Por favor, intenta nuevamente.',
+          this.translateService.instant('attendance.faceRecognition.verificationFailed'),
+          this.translateService.instant('attendance.faceRecognition.verificationFailedMessage'),
         );
-        this.loading.set(false);
         return;
       }
       // Obtener ubicación
@@ -688,14 +696,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
         await this.loadAttendance();
         this.showErrorModalWithMessage(
           'success',
-          '¡Asistencia registrada!',
-          'Tu asistencia ha sido registrada correctamente.',
+          this.translateService.instant('attendance.faceRecognition.attendanceRegistered'),
+          this.translateService.instant('attendance.faceRecognition.attendanceRegisteredMessage'),
         );
       } else {
         this.showErrorModalWithMessage(
           'error',
-          'Error al registrar',
-          'No se pudo registrar la asistencia. Por favor, intenta nuevamente.',
+          this.translateService.instant('attendance.faceRecognition.registerError'),
+          this.translateService.instant('attendance.faceRecognition.registerErrorMessage'),
         );
       }
     } catch (err: unknown) {
@@ -703,25 +711,38 @@ export class CheckinComponent implements OnInit, OnDestroy {
       const errorMessage = error.message ?? '';
       this.logger.error('Error en handleRegisterCheckIn:', err);
 
-      if (errorMessage.includes('ubicación') || errorMessage.includes('ubicacion')) {
+      if (
+        errorMessage.includes('ubicación') ||
+        errorMessage.includes('ubicacion') ||
+        errorMessage.includes('location')
+      ) {
         this.showErrorModalWithMessage(
           'error',
-          'Permiso de ubicación requerido',
-          'Se necesita acceso a la ubicación para registrar asistencia. Por favor, habilita el permiso en la configuración de tu navegador.',
+          this.translateService.instant('attendance.faceRecognition.locationPermissionRequired'),
+          this.translateService.instant('attendance.faceRecognition.locationPermissionMessage'),
         );
       } else if (errorMessage.includes('cámara') || errorMessage.includes('camera')) {
         this.showErrorModalWithMessage(
           'error',
-          'Permiso de cámara requerido',
-          'Se necesita acceso a la cámara para registrar asistencia. Por favor, habilita el permiso en la configuración de tu navegador.',
+          this.translateService.instant('attendance.faceRecognition.cameraPermissionRequired'),
+          this.translateService.instant('attendance.faceRecognition.cameraPermissionMessage'),
         );
-      } else if (errorMessage.includes('movimiento') || errorMessage.includes('liveness')) {
-        this.showErrorModalWithMessage('warning', 'Verificación de liveness', errorMessage);
+      } else if (
+        errorMessage.includes('movimiento') ||
+        errorMessage.includes('liveness') ||
+        errorMessage.includes('movement')
+      ) {
+        this.showErrorModalWithMessage(
+          'warning',
+          this.translateService.instant('attendance.faceRecognition.livenessVerification'),
+          errorMessage,
+        );
       } else {
         this.showErrorModalWithMessage(
           'error',
-          'Error al registrar asistencia',
-          errorMessage || 'Ocurrió un error desconocido. Por favor, intenta nuevamente.',
+          this.translateService.instant('attendance.faceRecognition.registerErrorGeneric'),
+          errorMessage ||
+            this.translateService.instant('attendance.faceRecognition.registerErrorGenericMessage'),
         );
       }
     } finally {
@@ -848,7 +869,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     try {
       if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
-        throw new Error('La cámara no está disponible en este navegador');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraNotAvailable'),
+        );
       }
 
       // Obtener acceso a la cámara frontal con flash si está disponible
@@ -918,7 +941,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       video.style.position = 'absolute';
       video.style.top = '50%';
       video.style.left = '50%';
-      video.style.transform = 'translate(-50%, -50%)';
+      video.style.transform = 'translate(-50%, -50%) scaleX(-1)';
       video.style.width = '100%';
       video.style.height = '100%';
       video.style.objectFit = 'cover';
@@ -978,7 +1001,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear mensaje de instrucción
       const instructionMessage = document.createElement('div');
-      instructionMessage.textContent = 'Buscando rostro...';
+      instructionMessage.textContent = this.translateService.instant(
+        'attendance.faceRecognition.searchingFace',
+      );
       instructionMessage.style.position = 'absolute';
       instructionMessage.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 120px)';
       instructionMessage.style.left = '50%';
@@ -996,7 +1021,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear botón para capturar la foto (inicialmente deshabilitado)
       const captureButton = document.createElement('button');
-      captureButton.textContent = 'Verificando...';
+      captureButton.textContent = this.translateService.instant(
+        'attendance.faceRecognition.verifying',
+      );
       captureButton.disabled = true;
       captureButton.style.position = 'absolute';
       captureButton.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 30px)';
@@ -1103,12 +1130,19 @@ export class CheckinComponent implements OnInit, OnDestroy {
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             this.closeLivenessFromOutside();
+            this.loading.set(false);
             reject(new Error('No se pudo obtener el contexto del canvas'));
             return;
           }
           ctx.drawImage(video, 0, 0);
           const base64 = canvas.toDataURL('image/jpeg', 0.9);
+
+          // Cerrar la cámara antes de resolver
           this.closeLivenessFromOutside();
+
+          // Activar el loader para el proceso de verificación
+          this.loading.set(true);
+
           resolve(base64);
         };
 
@@ -1129,28 +1163,76 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
             // Actualizar UI según resultado
             if (isLive) {
-              this.updateLivenessStatusIndicator(statusIndicator, 'verified');
-              updateFaceFrameColor('verified');
-              captureButton.textContent = 'Capturar';
-              captureButton.disabled = false;
-              captureButton.style.backgroundColor = 'var(--primary, #007bff)';
-              captureButton.style.cursor = 'pointer';
-              instructionMessage.textContent = 'Detectado';
-              instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.8)';
-              instructionMessage.style.border = '2px dashed rgba(40, 167, 69, 1)';
-              this.loading.set(false);
-              setTimeout(captureFinalPhoto, 300);
-              return;
+              // Verificar similitud con la foto almacenada
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.verifyingSimilarity',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(255, 193, 7, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(255, 193, 7, 1)';
+
+              const storedPhotoBase64 = this.getStoredPhotoBase64();
+              if (!storedPhotoBase64) {
+                this.logger.warn('No hay foto almacenada para comparar');
+                this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+                updateFaceFrameColor('failed');
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.noStoredPhoto',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+                return;
+              }
+
+              // Usar el último frame del buffer para comparar
+              const currentFrame = framesToAnalyze[framesToAnalyze.length - 1];
+              const isMatch = await this.compareFaces(storedPhotoBase64, currentFrame);
+
+              if (isMatch) {
+                this.updateLivenessStatusIndicator(statusIndicator, 'verified');
+                updateFaceFrameColor('verified');
+                captureButton.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.capture',
+                );
+                captureButton.disabled = false;
+                captureButton.style.backgroundColor = 'var(--primary, #007bff)';
+                captureButton.style.cursor = 'pointer';
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.detected',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(40, 167, 69, 1)';
+                this.loading.set(false);
+                setTimeout(captureFinalPhoto, 300);
+                return;
+              } else {
+                this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+                updateFaceFrameColor('failed');
+                captureButton.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.verifying',
+                );
+                captureButton.disabled = true;
+                captureButton.style.backgroundColor = '#6c757d';
+                captureButton.style.cursor = 'not-allowed';
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.faceNotMatch',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+              }
             } else {
               this.updateLivenessStatusIndicator(statusIndicator, 'failed');
               updateFaceFrameColor('failed');
-              captureButton.textContent = 'Verificando...';
+              captureButton.textContent = this.translateService.instant(
+                'attendance.faceRecognition.verifying',
+              );
               captureButton.disabled = true;
               captureButton.style.backgroundColor = '#6c757d';
               captureButton.style.cursor = 'not-allowed';
-              instructionMessage.textContent = 'No se ha detectado ningún rostro';
-              instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-              instructionMessage.style.border = '2px dashed rgba(0, 0, 0, 0.2)';
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.faceInstructions',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(255, 152, 0, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(255, 152, 0, 1)';
             }
           } catch (error) {
             this.logger.warn('Error en verificación de liveness:', error);
@@ -1178,18 +1260,27 @@ export class CheckinComponent implements OnInit, OnDestroy {
         this.livenessCheckInterval = livenessCheckInterval ?? undefined;
         cancelButton.onclick = (): void => {
           this.closeLivenessFromOutside();
-          reject(new Error('Captura cancelada'));
+          reject(
+            new Error(
+              this.translateService.instant('attendance.faceRecognition.captureCancelledError'),
+            ),
+          );
         };
       });
     } catch (error: unknown) {
       const err = error as { name?: string; message?: string };
       if (err.name === 'NotAllowedError') {
         this.logger.warn('Permiso de cámara denegado');
-        throw new Error('Se necesita permiso de cámara para registrar asistencia');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraAccessError'),
+        );
       } else if (err.name === 'NotFoundError') {
         this.logger.warn('Cámara no encontrada');
-        throw new Error('No se encontró ninguna cámara');
-      } else if (err.message?.includes('Captura cancelada')) {
+        throw new Error(this.translateService.instant('attendance.faceRecognition.noCameraFound'));
+      } else if (
+        err.message?.includes('Captura cancelada') ||
+        err.message?.includes('Capture cancelled')
+      ) {
         throw error;
       } else {
         this.logger.error('Error al acceder a la cámara:', error);
@@ -1280,19 +1371,25 @@ export class CheckinComponent implements OnInit, OnDestroy {
   ): void {
     switch (status) {
       case 'checking':
-        indicator.textContent = '🔄 Verificando...';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.checking',
+        );
         indicator.style.backgroundColor = 'rgba(255, 193, 7, 0.9)';
         indicator.style.color = '#000';
         indicator.style.border = '2px dashed rgba(255, 193, 7, 1)';
         break;
       case 'verified':
-        indicator.textContent = '✓ Persona verificada';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.personVerified',
+        );
         indicator.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
         indicator.style.color = 'white';
         indicator.style.border = '2px dashed rgba(40, 167, 69, 1)';
         break;
       case 'failed':
-        indicator.textContent = '⚠ Muévete para verificar';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.moveToVerify',
+        );
         indicator.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
         indicator.style.color = 'white';
         indicator.style.border = '2px dashed rgba(220, 53, 69, 1)';
@@ -1338,7 +1435,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear un botón para capturar
       const captureButton = document.createElement('button');
-      captureButton.textContent = 'Capturar';
+      captureButton.textContent = this.translateService.instant(
+        'attendance.faceRecognition.capture',
+      );
       captureButton.style.position = 'fixed';
       captureButton.style.bottom = '20px';
       captureButton.style.left = '50%';
@@ -1356,7 +1455,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear un botón para cancelar
       const cancelButton = document.createElement('button');
-      cancelButton.textContent = 'Cancelar';
+      cancelButton.textContent = this.translateService.instant('attendance.cancel');
       cancelButton.style.position = 'fixed';
       cancelButton.style.top = '20px';
       cancelButton.style.right = '20px';
@@ -1394,17 +1493,28 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
         cancelButton.onclick = (): void => {
           this.closeLivenessFromOutside();
-          reject(new Error('Captura cancelada'));
+          reject(
+            new Error(
+              this.translateService.instant('attendance.faceRecognition.captureCancelledError'),
+            ),
+          );
         };
       });
     } catch (error: unknown) {
-      const err = error as { name?: string };
+      const err = error as { name?: string; message?: string };
       if (err.name === 'NotAllowedError') {
         this.logger.warn('Permiso de cámara denegado');
-        throw new Error('Se necesita permiso de cámara para registrar asistencia');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraAccessError'),
+        );
       } else if (err.name === 'NotFoundError') {
         this.logger.warn('Cámara no encontrada');
-        throw new Error('No se encontró ninguna cámara');
+        throw new Error(this.translateService.instant('attendance.faceRecognition.noCameraFound'));
+      } else if (
+        err.message?.includes('Captura cancelada') ||
+        err.message?.includes('Capture cancelled')
+      ) {
+        throw error;
       } else {
         this.logger.error('Error al acceder a la cámara:', error);
         throw error;
@@ -1452,12 +1562,20 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private getCurrentLocation(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
       if (!isPlatformBrowser(this.platformId)) {
-        reject(new Error('Geolocalización no disponible en este entorno'));
+        reject(
+          new Error(
+            this.translateService.instant('attendance.faceRecognition.locationUnavailable'),
+          ),
+        );
         return;
       }
 
       if (typeof navigator.geolocation === 'undefined') {
-        reject(new Error('Geolocalización no disponible en este navegador'));
+        reject(
+          new Error(
+            this.translateService.instant('attendance.faceRecognition.locationUnavailable'),
+          ),
+        );
         return;
       }
 
@@ -1466,21 +1584,28 @@ export class CheckinComponent implements OnInit, OnDestroy {
           resolve(position);
         },
         (error) => {
-          let errorMessage = 'Error al obtener la ubicación';
+          let errorMessage = this.translateService.instant('attendance.locationError');
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage =
-                'Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationPermissionDenied',
+              );
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Información de ubicación no disponible';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationUnavailable',
+              );
               break;
             case error.TIMEOUT:
-              errorMessage = 'Tiempo de espera agotado al obtener la ubicación';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationTimeout',
+              );
               break;
             default:
-              errorMessage = 'Error desconocido al obtener la ubicación';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationUnknownError',
+              );
               break;
           }
 

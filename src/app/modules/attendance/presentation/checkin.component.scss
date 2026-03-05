@@ -316,15 +316,15 @@
     align-items: center;
     gap: $spacing-md;
     flex: 1;
-  }
 
-  .status-icon {
-    width: 28px;
-    height: 28px;
-    @include flex-center;
-    flex-shrink: 0;
-    transition: transform $transition-base;
-    &:hover { transform: scale(1.1); }
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+
+      path {
+        stroke: var(--text-tertiary);
+      }
+    }
   }
 
   .status-label {

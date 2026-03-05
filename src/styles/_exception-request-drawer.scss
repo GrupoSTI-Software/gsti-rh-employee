@@ -86,7 +86,7 @@
     &:disabled { opacity: 0.6; cursor: not-allowed; }
   }
 
-  .form-textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+  .form-textarea { resize: vertical; min-height: 80px; }
 
   .error-message { font-size: $font-size-sm; color: var(--danger); margin-top: $spacing-xs; }
 
@@ -243,7 +243,6 @@
     font-size: $font-size-xs;
     font-weight: $font-weight-medium;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
     &.status-requested { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); }
     &.status-pending { background: rgba(var(--info-rgb), 0.1); color: var(--info); }
     &.status-accepted { background: rgba(var(--success-rgb), 0.1); color: var(--success); }
@@ -267,7 +266,7 @@
     gap: $spacing-sm;
     font-size: $font-size-sm;
     strong { color: var(--text-secondary); font-weight: $font-weight-medium; }
-    span { color: var(--text-primary); font-family: 'Courier New', monospace; }
+    span { color: var(--text-primary); }
   }
 
   .request-footer { padding-top: $spacing-sm; border-top: 1px solid var(--border-color); }
