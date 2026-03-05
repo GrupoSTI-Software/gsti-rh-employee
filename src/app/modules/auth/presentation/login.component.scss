@@ -10,7 +10,7 @@
   background-repeat: no-repeat;
   background-size: cover;
   background-position: top;
-  @include safe-area-vertical(0px, 0px);
+  @include safe-area-top(0.25rem);
 }
 
 .login-header {
@@ -20,17 +20,17 @@
 
   .login-logo {
     display: block;
-    height: 5rem;
-    width: 4rem;
+    height: 4rem;
+    width: 6rem;
     object-fit: contain;
     object-position: bottom;
     background: var(--bg-primary);
     position: fixed;
-    top: -0.1rem;
-    left: 1rem;
+    top: 5rem;
+    left: -1rem;
     margin-left: -0rem;
+    border-top-right-radius: 15rem;
     border-bottom-right-radius: 15rem;
-    border-bottom-left-radius: 15rem;
     padding: 0.75rem;
     box-sizing: border-box;
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
