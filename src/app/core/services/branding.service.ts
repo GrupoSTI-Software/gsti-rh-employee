@@ -468,4 +468,20 @@ export class BrandingService {
     const tradeName = this.settings()?.systemSettingTradeName;
     return tradeName ?? 'GSTI';
   }
+
+  /**
+   * Obtiene la URL del banner actual para usar como fondo
+   */
+  getBannerUrl(): string {
+    const banner = this.settings()?.systemSettingBanner;
+    return banner ?? '';
+  }
+
+  /**
+   * Obtiene la URL del favicon actual
+   */
+  getFaviconUrl(): string {
+    const favicon = this.settings()?.systemSettingFavicon;
+    return favicon ?? '/assets/gsti/favicon.ico';
+  }
 }
