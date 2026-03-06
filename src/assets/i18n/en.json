@@ -66,7 +66,9 @@
     "skipForNow": "Skip for now",
     "passkeyRegisteredSuccess": "Biometrics set up successfully!",
     "noUserAuthenticated": "No authenticated user",
-    "continue": "Continue"
+    "continue": "Continue",
+    "back": "Back",
+    "goToLogin": "Go to login"
   },
   "validation": {
     "required": "This field is required",

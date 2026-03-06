@@ -66,7 +66,9 @@
     "skipForNow": "Omitir por ahora",
     "passkeyRegisteredSuccess": "¡Biometría configurada exitosamente!",
     "noUserAuthenticated": "No hay usuario autenticado",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "back": "Regresar",
+    "goToLogin": "Ir al inicio de sesión"
   },
   "validation": {
     "required": "Este campo es requerido",
