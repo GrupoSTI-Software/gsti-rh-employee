@@ -17,11 +17,13 @@ const swPath = path.join(__dirname, '..', 'src', 'assets', 'firebase-messaging-s
  * @returns {string} Cadena en formato UPPER_SNAKE_CASE
  */
 const toUpperSnakeCase = (str) => {
-  return str
-    // Insertar guion bajo antes de mayúsculas (para camelCase)
-    .replace(/([a-z])([A-Z])/g, '$1_$2')
-    // Convertir todo a mayúsculas
-    .toUpperCase();
+  return (
+    str
+      // Insertar guion bajo antes de mayúsculas (para camelCase)
+      .replace(/([a-z])([A-Z])/g, '$1_$2')
+      // Convertir todo a mayúsculas
+      .toUpperCase()
+  );
 };
 
 /**
@@ -67,7 +69,10 @@ const readEnvFile = () => {
       if (trimmedLine && !trimmedLine.startsWith('#')) {
         const [key, ...valueParts] = trimmedLine.split('=');
         if (key && valueParts.length > 0) {
-          const rawValue = valueParts.join('=').replace(/^["']|["']$/g, '').trim();
+          const rawValue = valueParts
+            .join('=')
+            .replace(/^["']|["']$/g, '')
+            .trim();
           // Convertir el nombre de la variable a UPPER_SNAKE_CASE
           const upperKey = toUpperSnakeCase(key.trim());
           envVars[upperKey] = parseValue(rawValue);
@@ -107,10 +112,7 @@ const generateEnvironmentContent = (envVars) => {
     return `  ${key}: ${formatValue(parsedValue)}`;
   });
 
-  return `export const environment = {
-${properties.join(',\n')}
-};
-`;
+  return `export const environment = {${properties.join(',\n')}};`;
 };
 
 const injectEnvIntoServiceWorker = (envVars) => {
@@ -125,7 +127,7 @@ const injectEnvIntoServiceWorker = (envVars) => {
     'FIREBASE_PROJECT_ID',
     'FIREBASE_STORAGE_BUCKET',
     'FIREBASE_MESSAGING_SENDER_ID',
-    'FIREBASE_APP_ID'
+    'FIREBASE_APP_ID',
   ];
 
   requiredKeys.forEach((key) => {

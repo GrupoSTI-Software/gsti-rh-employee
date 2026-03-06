@@ -1,0 +1,43 @@
+@if (visible) {
+  <div
+    class="modal-overlay"
+    @fadeOverlay
+    (click)="onOverlayClick()"
+    (keydown.escape)="onOverlayClick()"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+  >
+    <div
+      class="modal-container"
+      @fadeModal
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      role="document"
+      tabindex="0"
+    >
+      <div class="modal-content" [ngClass]="getTypeClass()">
+        <div class="modal-icon" [innerHTML]="getIcon()"></div>
+        
+        @if (title) {
+          <h2 class="modal-title">{{ title }}</h2>
+        }
+        
+        @if (message) {
+          <p class="modal-message">{{ message }}</p>
+        }
+        
+        @if (showCloseButton) {
+          <button
+            type="button"
+            class="modal-close-button"
+            (click)="close()"
+            (keydown.enter)="close()"
+            (keydown.space)="close()">
+            {{ closeButtonText }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

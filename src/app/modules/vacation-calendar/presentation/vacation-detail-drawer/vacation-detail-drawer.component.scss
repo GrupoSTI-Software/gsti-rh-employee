@@ -103,7 +103,6 @@
   font-weight: $font-weight-medium;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .detail-value {
@@ -260,7 +259,6 @@
 }
 
 .shift-time {
-  font-family: 'Courier New', monospace;
   color: var(--text-secondary);
   font-size: $font-size-sm;
 }
@@ -280,7 +278,6 @@
 .attendance-time {
   font-weight: $font-weight-semibold;
   color: var(--text-primary);
-  font-family: 'Courier New', monospace;
   margin-bottom: $spacing-xs;
 }
 

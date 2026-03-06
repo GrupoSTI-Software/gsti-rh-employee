@@ -57,7 +57,7 @@
     transition: background-color $transition-fast, transform $transition-fast;
 
     svg {
-      width: 1.75rem;
+      width: 1.35rem;
     }
 
     &:hover { background: var(--bg-hover); transform: scale(1.05); }
@@ -205,7 +205,7 @@
   }
 
   svg {
-    width: 4rem;
+    width: 2.5rem;
     opacity: 1;
 
     path {
@@ -255,6 +255,15 @@
 
   &:active:not(:disabled) { transform: translateY(0); }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  svg {
+    width: 2.5rem;
+    opacity: 1;
+
+    path {
+      stroke: #fff;
+    }
+  }
 }
 
 .date-navigation {
@@ -307,15 +316,15 @@
     align-items: center;
     gap: $spacing-md;
     flex: 1;
-  }
 
-  .status-icon {
-    width: 28px;
-    height: 28px;
-    @include flex-center;
-    flex-shrink: 0;
-    transition: transform $transition-base;
-    &:hover { transform: scale(1.1); }
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+
+      path {
+        stroke: var(--text-tertiary);
+      }
+    }
   }
 
   .status-label {
