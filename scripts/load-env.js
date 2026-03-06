@@ -62,24 +62,36 @@ const parseValue = (value) => {
 const readEnvFile = () => {
   const envVars = {};
 
-  if (fs.existsSync(envFile)) {
-    const envContent = fs.readFileSync(envFile, 'utf-8');
-    envContent.split('\n').forEach((line) => {
-      const trimmedLine = line.trim();
-      if (trimmedLine && !trimmedLine.startsWith('#')) {
-        const [key, ...valueParts] = trimmedLine.split('=');
-        if (key && valueParts.length > 0) {
-          const rawValue = valueParts
-            .join('=')
-            .replace(/^["']|["']$/g, '')
-            .trim();
-          // Convertir el nombre de la variable a UPPER_SNAKE_CASE
-          const upperKey = toUpperSnakeCase(key.trim());
-          envVars[upperKey] = parseValue(rawValue);
-        }
-      }
-    });
+  if (!fs.existsSync(envFile)) {
+    console.error('❌ ERROR: No se encontró el archivo .env');
+    console.error(`   Ruta esperada: ${envFile}`);
+    console.error('   Por favor, crea el archivo .env basándote en .env.example');
+    process.exit(1);
   }
+
+  const envContent = fs.readFileSync(envFile, 'utf-8');
+  
+  if (!envContent.trim()) {
+    console.error('❌ ERROR: El archivo .env está vacío');
+    console.error('   Por favor, agrega las variables de entorno necesarias');
+    process.exit(1);
+  }
+
+  envContent.split('\n').forEach((line) => {
+    const trimmedLine = line.trim();
+    if (trimmedLine && !trimmedLine.startsWith('#')) {
+      const [key, ...valueParts] = trimmedLine.split('=');
+      if (key && valueParts.length > 0) {
+        const rawValue = valueParts
+          .join('=')
+          .replace(/^["']|["']$/g, '')
+          .trim();
+        // Convertir el nombre de la variable a UPPER_SNAKE_CASE
+        const upperKey = toUpperSnakeCase(key.trim());
+        envVars[upperKey] = parseValue(rawValue);
+      }
+    }
+  });
 
   return envVars;
 };
@@ -143,6 +155,17 @@ const injectEnvIntoServiceWorker = (envVars) => {
   fs.writeFileSync(swPath, content);
   console.log('🔥 firebase-messaging-sw.js actualizado con variables de entorno');
 };
+
+// Verificar y mostrar información del archivo .env
+console.log('🔍 Verificando archivo .env...');
+console.log(`   Ruta: ${envFile}`);
+console.log(`   Existe: ${fs.existsSync(envFile) ? '✅ Sí' : '❌ No'}`);
+
+if (fs.existsSync(envFile)) {
+  const stats = fs.statSync(envFile);
+  console.log(`   Tamaño: ${stats.size} bytes`);
+  console.log(`   Última modificación: ${stats.mtime.toISOString()}`);
+}
 
 // Leer variables de entorno desde .env
 const envVars = readEnvFile();
