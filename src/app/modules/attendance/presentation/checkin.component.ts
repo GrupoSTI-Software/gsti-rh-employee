@@ -131,9 +131,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private faceApiModelsLoaded = false;
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
   private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
-  private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
-  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
-  private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
+  private readonly FACE_MATCH_THRESHOLD = 0.55; // Umbral de similitud (0-1, mayor = más estricto) - Más permisivo para reconocimiento rápido
+  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.015; // Umbral mínimo de movimiento entre frames (0-1) - Más permisivo
+  private readonly LIVENESS_FRAMES_TO_CHECK = 2; // Número de frames a analizar para detectar movimiento - Reducido para mayor velocidad
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
@@ -1068,21 +1068,23 @@ export class CheckinComponent implements OnInit, OnDestroy {
       let livenessCheckInterval: ReturnType<typeof setInterval> | null = null;
       let isCapturing = false;
       const frameBuffer: string[] = [];
-      const MAX_FRAME_BUFFER = 4;
-      const FRAME_CAPTURE_INTERVAL = 400; // Capturar frame cada 400ms
-      const LIVENESS_CHECK_INTERVAL = 800; // Verificar liveness cada 800ms
+      const MAX_FRAME_BUFFER = 3;
+      const FRAME_CAPTURE_INTERVAL = 150; // Capturar frame cada 150ms (más rápido)
+      const LIVENESS_CHECK_INTERVAL = 300; // Verificar liveness cada 300ms (más rápido)
       /**
        * Captura un frame del video y lo agrega al buffer circular
        */
       const captureFrame = (): void => {
         if (isCapturing) return;
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        const targetWidth = 640;
+        const targetHeight = (video.videoHeight / video.videoWidth) * targetWidth;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(video, 0, 0);
-          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+          const base64 = canvas.toDataURL('image/jpeg', 0.6);
           frameBuffer.push(base64);
           // Mantener solo los últimos MAX_FRAME_BUFFER frames
           if (frameBuffer.length > MAX_FRAME_BUFFER) {
@@ -1150,7 +1152,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
          * Verifica liveness usando los frames del buffer
          */
         const checkLiveness = async (): Promise<void> => {
-          if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
+          if (isCapturing || frameBuffer.length < 2) {
             return;
           }
 
@@ -2042,9 +2044,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   private async getFaceDescriptor(img: HTMLImageElement): Promise<Float32Array | null> {
     try {
-      // Detectar el rostro con landmarks
+      // Detectar el rostro con landmarks usando opciones optimizadas para velocidad
       const detection = await faceapi
-        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .detectSingleFace(
+          img,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 224,
+            scoreThreshold: 0.4,
+          }),
+        )
         .withFaceLandmarks()
         .withFaceDescriptor();
 
@@ -2080,10 +2088,18 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Convertir todos los frames a imágenes
       const images = await Promise.all(frames.map((frame) => this.base64ToImage(frame)));
 
-      // Verificar que todos los frames tengan un rostro detectado
+      // Verificar que todos los frames tengan un rostro detectado usando opciones optimizadas
       const faceDetections: (IFaceDetectionWithLandmarks | undefined)[] = await Promise.all(
         images.map((img) =>
-          faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(),
+          faceapi
+            .detectSingleFace(
+              img,
+              new faceapi.TinyFaceDetectorOptions({
+                inputSize: 224,
+                scoreThreshold: 0.4,
+              }),
+            )
+            .withFaceLandmarks(),
         ),
       );
 
@@ -2240,29 +2256,29 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Verificar que la variación de landmarks no sea demasiado alta
       // Fotos movidas pueden tener variación muy alta en landmarks (> 20%)
-      // Personas reales tienen variación más moderada (0.3% - 18%)
-      const hasNaturalLandmarkVariation = landmarkVariation > 0.003 && landmarkVariation < 0.18;
+      // Personas reales tienen variación más moderada (0.2% - 20%) - Más permisivo
+      const hasNaturalLandmarkVariation = landmarkVariation > 0.002 && landmarkVariation < 0.2;
 
       // Verificar que el movimiento no sea excesivo (fotos movidas suelen tener movimientos muy grandes > 20%)
-      // Movimiento natural de cabeza/parpadeos es moderado (1% - 15%)
-      const hasReasonableMovement = averageMovement > 0.01 && averageMovement < 0.15;
+      // Movimiento natural de cabeza/parpadeos es moderado (0.5% - 18%) - Más permisivo
+      const hasReasonableMovement = averageMovement > 0.005 && averageMovement < 0.18;
 
-      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 20%)
-      const hasReasonableSizeVariation = averageSizeVariation < 0.2;
+      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 25%)
+      const hasReasonableSizeVariation = averageSizeVariation < 0.25;
 
       // CLAVE: Verificar que el movimiento NO sea rígido (detectar fotos movidas)
-      // Una foto movida tiene rigidityScore bajo (< 0.25) porque todos los landmarks se mueven igual
-      // Una persona real tiene rigidityScore alto (> 0.25) porque hay micro-expresiones independientes
-      const hasFlexibleMovement = rigidityScore > 0.25;
+      // Una foto movida tiene rigidityScore bajo (< 0.2) porque todos los landmarks se mueven igual
+      // Una persona real tiene rigidityScore alto (> 0.2) porque hay micro-expresiones independientes - Más permisivo
+      const hasFlexibleMovement = rigidityScore > 0.2;
 
-      // Criterios de liveness balanceados:
+      // Criterios de liveness balanceados y más permisivos para reconocimiento rápido:
       // 1. El movimiento debe ser razonable (no muy poco, no excesivo)
       // 2. El movimiento debe ser flexible (no rígido como una foto)
       // 3. Los landmarks deben tener variación natural
 
       const hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
       const hasNaturalMovement =
-        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.9;
+        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.95;
 
       const hasMovement = hasSignificantMovement && hasNaturalMovement;
 
