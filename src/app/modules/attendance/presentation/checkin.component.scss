@@ -7,7 +7,7 @@
   justify-content: center;
   align-items: flex-start;
   padding: $spacing-lg;
-  @include safe-area-bottom($spacing-lg);
+  // @include safe-area-bottom($spacing-lg);
   @include safe-area-horizontal($spacing-lg);
 }
 

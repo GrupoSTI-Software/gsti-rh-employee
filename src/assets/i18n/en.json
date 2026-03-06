@@ -558,5 +558,12 @@
     "thursday": "Th",
     "friday": "Fr",
     "saturday": "Sa"
+  },
+  "connection": {
+    "noConnection": "No Internet Connection",
+    "noConnectionMessage": "Could not establish connection with the server. Please check your internet connection and try again.",
+    "retry": "Retry",
+    "retrying": "Retrying...",
+    "connectionRestored": "Connection restored"
   }
 }

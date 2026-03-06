@@ -5,6 +5,7 @@ import { ThemeService } from '@core/services/theme.service';
 import { BrandingService } from '@core/services/branding.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
 import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
+import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
 
 /**
  * Clave para almacenar el idioma de la aplicación
@@ -14,7 +15,7 @@ const LANGUAGE_STORAGE_KEY = 'app-language';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PullToRefreshDirective],
+  imports: [RouterOutlet, PullToRefreshDirective, NoConnectionOverlayComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
