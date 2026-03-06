@@ -4,6 +4,7 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from '@shared/components/header/header.component';
 import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
+import { PushNotificationsService } from '@core/services/push-notifications.service';
 import { filter, Subscription } from 'rxjs';
 
 @Component({
@@ -15,6 +16,7 @@ import { filter, Subscription } from 'rxjs';
 })
 export default class DashboardComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  readonly pushService = inject(PushNotificationsService);
   private readonly translateService = inject(TranslateService);
   private routerSubscription?: Subscription;
 
@@ -33,7 +35,7 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updatePageTitleFromRoute();
-
+    void this.listenNotifications();
     this.routerSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -61,5 +63,14 @@ export default class DashboardComponent implements OnInit, OnDestroy {
 
     this.pageTitle.set(labelKey ? this.translateService.instant(labelKey) : 'Dashboard');
     this.pageSubtitle.set(subtitleKey ? this.translateService.instant(subtitleKey) : '');
+  }
+
+  /**
+   * Escucha notificaciones push
+   */
+  private async listenNotifications(): Promise<void> {
+    if (await this.pushService.requestPermission()) {
+      void this.pushService.listen();
+    }
   }
 }

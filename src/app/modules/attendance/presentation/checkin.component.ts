@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
 import {
   Component,
   inject,
@@ -7,6 +9,7 @@ import {
   computed,
   PLATFORM_ID,
   DestroyRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,7 +17,6 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { Dialog } from 'primeng/dialog';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { GetAttendanceUseCase } from '../application/get-attendance.use-case';
 import { StoreAssistUseCase } from '../application/store-assist.use-case';
@@ -22,22 +24,23 @@ import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { IAttendance, IException, IAssistance } from '../domain/attendance.port';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { CheckInIconComponent } from '@shared/components/icons/check-in-icon/check-in-icon.component';
-import { CheckOutIconComponent } from '@shared/components/icons/check-out-icon/check-out-icon.component';
-import { EatInIconComponent } from '@shared/components/icons/eat-in-icon/eat-in-icon.component';
-import { EatOutIconComponent } from '@shared/components/icons/eat-out-icon/eat-out-icon.component';
 import { LoggerService } from '@core/services/logger.service';
 import { TooltipModule } from 'primeng/tooltip';
 import { WeekCalendarComponent } from '@shared/components/week-calendar/week-calendar.component';
 import { GetEmployeeBiometricFaceIdUseCase } from '../application/get-employee-biometric-face-id.use-case';
 import { SecureStorageService } from '@core/services/secure-storage.service';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - face-api.js no tiene tipos TypeScript oficiales
+import { DatePickerDrawerComponent } from './date-picker-drawer/date-picker-drawer.component';
+import { ExceptionsDrawerComponent } from './exceptions-drawer/exceptions-drawer.component';
+import { RecordsDrawerComponent } from './records-drawer/records-drawer.component';
+import {
+  ErrorModalComponent,
+  ErrorModalType,
+} from '@shared/components/error-modal/error-modal.component';
 import * as faceapi from 'face-api.js';
 import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
-import { formatLocalDate, parseLocalDate } from '@shared/utils/date.utils';
+import { formatLocalDate } from '@shared/utils/date.utils';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -64,13 +67,12 @@ interface IFaceDetectionWithLandmarks {
     CommonModule,
     FormsModule,
     TranslatePipe,
-    Dialog,
-    CheckInIconComponent,
-    CheckOutIconComponent,
-    EatInIconComponent,
-    EatOutIconComponent,
     TooltipModule,
     WeekCalendarComponent,
+    DatePickerDrawerComponent,
+    ExceptionsDrawerComponent,
+    RecordsDrawerComponent,
+    ErrorModalComponent,
   ],
   templateUrl: './checkin.component.html',
   styleUrl: './checkin.component.scss',
@@ -98,6 +100,13 @@ interface IFaceDetectionWithLandmarks {
         animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)', style({ transform: 'translateY(100%)' })),
       ]),
     ]),
+    trigger('fadeOverlay', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('300ms ease-out', style({ opacity: 1 })),
+      ]),
+      transition(':leave', [animate('250ms ease-in', style({ opacity: 0 }))]),
+    ]),
   ],
 })
 export class CheckinComponent implements OnInit, OnDestroy {
@@ -122,9 +131,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private faceApiModelsLoaded = false;
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
   private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
-  private readonly FACE_MATCH_THRESHOLD = 0.6; // Umbral de similitud (0-1, mayor = más estricto)
-  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.02; // Umbral mínimo de movimiento entre frames (0-1)
-  private readonly LIVENESS_FRAMES_TO_CHECK = 3; // Número de frames a analizar para detectar movimiento
+  private readonly FACE_MATCH_THRESHOLD = 0.55; // Umbral de similitud (0-1, mayor = más estricto) - Más permisivo para reconocimiento rápido
+  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.015; // Umbral mínimo de movimiento entre frames (0-1) - Más permisivo
+  private readonly LIVENESS_FRAMES_TO_CHECK = 2; // Número de frames a analizar para detectar movimiento - Reducido para mayor velocidad
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
@@ -148,49 +157,18 @@ export class CheckinComponent implements OnInit, OnDestroy {
   );
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
 
-  // Datepicker
+  // Drawers visibility
   showDatePicker = false;
-  datePickerValue = '';
-  maxDate = new Date(); // No permitir fechas futuras
+  showExceptionsDrawer = false;
+  showRecordsDrawer = false;
 
-  // Calendario drawer
-  readonly calendarDate = signal<Date>(new Date());
-  readonly calendarDays = signal<
-    {
-      date: Date;
-      day: number;
-      isCurrentMonth: boolean;
-      isSelected: boolean;
-      isToday: boolean;
-      isInRange: boolean;
-      isFuture: boolean;
-    }[]
-  >([]);
-  readonly calendarLoading = signal<boolean>(false);
-  readonly weekDays = computed(() => {
-    const currentLang = this.currentLang();
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
+  // Modal de error
+  readonly showErrorModal = signal(false);
+  readonly errorModalType = signal<ErrorModalType>('error');
+  readonly errorModalTitle = signal('');
+  readonly errorModalMessage = signal('');
 
-    // Generar las iniciales de los días de la semana (domingo a sábado)
-    const days: string[] = [];
-    const baseDate = new Date(2024, 0, 7); // Domingo 7 de enero de 2024
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(baseDate);
-      date.setDate(baseDate.getDate() + i);
-      const dayName = date.toLocaleDateString(locale, { weekday: 'short' });
-      // Tomar la primera letra y convertir a mayúscula
-      days.push(dayName.charAt(0).toUpperCase());
-    }
-
-    return days;
-  });
-
-  // Excepciones popup
-  showExceptionsDialog = false;
-
-  // Registros popup
-  showRecordsDialog = false;
+  @ViewChild(DatePickerDrawerComponent) datePickerDrawer?: DatePickerDrawerComponent;
 
   readonly formattedDate = computed(() => {
     const currentLang = this.translateService.currentLang || 'es';
@@ -209,13 +187,23 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * en español la palabra "to" se reemplaza por "a", y sufijo " Hrs".
    */
   readonly displayShiftName = computed(() => {
-    const raw = this.attendance()?.shiftName?.trim();
-    if (!raw) return '';
-    const beforeDash = raw.includes('-') ? raw.split('-')[0].trim() : raw;
+    const shiftTimeStart = this.attendance()?.shiftTimeStart?.trim();
+    const shiftTimeEnd = this.attendance()?.shiftTimeEnd?.trim();
+
+    if (!shiftTimeStart || !shiftTimeEnd) return '';
+
+    const formatTime = (time: string): string => {
+      return time.length === 8 ? time.substring(0, 5) : time;
+    };
+
+    const formattedStart = formatTime(shiftTimeStart);
+    const formattedEnd = formatTime(shiftTimeEnd);
+
     const lang = this.translateService.currentLang || 'es';
-    const name = lang === 'es' ? beforeDash.replace(/\bto\b/gi, 'a') : beforeDash;
+    const separator = lang === 'es' ? 'a' : 'to';
     const prefix = lang === 'es' ? 'De ' : 'From ';
-    return prefix + name + ' Hrs';
+
+    return `${prefix}${formattedStart} ${separator} ${formattedEnd} Hrs`;
   });
 
   /**
@@ -426,7 +414,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
   async loadAttendance(): Promise<void> {
     const user = this.authPort.getCurrentUser();
     if (typeof user?.employeeId !== 'number') {
-      this.error.set('No se encontró el ID del empleado');
+      this.showErrorModalWithMessage(
+        'error',
+        this.translateService.instant('attendance.faceRecognition.authenticationError'),
+        this.translateService.instant('attendance.faceRecognition.noEmployeeId'),
+      );
       return;
     }
 
@@ -445,7 +437,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
       );
       this.attendance.set(attendance);
     } catch (err) {
-      this.error.set('Error al cargar la asistencia');
+      this.error.set(this.translateService.instant('attendance.error'));
       this.logger.error('Error al cargar la asistencia:', err);
     } finally {
       this.loading.set(false);
@@ -545,7 +537,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     const user = this.authPort.getCurrentUser();
     if (typeof user?.employeeId !== 'number') {
-      this.error.set('No se encontró el ID del empleado');
+      this.showErrorModalWithMessage(
+        'error',
+        this.translateService.instant('attendance.faceRecognition.authenticationError'),
+        this.translateService.instant('attendance.faceRecognition.noEmployeeId'),
+      );
       return;
     }
 
@@ -558,7 +554,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
       user.employeeId,
     );
     if (!employeeBiometricFaceId) {
-      this.error.set('No se encontró la fotografía del rostro del empleado');
+      this.showErrorModalWithMessage(
+        'error',
+        this.translateService.instant('attendance.faceRecognition.incompleteSetup'),
+        this.translateService.instant('attendance.faceRecognition.noFacePhoto'),
+      );
       this.starting.set(false);
       return;
     }
@@ -586,13 +586,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
         await this.loadFaceApiModels();
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : 'Error desconocido al cargar modelos';
-        if (errorMessage.includes('reconocimiento facial')) {
-          this.error.set(
-            'Error al cargar los modelos de reconocimiento facial. Por favor, verifica que los modelos estén descargados correctamente.',
+          error instanceof Error
+            ? error.message
+            : this.translateService.instant('attendance.faceRecognition.modelsLoadError');
+        if (
+          errorMessage.includes('reconocimiento facial') ||
+          errorMessage.includes('facial recognition')
+        ) {
+          this.showErrorModalWithMessage(
+            'error',
+            this.translateService.instant('attendance.faceRecognition.modelsLoadError'),
+            this.translateService.instant('attendance.faceRecognition.modelsLoadErrorMessage'),
           );
         } else {
-          this.error.set(`Error: ${errorMessage}`);
+          this.showErrorModalWithMessage(
+            'error',
+            this.translateService.instant('attendance.faceRecognition.unexpectedError'),
+            errorMessage,
+          );
         }
         this.loading.set(false);
         return;
@@ -607,37 +618,68 @@ export class CheckinComponent implements OnInit, OnDestroy {
           livenessError instanceof Error ? livenessError.message : 'Error desconocido';
         this.logger.error('Error en verificación de liveness:', livenessError);
 
+        this.loading.set(false);
+
         // Si el error es de liveness (movimiento insuficiente), mostrar mensaje específico
         if (
           livenessErrorMessage.includes('movimiento') ||
           livenessErrorMessage.includes('liveness') ||
-          livenessErrorMessage.includes('persona real')
+          livenessErrorMessage.includes('persona real') ||
+          livenessErrorMessage.includes('movement') ||
+          livenessErrorMessage.includes('real person')
         ) {
-          this.error.set(livenessErrorMessage);
+          this.showErrorModalWithMessage(
+            'warning',
+            this.translateService.instant('attendance.faceRecognition.livenessVerification'),
+            livenessErrorMessage,
+          );
         } else if (
           livenessErrorMessage.includes('cámara') ||
           livenessErrorMessage.includes('camera')
         ) {
-          this.error.set('Se necesita permiso de cámara para registrar asistencia');
-        } else if (livenessErrorMessage.includes('Captura cancelada')) {
-          this.error.set('Captura cancelada por el usuario');
+          this.showErrorModalWithMessage(
+            'error',
+            this.translateService.instant('attendance.faceRecognition.cameraPermissionRequired'),
+            this.translateService.instant('attendance.faceRecognition.cameraPermissionMessage'),
+          );
+        } else if (
+          livenessErrorMessage.includes('Captura cancelada') ||
+          livenessErrorMessage.includes('Capture cancelled')
+        ) {
+          this.showErrorModalWithMessage(
+            'info',
+            this.translateService.instant('attendance.faceRecognition.captureCancelled'),
+            this.translateService.instant('attendance.faceRecognition.captureCancelledMessage'),
+          );
         } else {
-          this.error.set(`Error al capturar la fotografía: ${livenessErrorMessage}`);
+          this.showErrorModalWithMessage(
+            'error',
+            this.translateService.instant('attendance.faceRecognition.captureError'),
+            livenessErrorMessage,
+          );
         }
-        this.loading.set(false);
         return;
       }
       const storedPhotoBase64 = this.getStoredPhotoBase64();
       if (!storedPhotoBase64) {
-        this.error.set('No se encontró la fotografía del empleado guardada');
         this.loading.set(false);
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.dataNotFound'),
+          this.translateService.instant('attendance.faceRecognition.noStoredPhoto'),
+        );
         return;
       }
+
       // Comparar las fotografías usando face-api.js
       const isMatch = await this.compareFaces(storedPhotoBase64, capturedPhotoBase64);
       if (!isMatch) {
-        this.error.set('La fotografía capturada no coincide con la del empleado registrado');
         this.loading.set(false);
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.verificationFailed'),
+          this.translateService.instant('attendance.faceRecognition.verificationFailedMessage'),
+        );
         return;
       }
       // Obtener ubicación
@@ -652,24 +694,56 @@ export class CheckinComponent implements OnInit, OnDestroy {
       if (success) {
         // Recargar asistencia
         await this.loadAttendance();
-        this.success.set('Asistencia registrada correctamente');
+        this.showErrorModalWithMessage(
+          'success',
+          this.translateService.instant('attendance.faceRecognition.attendanceRegistered'),
+          this.translateService.instant('attendance.faceRecognition.attendanceRegisteredMessage'),
+        );
       } else {
-        this.error.set('Error al registrar el check-in');
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.registerError'),
+          this.translateService.instant('attendance.faceRecognition.registerErrorMessage'),
+        );
       }
     } catch (err: unknown) {
       const error = err as { message?: string };
       const errorMessage = error.message ?? '';
       this.logger.error('Error en handleRegisterCheckIn:', err);
 
-      if (errorMessage.includes('ubicación') || errorMessage.includes('ubicacion')) {
-        this.error.set('Se necesita permiso de ubicación para registrar asistencia');
+      if (
+        errorMessage.includes('ubicación') ||
+        errorMessage.includes('ubicacion') ||
+        errorMessage.includes('location')
+      ) {
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.locationPermissionRequired'),
+          this.translateService.instant('attendance.faceRecognition.locationPermissionMessage'),
+        );
       } else if (errorMessage.includes('cámara') || errorMessage.includes('camera')) {
-        this.error.set('Se necesita permiso de cámara para registrar asistencia');
-      } else if (errorMessage.includes('movimiento') || errorMessage.includes('liveness')) {
-        // Error de liveness ya fue manejado arriba, pero por si acaso
-        this.error.set(errorMessage);
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.cameraPermissionRequired'),
+          this.translateService.instant('attendance.faceRecognition.cameraPermissionMessage'),
+        );
+      } else if (
+        errorMessage.includes('movimiento') ||
+        errorMessage.includes('liveness') ||
+        errorMessage.includes('movement')
+      ) {
+        this.showErrorModalWithMessage(
+          'warning',
+          this.translateService.instant('attendance.faceRecognition.livenessVerification'),
+          errorMessage,
+        );
       } else {
-        this.error.set(`Error al registrar check-in: ${errorMessage || 'Error desconocido'}`);
+        this.showErrorModalWithMessage(
+          'error',
+          this.translateService.instant('attendance.faceRecognition.registerErrorGeneric'),
+          errorMessage ||
+            this.translateService.instant('attendance.faceRecognition.registerErrorGenericMessage'),
+        );
       }
     } finally {
       this.loading.set(false);
@@ -795,30 +869,83 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     try {
       if (typeof navigator.mediaDevices?.getUserMedia === 'undefined') {
-        throw new Error('La cámara no está disponible en este navegador');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraNotAvailable'),
+        );
       }
 
-      // Obtener acceso a la cámara
+      // Obtener acceso a la cámara frontal con flash si está disponible
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: 'user', // Cámara frontal
+          facingMode: 'user',
+          // @ts-ignore - torch es una propiedad experimental pero soportada en muchos navegadores
+          advanced: [{ torch: true }],
         },
       });
 
-      // Crear un elemento de video temporal para mostrar la cámara
+      // Intentar activar el flash si está disponible
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        try {
+          const capabilities = videoTrack.getCapabilities();
+          // @ts-ignore - torch es una propiedad experimental
+          if (capabilities.torch) {
+            await videoTrack.applyConstraints({
+              // @ts-ignore - torch es una propiedad experimental
+              advanced: [{ torch: true }],
+            });
+            this.logger.info('Flash activado correctamente');
+          }
+        } catch (error) {
+          this.logger.warn('No se pudo activar el flash (puede que no esté disponible):', error);
+        }
+      }
+
+      // Crear contenedor principal con fondo blanco y safe areas
+      const cameraContainer = document.createElement('div');
+      cameraContainer.style.position = 'fixed';
+      cameraContainer.style.top = '0';
+      cameraContainer.style.left = '0';
+      cameraContainer.style.width = '100%';
+      cameraContainer.style.height = '100%';
+      cameraContainer.style.backgroundColor = '#ffffff';
+      cameraContainer.style.zIndex = '9999';
+      cameraContainer.style.display = 'flex';
+      cameraContainer.style.flexDirection = 'column';
+      cameraContainer.style.alignItems = 'center';
+      cameraContainer.style.justifyContent = 'center';
+      cameraContainer.style.paddingTop = 'calc(env(safe-area-inset-top, 0px) + 20px)';
+      cameraContainer.style.paddingBottom = 'calc(env(safe-area-inset-bottom, 0px) + 20px)';
+      cameraContainer.style.paddingLeft = 'env(safe-area-inset-left, 0px)';
+      cameraContainer.style.paddingRight = 'env(safe-area-inset-right, 0px)';
+      cameraContainer.id = 'camera-container';
+      document.body.appendChild(cameraContainer);
+
+      // Crear contenedor del óvalo para el video
+      const ovalContainer = document.createElement('div');
+      ovalContainer.style.position = 'relative';
+      ovalContainer.style.width = '85%';
+      ovalContainer.style.maxWidth = '400px';
+      ovalContainer.style.aspectRatio = '3 / 5';
+      ovalContainer.style.borderRadius = '50%';
+      ovalContainer.style.overflow = 'hidden';
+      ovalContainer.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.15)';
+      ovalContainer.id = 'oval-container';
+      cameraContainer.appendChild(ovalContainer);
+
+      // Crear un elemento de video dentro del óvalo
       const video = document.createElement('video');
       video.srcObject = stream;
       video.autoplay = true;
       video.playsInline = true;
-      video.style.position = 'fixed';
-      video.style.top = '0';
-      video.style.left = '0';
+      video.style.position = 'absolute';
+      video.style.top = '50%';
+      video.style.left = '50%';
+      video.style.transform = 'translate(-50%, -50%) scaleX(-1)';
       video.style.width = '100%';
       video.style.height = '100%';
       video.style.objectFit = 'cover';
-      video.style.zIndex = '9999';
-      video.style.backgroundColor = '#000';
-      document.body.appendChild(video);
+      ovalContainer.appendChild(video);
 
       // Esperar a que el video esté listo
       await new Promise<void>((resolve) => {
@@ -829,26 +956,27 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear contenedor para la UI de la cámara
       const uiContainer = document.createElement('div');
-      uiContainer.style.position = 'fixed';
+      uiContainer.style.position = 'absolute';
       uiContainer.style.top = '0';
       uiContainer.style.left = '0';
       uiContainer.style.width = '100%';
       uiContainer.style.height = '100%';
       uiContainer.style.zIndex = '10000';
       uiContainer.style.pointerEvents = 'none';
-      document.body.appendChild(uiContainer);
+      cameraContainer.appendChild(uiContainer);
 
-      // Crear recuadro delimitador para el rostro (rectángulo)
+      // Crear recuadro delimitador para el rostro (óvalo)
       const faceFrame = document.createElement('div');
-      faceFrame.style.position = 'fixed';
-      faceFrame.style.top = 'calc(50% - 30px)';
+      faceFrame.style.position = 'absolute';
+      faceFrame.style.top = '50%';
       faceFrame.style.left = '50%';
       faceFrame.style.transform = 'translate(-50%, -50%)';
       faceFrame.style.width = '85%';
-      faceFrame.style.height = '60%';
-      faceFrame.style.border = '3px dashed rgba(255, 255, 255, 0.8)';
-      faceFrame.style.borderRadius = '100%';
-      faceFrame.style.boxShadow = '0 0 0 4px rgba(0, 0, 0, 0.3), inset 0 0 30px rgba(0, 0, 0, 0.1)';
+      faceFrame.style.maxWidth = '400px';
+      faceFrame.style.aspectRatio = '3 / 5';
+      faceFrame.style.border = '4px dashed rgba(255, 193, 7, 0.9)';
+      faceFrame.style.borderRadius = '50%';
+      faceFrame.style.boxShadow = '0 0 0 4px rgba(255, 193, 7, 0.3)';
       faceFrame.style.pointerEvents = 'none';
       faceFrame.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
       faceFrame.id = 'face-frame';
@@ -856,8 +984,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear indicador de estado de liveness
       const statusIndicator = document.createElement('div');
-      statusIndicator.style.position = 'fixed';
-      statusIndicator.style.top = '20px';
+      statusIndicator.style.position = 'absolute';
+      statusIndicator.style.top = 'calc(env(safe-area-inset-top, 0px) + 20px)';
       statusIndicator.style.left = '50%';
       statusIndicator.style.transform = 'translateX(-50%)';
       statusIndicator.style.padding = '12px 24px';
@@ -867,67 +995,71 @@ export class CheckinComponent implements OnInit, OnDestroy {
       statusIndicator.style.textAlign = 'center';
       statusIndicator.style.transition = 'all 0.3s ease';
       statusIndicator.style.pointerEvents = 'none';
-      statusIndicator.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      statusIndicator.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
       this.updateLivenessStatusIndicator(statusIndicator, 'checking');
-      uiContainer.appendChild(statusIndicator);
+      // uiContainer.appendChild(statusIndicator);
 
       // Crear mensaje de instrucción
       const instructionMessage = document.createElement('div');
-      instructionMessage.textContent =
-        'Mueve ligeramente la cabeza o parpadea para verificar que eres una persona real';
-      instructionMessage.style.position = 'fixed';
-      instructionMessage.style.bottom = '120px';
+      instructionMessage.textContent = this.translateService.instant(
+        'attendance.faceRecognition.searchingFace',
+      );
+      instructionMessage.style.position = 'absolute';
+      instructionMessage.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 120px)';
       instructionMessage.style.left = '50%';
       instructionMessage.style.transform = 'translateX(-50%)';
-      instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+      instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
       instructionMessage.style.color = 'white';
-      instructionMessage.style.padding = '10px 20px';
-      instructionMessage.style.borderRadius = '8px';
+      instructionMessage.style.padding = '12px 24px';
+      instructionMessage.style.borderRadius = '12px';
       instructionMessage.style.fontSize = '13px';
       instructionMessage.style.textAlign = 'center';
       instructionMessage.style.maxWidth = '90%';
       instructionMessage.style.pointerEvents = 'none';
+      instructionMessage.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
       uiContainer.appendChild(instructionMessage);
 
       // Crear botón para capturar la foto (inicialmente deshabilitado)
       const captureButton = document.createElement('button');
-      captureButton.textContent = 'Verificando...';
+      captureButton.textContent = this.translateService.instant(
+        'attendance.faceRecognition.verifying',
+      );
       captureButton.disabled = true;
-      captureButton.style.position = 'fixed';
-      captureButton.style.bottom = '30px';
+      captureButton.style.position = 'absolute';
+      captureButton.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 30px)';
       captureButton.style.left = '50%';
       captureButton.style.transform = 'translateX(-50%)';
-      captureButton.style.padding = '14px 32px';
+      captureButton.style.padding = '16px 40px';
       captureButton.style.backgroundColor = '#6c757d';
       captureButton.style.color = 'white';
       captureButton.style.border = 'none';
-      captureButton.style.borderRadius = '25px';
+      captureButton.style.borderRadius = '30px';
       captureButton.style.fontSize = '16px';
       captureButton.style.fontWeight = 'bold';
       captureButton.style.cursor = 'not-allowed';
       captureButton.style.transition = 'all 0.3s ease';
       captureButton.style.pointerEvents = 'auto';
-      captureButton.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
-      uiContainer.appendChild(captureButton);
+      captureButton.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+      // uiContainer.appendChild(captureButton);
 
       // Crear botón para cancelar/cerrar
       const cancelButton = document.createElement('button');
       cancelButton.textContent = '✕';
-      cancelButton.style.position = 'fixed';
-      cancelButton.style.top = '20px';
-      cancelButton.style.right = '20px';
+      cancelButton.style.position = 'absolute';
+      cancelButton.style.top = 'calc(env(safe-area-inset-top, 0px) + 20px)';
+      cancelButton.style.right = 'calc(env(safe-area-inset-right, 0px) + 20px)';
       cancelButton.style.width = '44px';
       cancelButton.style.height = '44px';
       cancelButton.style.padding = '0';
-      cancelButton.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-      cancelButton.style.color = '#333';
+      cancelButton.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
+      cancelButton.style.color = 'var(--text-tertiary)';
       cancelButton.style.border = 'none';
       cancelButton.style.borderRadius = '50%';
       cancelButton.style.fontSize = '20px';
       cancelButton.style.fontWeight = 'bold';
       cancelButton.style.cursor = 'pointer';
       cancelButton.style.pointerEvents = 'auto';
-      cancelButton.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+      cancelButton.style.boxShadow = 'none';
       cancelButton.style.transition = 'all 0.2s ease';
       uiContainer.appendChild(cancelButton);
 
@@ -936,21 +1068,23 @@ export class CheckinComponent implements OnInit, OnDestroy {
       let livenessCheckInterval: ReturnType<typeof setInterval> | null = null;
       let isCapturing = false;
       const frameBuffer: string[] = [];
-      const MAX_FRAME_BUFFER = 4;
-      const FRAME_CAPTURE_INTERVAL = 400; // Capturar frame cada 400ms
-      const LIVENESS_CHECK_INTERVAL = 800; // Verificar liveness cada 800ms
+      const MAX_FRAME_BUFFER = 3;
+      const FRAME_CAPTURE_INTERVAL = 150; // Capturar frame cada 150ms (más rápido)
+      const LIVENESS_CHECK_INTERVAL = 300; // Verificar liveness cada 300ms (más rápido)
       /**
        * Captura un frame del video y lo agrega al buffer circular
        */
       const captureFrame = (): void => {
         if (isCapturing) return;
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        const targetWidth = 640;
+        const targetHeight = (video.videoHeight / video.videoWidth) * targetWidth;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(video, 0, 0);
-          const base64 = canvas.toDataURL('image/jpeg', 0.8);
+          ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+          const base64 = canvas.toDataURL('image/jpeg', 0.6);
           frameBuffer.push(base64);
           // Mantener solo los últimos MAX_FRAME_BUFFER frames
           if (frameBuffer.length > MAX_FRAME_BUFFER) {
@@ -966,15 +1100,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
         const frameColors = {
           checking: {
             border: 'rgba(255, 193, 7, 0.9)',
-            shadow: '0 0 0 4px rgba(255, 193, 7, 0.3), inset 0 0 30px rgba(255, 193, 7, 0.1)',
+            shadow: '0 0 0 4px rgba(255, 193, 7, 0.3)',
           },
           verified: {
             border: 'rgba(40, 167, 69, 0.9)',
-            shadow: '0 0 0 4px rgba(40, 167, 69, 0.3), inset 0 0 30px rgba(40, 167, 69, 0.1)',
+            shadow: '0 0 0 4px rgba(40, 167, 69, 0.3)',
           },
           failed: {
             border: 'rgba(220, 53, 69, 0.9)',
-            shadow: '0 0 0 4px rgba(220, 53, 69, 0.3), inset 0 0 30px rgba(220, 53, 69, 0.1)',
+            shadow: '0 0 0 4px rgba(220, 53, 69, 0.3)',
           },
         };
 
@@ -998,12 +1132,19 @@ export class CheckinComponent implements OnInit, OnDestroy {
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             this.closeLivenessFromOutside();
+            this.loading.set(false);
             reject(new Error('No se pudo obtener el contexto del canvas'));
             return;
           }
           ctx.drawImage(video, 0, 0);
           const base64 = canvas.toDataURL('image/jpeg', 0.9);
+
+          // Cerrar la cámara antes de resolver
           this.closeLivenessFromOutside();
+
+          // Activar el loader para el proceso de verificación
+          this.loading.set(true);
+
           resolve(base64);
         };
 
@@ -1011,7 +1152,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
          * Verifica liveness usando los frames del buffer
          */
         const checkLiveness = async (): Promise<void> => {
-          if (isCapturing || frameBuffer.length < MAX_FRAME_BUFFER) {
+          if (isCapturing || frameBuffer.length < 2) {
             return;
           }
 
@@ -1024,27 +1165,76 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
             // Actualizar UI según resultado
             if (isLive) {
-              this.updateLivenessStatusIndicator(statusIndicator, 'verified');
-              updateFaceFrameColor('verified');
-              captureButton.textContent = 'Capturar';
-              captureButton.disabled = false;
-              captureButton.style.backgroundColor = 'var(--primary, #007bff)';
-              captureButton.style.cursor = 'pointer';
-              instructionMessage.textContent = 'Persona verificada - Puedes capturar la foto';
-              instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
-              this.loading.set(false);
-              setTimeout(captureFinalPhoto, 300);
-              return;
+              // Verificar similitud con la foto almacenada
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.verifyingSimilarity',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(255, 193, 7, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(255, 193, 7, 1)';
+
+              const storedPhotoBase64 = this.getStoredPhotoBase64();
+              if (!storedPhotoBase64) {
+                this.logger.warn('No hay foto almacenada para comparar');
+                this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+                updateFaceFrameColor('failed');
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.noStoredPhoto',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+                return;
+              }
+
+              // Usar el último frame del buffer para comparar
+              const currentFrame = framesToAnalyze[framesToAnalyze.length - 1];
+              const isMatch = await this.compareFaces(storedPhotoBase64, currentFrame);
+
+              if (isMatch) {
+                this.updateLivenessStatusIndicator(statusIndicator, 'verified');
+                updateFaceFrameColor('verified');
+                captureButton.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.capture',
+                );
+                captureButton.disabled = false;
+                captureButton.style.backgroundColor = 'var(--primary, #007bff)';
+                captureButton.style.cursor = 'pointer';
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.detected',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(40, 167, 69, 1)';
+                this.loading.set(false);
+                setTimeout(captureFinalPhoto, 300);
+                return;
+              } else {
+                this.updateLivenessStatusIndicator(statusIndicator, 'failed');
+                updateFaceFrameColor('failed');
+                captureButton.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.verifying',
+                );
+                captureButton.disabled = true;
+                captureButton.style.backgroundColor = '#6c757d';
+                captureButton.style.cursor = 'not-allowed';
+                instructionMessage.textContent = this.translateService.instant(
+                  'attendance.faceRecognition.faceNotMatch',
+                );
+                instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+                instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+              }
             } else {
               this.updateLivenessStatusIndicator(statusIndicator, 'failed');
               updateFaceFrameColor('failed');
-              captureButton.textContent = 'Verificando...';
+              captureButton.textContent = this.translateService.instant(
+                'attendance.faceRecognition.verifying',
+              );
               captureButton.disabled = true;
               captureButton.style.backgroundColor = '#6c757d';
               captureButton.style.cursor = 'not-allowed';
-              instructionMessage.textContent =
-                'Mueve ligeramente la cabeza o parpadea para verificar';
-              instructionMessage.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.faceInstructions',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(255, 152, 0, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(255, 152, 0, 1)';
             }
           } catch (error) {
             this.logger.warn('Error en verificación de liveness:', error);
@@ -1072,18 +1262,27 @@ export class CheckinComponent implements OnInit, OnDestroy {
         this.livenessCheckInterval = livenessCheckInterval ?? undefined;
         cancelButton.onclick = (): void => {
           this.closeLivenessFromOutside();
-          reject(new Error('Captura cancelada'));
+          reject(
+            new Error(
+              this.translateService.instant('attendance.faceRecognition.captureCancelledError'),
+            ),
+          );
         };
       });
     } catch (error: unknown) {
       const err = error as { name?: string; message?: string };
       if (err.name === 'NotAllowedError') {
         this.logger.warn('Permiso de cámara denegado');
-        throw new Error('Se necesita permiso de cámara para registrar asistencia');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraAccessError'),
+        );
       } else if (err.name === 'NotFoundError') {
         this.logger.warn('Cámara no encontrada');
-        throw new Error('No se encontró ninguna cámara');
-      } else if (err.message?.includes('Captura cancelada')) {
+        throw new Error(this.translateService.instant('attendance.faceRecognition.noCameraFound'));
+      } else if (
+        err.message?.includes('Captura cancelada') ||
+        err.message?.includes('Capture cancelled')
+      ) {
         throw error;
       } else {
         this.logger.error('Error al acceder a la cámara:', error);
@@ -1099,7 +1298,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     frameCaptureInterval?: ReturnType<typeof setInterval> | null;
     livenessCheckInterval?: ReturnType<typeof setInterval> | null;
   }): void {
-    const { video, uiContainer, stream, frameCaptureInterval, livenessCheckInterval } = options;
+    const { stream, frameCaptureInterval, livenessCheckInterval } = options;
 
     // Detener intervalos
     if (frameCaptureInterval) {
@@ -1110,18 +1309,31 @@ export class CheckinComponent implements OnInit, OnDestroy {
       clearInterval(livenessCheckInterval);
     }
 
-    // Detener cámara
+    // Apagar el flash antes de detener la cámara
     if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        try {
+          const capabilities = videoTrack.getCapabilities();
+          // @ts-ignore - torch es una propiedad experimental
+          if (capabilities.torch) {
+            void videoTrack.applyConstraints({
+              // @ts-ignore - torch es una propiedad experimental
+              advanced: [{ torch: false }],
+            });
+            this.logger.info('Flash apagado correctamente');
+          }
+        } catch (error) {
+          this.logger.warn('No se pudo apagar el flash:', error);
+        }
+      }
       stream.getTracks().forEach((track) => track.stop());
     }
 
-    // Remover elementos del DOM
-    if (video && document.body.contains(video)) {
-      document.body.removeChild(video);
-    }
-
-    if (uiContainer && document.body.contains(uiContainer)) {
-      document.body.removeChild(uiContainer);
+    // Remover el contenedor principal de la cámara (que contiene video y UI)
+    const cameraContainer = document.getElementById('camera-container');
+    if (cameraContainer && document.body.contains(cameraContainer)) {
+      document.body.removeChild(cameraContainer);
     }
   }
 
@@ -1161,19 +1373,28 @@ export class CheckinComponent implements OnInit, OnDestroy {
   ): void {
     switch (status) {
       case 'checking':
-        indicator.textContent = '🔄 Verificando...';
-        indicator.style.backgroundColor = 'rgba(255, 193, 7, 0.95)';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.checking',
+        );
+        indicator.style.backgroundColor = 'rgba(255, 193, 7, 0.9)';
         indicator.style.color = '#000';
+        indicator.style.border = '2px dashed rgba(255, 193, 7, 1)';
         break;
       case 'verified':
-        indicator.textContent = '✓ Persona verificada';
-        indicator.style.backgroundColor = 'rgba(40, 167, 69, 0.95)';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.personVerified',
+        );
+        indicator.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
         indicator.style.color = 'white';
+        indicator.style.border = '2px dashed rgba(40, 167, 69, 1)';
         break;
       case 'failed':
-        indicator.textContent = '⚠ Muévete para verificar';
-        indicator.style.backgroundColor = 'rgba(220, 53, 69, 0.95)';
+        indicator.textContent = this.translateService.instant(
+          'attendance.faceRecognition.moveToVerify',
+        );
+        indicator.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
         indicator.style.color = 'white';
+        indicator.style.border = '2px dashed rgba(220, 53, 69, 1)';
         break;
     }
   }
@@ -1216,7 +1437,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear un botón para capturar
       const captureButton = document.createElement('button');
-      captureButton.textContent = 'Capturar';
+      captureButton.textContent = this.translateService.instant(
+        'attendance.faceRecognition.capture',
+      );
       captureButton.style.position = 'fixed';
       captureButton.style.bottom = '20px';
       captureButton.style.left = '50%';
@@ -1234,7 +1457,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Crear un botón para cancelar
       const cancelButton = document.createElement('button');
-      cancelButton.textContent = 'Cancelar';
+      cancelButton.textContent = this.translateService.instant('attendance.cancel');
       cancelButton.style.position = 'fixed';
       cancelButton.style.top = '20px';
       cancelButton.style.right = '20px';
@@ -1272,17 +1495,28 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
         cancelButton.onclick = (): void => {
           this.closeLivenessFromOutside();
-          reject(new Error('Captura cancelada'));
+          reject(
+            new Error(
+              this.translateService.instant('attendance.faceRecognition.captureCancelledError'),
+            ),
+          );
         };
       });
     } catch (error: unknown) {
-      const err = error as { name?: string };
+      const err = error as { name?: string; message?: string };
       if (err.name === 'NotAllowedError') {
         this.logger.warn('Permiso de cámara denegado');
-        throw new Error('Se necesita permiso de cámara para registrar asistencia');
+        throw new Error(
+          this.translateService.instant('attendance.faceRecognition.cameraAccessError'),
+        );
       } else if (err.name === 'NotFoundError') {
         this.logger.warn('Cámara no encontrada');
-        throw new Error('No se encontró ninguna cámara');
+        throw new Error(this.translateService.instant('attendance.faceRecognition.noCameraFound'));
+      } else if (
+        err.message?.includes('Captura cancelada') ||
+        err.message?.includes('Capture cancelled')
+      ) {
+        throw error;
       } else {
         this.logger.error('Error al acceder a la cámara:', error);
         throw error;
@@ -1330,12 +1564,20 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private getCurrentLocation(): Promise<GeolocationPosition> {
     return new Promise((resolve, reject) => {
       if (!isPlatformBrowser(this.platformId)) {
-        reject(new Error('Geolocalización no disponible en este entorno'));
+        reject(
+          new Error(
+            this.translateService.instant('attendance.faceRecognition.locationUnavailable'),
+          ),
+        );
         return;
       }
 
       if (typeof navigator.geolocation === 'undefined') {
-        reject(new Error('Geolocalización no disponible en este navegador'));
+        reject(
+          new Error(
+            this.translateService.instant('attendance.faceRecognition.locationUnavailable'),
+          ),
+        );
         return;
       }
 
@@ -1344,21 +1586,28 @@ export class CheckinComponent implements OnInit, OnDestroy {
           resolve(position);
         },
         (error) => {
-          let errorMessage = 'Error al obtener la ubicación';
+          let errorMessage = this.translateService.instant('attendance.locationError');
 
           switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage =
-                'Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationPermissionDenied',
+              );
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Información de ubicación no disponible';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationUnavailable',
+              );
               break;
             case error.TIMEOUT:
-              errorMessage = 'Tiempo de espera agotado al obtener la ubicación';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationTimeout',
+              );
               break;
             default:
-              errorMessage = 'Error desconocido al obtener la ubicación';
+              errorMessage = this.translateService.instant(
+                'attendance.faceRecognition.locationUnknownError',
+              );
               break;
           }
 
@@ -1490,228 +1739,35 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Abre el datepicker para seleccionar una fecha
+   * Abre el drawer del selector de fecha
    */
   openDatePicker(): void {
-    const date = this.selectedDate();
-    this.calendarDate.set(new Date(date));
     this.showDatePicker = true;
-    this.calendarLoading.set(true);
-
-    // Cargar los días del calendario de forma asíncrona para no bloquear la animación
     setTimeout(() => {
-      this.calendarDays.set(this.generateCalendarDays());
-      this.calendarLoading.set(false);
+      this.datePickerDrawer?.open();
     }, 0);
   }
 
   /**
-   * Cierra el drawer del calendario
+   * Maneja la selección de fecha desde el drawer
    */
-  closeDatePicker(): void {
-    this.showDatePicker = false;
-  }
-
-  /**
-   * Genera los días del calendario para el mes actual
-   */
-  private generateCalendarDays(): {
-    date: Date;
-    day: number;
-    isCurrentMonth: boolean;
-    isSelected: boolean;
-    isToday: boolean;
-    isInRange: boolean;
-    isFuture: boolean;
-  }[] {
-    const currentDate = this.calendarDate();
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    // Primer día del mes
-    const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-
-    // Día de la semana del primer día (0 = domingo, 1 = lunes, etc.)
-    const firstDayWeekday = firstDayOfMonth.getDay();
-
-    // Días del mes anterior que se muestran
-    const daysFromPrevMonth = firstDayWeekday;
-    const prevMonthLastDay = new Date(year, month, 0);
-
-    const days: {
-      date: Date;
-      day: number;
-      isCurrentMonth: boolean;
-      isSelected: boolean;
-      isToday: boolean;
-      isInRange: boolean;
-      isFuture: boolean;
-    }[] = [];
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const selectedDate = this.selectedDate();
-    selectedDate.setHours(0, 0, 0, 0);
-
-    // Agregar días del mes anterior
-    for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
-      const day = prevMonthLastDay.getDate() - i;
-      const date = new Date(year, month - 1, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    // Agregar días del mes actual
-    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-      const date = new Date(year, month, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: true,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    // Agregar días del mes siguiente para completar la última semana
-    const remainingDays = 42 - days.length; // 6 semanas * 7 días
-    for (let day = 1; day <= remainingDays; day++) {
-      const date = new Date(year, month + 1, day);
-      date.setHours(0, 0, 0, 0);
-
-      days.push({
-        date,
-        day,
-        isCurrentMonth: false,
-        isSelected: date.getTime() === selectedDate.getTime(),
-        isToday: date.getTime() === today.getTime(),
-        isInRange: false,
-        isFuture: date > today,
-      });
-    }
-
-    return days;
-  }
-
-  /**
-   * Selecciona una fecha del calendario
-   */
-  selectCalendarDate(date: Date): void {
-    this.calendarDate.set(new Date(date));
-    this.selectedDate.set(new Date(date));
+  onDatePickerDateSelected(date: Date): void {
+    this.selectedDate.set(date);
     void this.loadAttendance();
-    this.closeDatePicker();
   }
 
   /**
-   * Limpia la selección de fecha (vuelve a hoy)
+   * Abre el drawer de excepciones
    */
-  clearDateSelection(): void {
-    this.calendarDate.set(new Date());
-    this.calendarDays.set(this.generateCalendarDays());
+  openExceptionsDrawer(): void {
+    this.showExceptionsDrawer = true;
   }
 
   /**
-   * Navega al mes anterior en el calendario
+   * Abre el drawer de registros
    */
-  previousCalendarMonth(): void {
-    const date = new Date(this.calendarDate());
-    date.setMonth(date.getMonth() - 1);
-    this.calendarDate.set(date);
-    this.calendarDays.set(this.generateCalendarDays());
-  }
-
-  /**
-   * Navega al mes siguiente en el calendario
-   */
-  nextCalendarMonth(): void {
-    const date = new Date(this.calendarDate());
-    date.setMonth(date.getMonth() + 1);
-    this.calendarDate.set(date);
-    this.calendarDays.set(this.generateCalendarDays());
-  }
-
-  /**
-   * Formatea el día del calendario para mostrar en el chip
-   */
-  formatCalendarDay(date: Date): string {
-    return date.getDate().toString().padStart(2, '0') + ' ' + this.getMonthAbbreviation(date);
-  }
-
-  /**
-   * Formatea el nombre del día para mostrar en el chip
-   */
-  formatCalendarDayName(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { weekday: 'short' });
-  }
-
-  /**
-   * Formatea el mes y año del calendario
-   */
-  formatCalendarMonth(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  }
-
-  /**
-   * Obtiene la abreviación del mes
-   */
-  private getMonthAbbreviation(date: Date): string {
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, { month: 'short' });
-  }
-
-  /**
-   * Maneja la selección de fecha del datepicker
-   */
-  onDateSelect(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target?.value) {
-      const selectedDate = parseLocalDate(target.value);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      selectedDate.setHours(0, 0, 0, 0);
-
-      // Solo permitir fechas menores a hoy
-      if (selectedDate < today) {
-        this.selectedDate.set(selectedDate);
-        void this.loadAttendance();
-      }
-    }
-    this.showDatePicker = false;
-  }
-
-  /**
-   * Abre el diálogo de excepciones
-   */
-  openExceptionsDialog(): void {
-    this.showExceptionsDialog = true;
-  }
-
-  /**
-   * Cierra el diálogo de excepciones
-   */
-  closeExceptionsDialog(): void {
-    this.showExceptionsDialog = false;
+  openRecordsDrawer(): void {
+    this.showRecordsDrawer = true;
   }
 
   /**
@@ -1722,78 +1778,10 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Formatea la fecha de la excepción
-   */
-  formatExceptionDate(dateString: string): string {
-    const date = parseLocalDate(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-    return date.toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  /**
-   * Abre el diálogo de registros
-   */
-  openRecordsDialog(): void {
-    this.showRecordsDialog = true;
-  }
-
-  /**
-   * Cierra el diálogo de registros
-   */
-  closeRecordsDialog(): void {
-    this.showRecordsDialog = false;
-  }
-
-  /**
    * Obtiene los registros de asistencia del attendance actual
    */
   getRecords(): IAssistance[] {
     return this.attendance()?.assistFlatList ?? [];
-  }
-
-  /**
-   * Formatea la fecha y hora del registro
-   */
-  formatRecordDateTime(dateString: string): string {
-    const date = new Date(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-
-    const dateStr = date.toLocaleDateString(locale, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-
-    const timeStr = date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-
-    return `${dateStr} ${timeStr}`;
-  }
-
-  /**
-   * Formatea solo la hora del registro
-   */
-  formatRecordTime(dateString: string): string {
-    const date = new Date(dateString);
-    const currentLang = this.translateService.currentLang || 'es';
-    const locale = currentLang === 'en' ? 'en-US' : 'es-MX';
-
-    return date.toLocaleTimeString(locale, {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
   }
 
   /**
@@ -2056,9 +2044,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
    */
   private async getFaceDescriptor(img: HTMLImageElement): Promise<Float32Array | null> {
     try {
-      // Detectar el rostro con landmarks
+      // Detectar el rostro con landmarks usando opciones optimizadas para velocidad
       const detection = await faceapi
-        .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+        .detectSingleFace(
+          img,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 224,
+            scoreThreshold: 0.4,
+          }),
+        )
         .withFaceLandmarks()
         .withFaceDescriptor();
 
@@ -2094,10 +2088,18 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // Convertir todos los frames a imágenes
       const images = await Promise.all(frames.map((frame) => this.base64ToImage(frame)));
 
-      // Verificar que todos los frames tengan un rostro detectado
+      // Verificar que todos los frames tengan un rostro detectado usando opciones optimizadas
       const faceDetections: (IFaceDetectionWithLandmarks | undefined)[] = await Promise.all(
         images.map((img) =>
-          faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks(),
+          faceapi
+            .detectSingleFace(
+              img,
+              new faceapi.TinyFaceDetectorOptions({
+                inputSize: 224,
+                scoreThreshold: 0.4,
+              }),
+            )
+            .withFaceLandmarks(),
         ),
       );
 
@@ -2254,29 +2256,29 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
       // Verificar que la variación de landmarks no sea demasiado alta
       // Fotos movidas pueden tener variación muy alta en landmarks (> 20%)
-      // Personas reales tienen variación más moderada (0.3% - 18%)
-      const hasNaturalLandmarkVariation = landmarkVariation > 0.003 && landmarkVariation < 0.18;
+      // Personas reales tienen variación más moderada (0.2% - 20%) - Más permisivo
+      const hasNaturalLandmarkVariation = landmarkVariation > 0.002 && landmarkVariation < 0.2;
 
       // Verificar que el movimiento no sea excesivo (fotos movidas suelen tener movimientos muy grandes > 20%)
-      // Movimiento natural de cabeza/parpadeos es moderado (1% - 15%)
-      const hasReasonableMovement = averageMovement > 0.01 && averageMovement < 0.15;
+      // Movimiento natural de cabeza/parpadeos es moderado (0.5% - 18%) - Más permisivo
+      const hasReasonableMovement = averageMovement > 0.005 && averageMovement < 0.18;
 
-      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 20%)
-      const hasReasonableSizeVariation = averageSizeVariation < 0.2;
+      // Verificar que la variación de tamaño no sea excesiva (fotos movidas tienen variación muy alta > 25%)
+      const hasReasonableSizeVariation = averageSizeVariation < 0.25;
 
       // CLAVE: Verificar que el movimiento NO sea rígido (detectar fotos movidas)
-      // Una foto movida tiene rigidityScore bajo (< 0.25) porque todos los landmarks se mueven igual
-      // Una persona real tiene rigidityScore alto (> 0.25) porque hay micro-expresiones independientes
-      const hasFlexibleMovement = rigidityScore > 0.25;
+      // Una foto movida tiene rigidityScore bajo (< 0.2) porque todos los landmarks se mueven igual
+      // Una persona real tiene rigidityScore alto (> 0.2) porque hay micro-expresiones independientes - Más permisivo
+      const hasFlexibleMovement = rigidityScore > 0.2;
 
-      // Criterios de liveness balanceados:
+      // Criterios de liveness balanceados y más permisivos para reconocimiento rápido:
       // 1. El movimiento debe ser razonable (no muy poco, no excesivo)
       // 2. El movimiento debe ser flexible (no rígido como una foto)
       // 3. Los landmarks deben tener variación natural
 
       const hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
       const hasNaturalMovement =
-        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.9;
+        hasNaturalLandmarkVariation && hasFlexibleMovement && consistencyRatio < 0.95;
 
       const hasMovement = hasSignificantMovement && hasNaturalMovement;
 
@@ -2296,5 +2298,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
       // En caso de error, ser permisivo para no bloquear usuarios legítimos
       return true;
     }
+  }
+
+  /**
+   * Muestra el modal de error con el tipo, título y mensaje especificados
+   */
+  private showErrorModalWithMessage(type: ErrorModalType, title: string, message: string): void {
+    this.errorModalType.set(type);
+    this.errorModalTitle.set(title);
+    this.errorModalMessage.set(message);
+    this.showErrorModal.set(true);
   }
 }

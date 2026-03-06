@@ -1,0 +1,52 @@
+<app-drawer
+  [(visible)]="visible"
+  [title]="title"
+  [cancelButtonText]="cancelButtonText"
+  [enableSwipe]="true"
+  (closed)="close()"
+>
+  <!-- Contenido de excepciones -->
+      <div class="exceptions-list">
+        @if (exceptions.length === 0) {
+          <div class="no-exceptions">
+            <i class="pi pi-info-circle"></i>
+            <p>{{ 'attendance.noExceptions' | translate }}</p>
+          </div>
+        } @else {
+          @for (exception of exceptions; track exception.shiftExceptionId) {
+            <div class="exception-item">
+              <div class="exception-header">
+                <div class="exception-type">
+                  <i class="pi pi-info-circle"></i>
+                  <span class="exception-type-name">{{
+                    exception.exceptionType.exceptionTypeTypeName
+                  }}</span>
+                </div>
+                <span class="exception-date">{{
+                  formatExceptionDate(exception.shiftExceptionsDate)
+                }}</span>
+              </div>
+              @if (exception.shiftExceptionsDescription) {
+                <div class="exception-description">
+                  {{ exception.shiftExceptionsDescription }}
+                </div>
+              }
+              <div class="exception-times">
+                @if (exception.shiftExceptionCheckInTime) {
+                  <div class="exception-time">
+                    <span class="time-label">{{ 'attendance.checkIn' | translate }}:</span>
+                    <span class="time-value">{{ exception.shiftExceptionCheckInTime }}</span>
+                  </div>
+                }
+                @if (exception.shiftExceptionCheckOutTime) {
+                  <div class="exception-time">
+                    <span class="time-label">{{ 'attendance.checkOut' | translate }}:</span>
+                    <span class="time-value">{{ exception.shiftExceptionCheckOutTime }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+</app-drawer>

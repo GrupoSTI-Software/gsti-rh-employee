@@ -7,12 +7,10 @@
   background: var(--bg-secondary);
   display: flex;
   align-items: flex-end;
-  background-image: url('../../../../assets/images/startbg.jpeg');
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center;
-  @include safe-area-vertical(0px, 0px);
-  @include safe-area-horizontal($spacing-md);
+  background-position: top;
+  @include safe-area-top(0.25rem);
 }
 
 .login-header {
@@ -23,20 +21,31 @@
   .login-logo {
     display: block;
     height: 4rem;
-    width: 15rem;
+    width: 6rem;
     object-fit: contain;
-    object-position: left;
+    object-position: bottom;
+    background: var(--bg-primary);
+    position: fixed;
+    top: 5rem;
+    left: -1rem;
+    margin-left: -0rem;
+    border-top-right-radius: 15rem;
+    border-bottom-right-radius: 15rem;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
   }
 }
 
 .login-card {
-  @include safe-area-bottom($padding);
   position: relative;
   width: 100%;
-  padding: $padding-lg;
+  padding: $padding-sm;
   padding-bottom: $padding;
-  padding-top: $padding-xl;
+  padding-top: 2.5rem;
   background: var(--bg-primary);
+  border-top-left-radius: 2rem;
+  border-top-right-radius: 2rem;
 }
 
 .login-form {
@@ -49,15 +58,20 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: $padding-md;
 }
 
 .forgot-password-button {
-  margin-top: $padding-md;
-  text-align: center;
   font-size: $font-size-xs;
-  color: var(--text-secondary);
-  opacity: 0.5;
+  color: var(--text-tertiary);
+  text-align: left;
+  width: 100%;
+  padding: 0.5rem;
+  padding-left: 0;
+  margin-top: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .version-info {

@@ -17,6 +17,7 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 import { JwtService } from '@core/services/jwt.service';
 import { LoggerService } from '@core/services/logger.service';
 import { WebAuthnAdapter } from './webauthn.adapter';
+import { PushNotificationsService } from '@core/services/push-notifications.service';
 
 /**
  * Constante para el nombre de la cookie del token de autenticación
@@ -112,6 +113,7 @@ export class HttpAuthAdapter implements IAuthPort {
   private readonly jwtService = inject(JwtService);
   private readonly logger = inject(LoggerService);
   private readonly webAuthnAdapter = inject(WebAuthnAdapter);
+  private readonly pushNotificationsService = inject(PushNotificationsService);
   private readonly apiUrl = environment.API_URL;
   private currentUser: IUser | null = null;
   private userInitialized = false;
@@ -144,7 +146,6 @@ export class HttpAuthAdapter implements IAuthPort {
       const loginResponse = await firstValueFrom(
         this.http.post<ILoginResponse>(`${this.apiUrl}/auth/login`, payload),
       );
-
       // Verificar que la respuesta sea exitosa
       if (
         loginResponse?.type === 'success' &&
@@ -180,31 +181,32 @@ export class HttpAuthAdapter implements IAuthPort {
           );
           this.secureStorage.setSecureCookie(AUTH_TOKEN_COOKIE, token, daysUntilExpiry);
         }
-
         // Obtener información completa del usuario desde /auth/session
         try {
           const sessionResponse = await this.getSessionData();
           const user = this.mapSessionToUser(sessionResponse);
 
           this.currentUser = user;
-
+          await this.pushNotificationsService.getToken();
           // Guardar datos del usuario cifrados (sin datos ultra-sensibles)
           this.storeUserDataSecurely(user);
-          const fcmTokenPayload: {
-            userId: number;
-            userFcmToken: string;
-            userFcmActive: number;
-            userFcmTokenPlatform?: string;
-          } = {
-            userId: Number(this.currentUser?.id) ?? 0,
-            userFcmToken: this.secureStorage.getItem('fcmToken') ?? '',
-            userFcmActive: 1,
-            userFcmTokenPlatform: 'app',
-          };
-          await firstValueFrom(
-            this.http.post<IFcmTokenResponse>(`${this.apiUrl}/user-fcm-tokens`, fcmTokenPayload),
-          );
-
+          const fcmToken = this.secureStorage.getItem('fcmToken');
+          if (fcmToken) {
+            const fcmTokenPayload: {
+              userId: number;
+              userFcmToken: string;
+              userFcmActive: number;
+              userFcmTokenPlatform?: string;
+            } = {
+              userId: Number(this.currentUser?.id) ?? 0,
+              userFcmToken: this.secureStorage.getItem('fcmToken') ?? '',
+              userFcmActive: 1,
+              userFcmTokenPlatform: 'app',
+            };
+            await firstValueFrom(
+              this.http.post<IFcmTokenResponse>(`${this.apiUrl}/user-fcm-tokens`, fcmTokenPayload),
+            );
+          }
           return {
             success: true,
             token: token,

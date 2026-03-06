@@ -22,8 +22,8 @@ export class ForgotPasswordComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  // Logo del branding o logo por defecto
-  readonly logoUrl = computed(() => this.branding.getLogoUrl());
+  readonly bannerUrl = computed(() => this.branding.getBannerUrl());
+  readonly faviconUrl = computed(() => this.branding.getFaviconUrl());
 
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
@@ -50,7 +50,6 @@ export class ForgotPasswordComponent {
     try {
       const result = await this.forgotPasswordUseCase.execute(email);
       if (result.success) {
-        // Redirigir al dashboard
         await this.router.navigate(['/pincode-password']);
       } else {
         const errorMessage =
@@ -64,5 +63,9 @@ export class ForgotPasswordComponent {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async goBack(): Promise<void> {
+    await this.router.navigate(['/login']);
   }
 }

@@ -1,9 +1,4 @@
 <div class="vacations-page">
-  <header class="page-header">
-    <h1 class="page-title">{{ 'vacationsModule.title' | translate }}</h1>
-    <p class="page-subtitle">{{ 'vacationsModule.subtitle' | translate }}</p>
-  </header>
-
   @if (loading() && !employeeId()) {
     <div class="loading-state">
       <i class="pi pi-spin pi-spinner"></i>

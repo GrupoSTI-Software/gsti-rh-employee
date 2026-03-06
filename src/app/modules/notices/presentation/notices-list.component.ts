@@ -19,6 +19,10 @@ import { INotice, INoticesPaginatedResponse } from '../domain/notices.port';
 import { LoggerService } from '@core/services/logger.service';
 import { parseLocalDate } from '@shared/utils/date.utils';
 
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
+const PDF_EXTENSION = /\.pdf(\?.*)?$/i;
+const URL_PATTERN = /^https?:\/\/.+/i;
+
 @Component({
   selector: 'app-notices-list',
   standalone: true,
@@ -165,6 +169,43 @@ export class NoticesListComponent implements OnInit {
       month: 'short',
       day: 'numeric',
     });
+  }
+
+  /**
+   * Determina si la descripción es una URL de imagen
+   */
+  isImageUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && IMAGE_EXTENSIONS.test(trimmed);
+  }
+
+  /**
+   * Determina si la descripción es una URL de PDF
+   */
+  isPdfUrl(description: string): boolean {
+    const trimmed = description?.trim() ?? '';
+    return URL_PATTERN.test(trimmed) && PDF_EXTENSION.test(trimmed);
+  }
+
+  /** determinar si es una descripcion normal */
+  isNormalDescription(description: string): boolean {
+    return !this.isImageUrl(description) && !this.isPdfUrl(description);
+  }
+
+  /**
+   * Determina si la descripción es contenido HTML/texto plano
+   */
+  isHtmlContent(description: string): boolean {
+    return !this.isImageUrl(description) && !this.isPdfUrl(description);
+  }
+
+  /**
+   * Extrae el nombre del archivo desde una URL
+   */
+  getFileName(url: string): string {
+    const segments = url.trim().split('/');
+    const lastSegment = segments[segments.length - 1] ?? '';
+    return decodeURIComponent(lastSegment.split('?')[0]);
   }
 
   /**
