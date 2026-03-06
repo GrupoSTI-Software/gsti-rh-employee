@@ -1,20 +1,56 @@
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+// SW sin Firebase Messaging SDK para tener control total de push y notificationclick
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
-firebase.initializeApp({
-     apiKey: 'AIzaSyDGud8T2cntLMqxuPfIm6qiRcpdbx8x_WA',
-     authDomain: 'gsti-rh-employee-5e1a7.firebaseapp.com',
-     projectId: 'gsti-rh-employee-5e1a7',
-     storageBucket: 'gsti-rh-employee-5e1a7.firebasestorage.app',
-     messagingSenderId: '567590699861',
-     appId: '1:567590699861:web:d38d20db26383c05be65dc'
+// Recibir push directamente sin Firebase SDK
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch (e) {
+    return;
+  }
+
+  const notification = payload.notification || {};
+  const data = payload.data || {};
+  const title = notification.title || 'Nuevo aviso';
+  const body = notification.body || '';
+  const noticeId = data.noticeId || '';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: body,
+      icon: 'assets/gsti/icon.png',
+      data: { noticeId: noticeId },
+    }),
+  );
 });
 
- const messaging = firebase.messaging();
+// Click en notificación
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
 
- messaging.onBackgroundMessage(payload => {
-    self.registration.showNotification(
-    payload.notification.title,
-   { body: payload.notification.body }
-   );
+  const noticeId = event.notification.data?.noticeId || '';
+  const targetUrl = noticeId
+    ? '/dashboard/notices/' + noticeId
+    : '/dashboard/notices';
+  const fullUrl = self.location.origin + targetUrl;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.startsWith(self.location.origin)) {
+          return client.focus().then(() => {
+            client.postMessage({
+              type: 'NOTIFICATION_CLICK',
+              noticeId: noticeId,
+            });
+          });
+        }
+      }
+      return self.clients.openWindow(fullUrl);
+    }),
+  );
 });

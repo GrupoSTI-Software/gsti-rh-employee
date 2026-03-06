@@ -20,4 +20,5 @@ export interface ISystemSettings {
   systemSettingUpdatedAt: string;
   deletedAt: string | null;
   systemSettingTolerances: ITolerance[];
+  systemSettingEmployeeAplicationIcon: string;
 }

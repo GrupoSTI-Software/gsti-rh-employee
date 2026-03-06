@@ -1,6 +1,7 @@
 import { Component, inject, computed, signal, OnInit, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser, Location } from '@angular/common';
 import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { SidebarService } from '@core/services/sidebar.service';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
@@ -31,6 +32,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private readonly location = inject(Location);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly getUnreadCountUseCase = inject(GetUnreadCountUseCase);
+  private readonly sanitizer = inject(DomSanitizer);
   readonly branding = inject(BrandingService);
 
   private routerSubscription?: Subscription;
@@ -58,36 +60,121 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return user?.name ?? user?.email ?? '';
   });
 
+  readonly menuIcon = computed(() => {
+    return `<svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="48"
+      height="48"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#88a4bf"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M10 6h10" />
+      <path d="M4 12h16" />
+      <path d="M7 12h13" />
+      <path d="M4 18h10" />
+    </svg>`;
+  });
+
   readonly menuItems: MenuItem[] = [
     {
       label: 'Asistencia',
       route: '/dashboard/checkin',
-      icon: 'pi-clock',
+      icon: `<svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#88a4bf"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20.971 11.278a9 9 0 1 0 -8.313 9.698" />
+        <path d="M12 7v5l1.5 1.5" />
+        <path d="M21.121 20.121a3 3 0 1 0 -4.242 0c.418 .419 1.125 1.045 2.121 1.879c1.051 -.89 1.759 -1.516 2.121 -1.879z" />
+        <path d="M19 18v.01" />
+      </svg>`,
       translationKey: 'menu.attendance',
     },
     {
       label: 'Vacaciones',
       route: '/dashboard/vacations',
-      icon: 'pi-briefcase',
+      icon: `<svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#88a4bf"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M17.553 16.75a7.5 7.5 0 0 0 -10.606 0" />
+        <path d="M18 3.804a6 6 0 0 0 -8.196 2.196l10.392 6a6 6 0 0 0 -2.196 -8.196z" />
+        <path d="M16.732 10c1.658 -2.87 2.225 -5.644 1.268 -6.196c-.957 -.552 -3.075 1.326 -4.732 4.196" />
+        <path d="M15 9l-3 5.196" />
+        <path d="M3 19.25a2.4 2.4 0 0 1 1 -.25a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 1 .25" />
+      </svg>`,
       translationKey: 'menu.vacations',
     },
     {
       label: 'Calendario general',
       route: '/dashboard/calendar',
-      icon: 'pi-calendar',
+      icon: `<svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#88a4bf"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+        <path d="M16 3v4" />
+        <path d="M8 3v4" />
+        <path d="M4 11h16" />
+        <path d="M7 14h.013" />
+        <path d="M10.01 14h.005" />
+        <path d="M13.01 14h.005" />
+        <path d="M16.015 14h.005" />
+        <path d="M13.015 17h.005" />
+        <path d="M7.01 17h.005" />
+        <path d="M10.01 17h.005" />
+      </svg>`,
       translationKey: 'menu.calendarGeneral',
     },
     {
       label: 'Avisos',
       route: '/dashboard/notices',
-      icon: 'pi-bell',
+      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8a3 3 0 0 1 0 6"></path>
+        <path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"></path>
+        <path d="M12 8h0l4.524 -3.77a.9 .9 0 0 1 1.476 .692v12.156a.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8"></path>
+      </svg>`,
       translationKey: 'menu.notices',
       badgeCount: () => this.unreadCount(),
     },
     {
       label: 'Perfil',
       route: '/dashboard/profile',
-      icon: 'pi-user',
+      icon: `<svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#88a4bf"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+      </svg>`,
       translationKey: 'menu.profile',
     },
   ];
@@ -226,5 +313,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   logout(): void {
     void this.authPort.logout();
     void this.router.navigate(['/login']);
+  }
+
+  /**
+   * Sanitiza el HTML del icono para que pueda ser renderizado de forma segura
+   */
+  getSafeIcon(icon: string): SafeHtml {
+    // Si el icono comienza con '<', es HTML/SVG, sanitizarlo
+    if (icon.startsWith('<')) {
+      return this.sanitizer.bypassSecurityTrustHtml(icon);
+    }
+    // Si no, es una clase de PrimeIcons, devolverlo tal cual
+    return icon;
   }
 }

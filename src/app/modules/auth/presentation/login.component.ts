@@ -39,6 +39,9 @@ export class LoginComponent implements OnInit {
   // Logo del branding o logo por defecto
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
 
+  readonly bannerUrl = computed(() => this.branding.getBannerUrl());
+  readonly faviconUrl = computed(() => this.branding.getFaviconUrl());
+
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 
@@ -144,9 +147,10 @@ export class LoginComponent implements OnInit {
       const result = await this.loginUseCase.execute(email, password);
 
       if (result.success) {
-        await this.pushService.requestPermission();
-
-        void this.pushService.listen();
+        const permission = await this.pushService.requestPermission();
+        if (permission) {
+          void this.pushService.listen();
+        }
         await this.router.navigate(['/dashboard/checkin']);
       } else {
         this.error.set(

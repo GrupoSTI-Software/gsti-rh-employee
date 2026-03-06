@@ -1,7 +1,7 @@
-<div class="login-container">
+<div class="login-container" [style.backgroundImage]="'url(' + bannerUrl() + ')'">
   <div class="login-header">
     @if (showLogo()) {
-      <img [src]="logoUrl()" [alt]="'auth.login' | translate" class="login-logo" id="app-logo" />
+      <img [src]="faviconUrl()" [alt]="'auth.login' | translate" class="login-logo" id="app-logo" />
     } @else {
       <div class="login-logo-placeholder">
         <i class="pi pi-spin pi-spinner"></i>
@@ -84,7 +84,7 @@
         }
       </button>
 
-      <button
+      <!-- <button
         type="button"
         class="btn secondary passkey-button"
         (click)="loginWithPasskey()"
@@ -96,7 +96,7 @@
           <i class="pi pi-fingerprint"></i>
           {{ 'auth.loginWithPasskey' | translate }}
         }
-      </button>
+      </button> -->
     </form>
     <div class="forgot-password-container">
       <button

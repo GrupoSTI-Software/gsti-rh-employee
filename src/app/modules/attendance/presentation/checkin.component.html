@@ -16,7 +16,7 @@
           <button
             type="button"
             class="action-icon-button bg-class"
-            (click)="openExceptionsDialog()"
+            (click)="openExceptionsDrawer()"
             [attr.aria-label]="'attendance.exceptions' | translate"
           >
             <svg
@@ -40,7 +40,7 @@
           <button
             type="button"
             class="action-icon-button bg-class"
-            (click)="openRecordsDialog()"
+            (click)="openRecordsDrawer()"
             [attr.aria-label]="'attendance.records' | translate"
           >
             <svg
@@ -193,9 +193,9 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     >
-                    <path d="M20.956 11.107a9 9 0 1 0 -9.579 9.871" />
-                    <path d="M18 22l3.35 -3.284a2.143 2.143 0 0 0 .005 -3.071a2.242 2.242 0 0 0 -3.129 -.006l-.224 .22l-.223 -.22a2.242 2.242 0 0 0 -3.128 -.006a2.143 2.143 0 0 0 -.006 3.071l3.355 3.296z" />
-                    <path d="M12 7v5l.5 .5" />
+                    <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" />
+                    <path d="M8 7c1.657 0 3 -.895 3 -2s-1.343 -2 -3 -2s-3 .895 -3 2s1.343 2 3 2" />
+                    <path d="M11 5h9" />
                   </svg>
                   <span class="button-label">{{ 'attendance.checkEatIn' | translate }}</span>
                 </button>
@@ -207,7 +207,24 @@
                   [disabled]="!canCheckIn() || loading()"
                   [attr.aria-label]="'attendance.checkEatOut' | translate"
                 >
-                  <app-eat-out-icon [size]="32" [color]="'white'"></app-eat-out-icon>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#88a4bf"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M9 4.55a8 8 0 0 1 6 14.9m0 -4.45v5h5" />
+                    <path d="M5.63 7.16l0 .01" />
+                    <path d="M4.06 11l0 .01" />
+                    <path d="M4.63 15.1l0 .01" />
+                    <path d="M7.16 18.37l0 .01" />
+                    <path d="M11 19.94l0 .01" />
+                  </svg>
                   <span class="button-label">{{ 'attendance.checkEatOut' | translate }}</span>
                 </button>
               }
@@ -221,7 +238,20 @@
                 [disabled]="!canCheckIn() || loading()"
                 [attr.aria-label]="'attendance.checkOut' | translate"
               >
-                <app-check-out-icon [size]="32" [color]="'white'"></app-check-out-icon>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#88a4bf"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+                  <path d="M4 17l5 1l.75 -1.5" />
+                  <path d="M15 21l0 -4l-4 -3l1 -6" />
+                  <path d="M7 12l0 -3l5 -1l3 3l3 1" />
+                </svg>
                 <span class="button-label">{{ 'attendance.checkOut' | translate }}</span>
               </button>
             }
@@ -233,105 +263,115 @@
       <div class="attendance-status" [@fadeInUp]>
         <div class="status-item">
           <div class="status-left">
-            <app-check-in-icon
-              class="status-icon checkin-icon"
-              [size]="28"
-              [color]="getStatusColor(attendance()?.checkInStatus, 'var(--text-secondary)')"
-            >
-            </app-check-in-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+              <path d="M11.87 21.48a1.992 1.992 0 0 1 -1.283 -.58l-4.244 -4.243a8 8 0 1 1 13.355 -3.474" />
+              <path d="M15 19l2 2l4 -4" />
+            </svg>
             <span class="status-label">{{ 'attendance.checkIn' | translate }}</span>
           </div>
           <div class="status-right">
             <span
               class="status-value"
-              [class.has-value]="attendance()?.checkInTime"
-              [class]="getStatusClass(attendance()?.checkInStatus)"
             >
               {{ attendance()?.checkInTime || '--:--' }}
             </span>
-            @if (attendance()?.checkInStatus) {
-              <span class="status-badge" [class]="getStatusClass(attendance()?.checkInStatus)">
-                {{ attendance()?.checkInStatus }}
-              </span>
-            }
           </div>
         </div>
 
         <div class="status-item">
           <div class="status-left">
-            <app-eat-in-icon
-              class="status-icon eatin-icon"
-              [size]="28"
-              [color]="getStatusColor(attendance()?.checkEatInStatus, 'var(--text-secondary)')"
-            >
-            </app-eat-in-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              >
+              <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" />
+              <path d="M8 7c1.657 0 3 -.895 3 -2s-1.343 -2 -3 -2s-3 .895 -3 2s1.343 2 3 2" />
+              <path d="M11 5h9" />
+            </svg>
             <span class="status-label">{{ 'attendance.checkEatIn' | translate }}</span>
           </div>
           <div class="status-right">
             <span
               class="status-value"
-              [class.has-value]="attendance()?.checkEatInTime"
-              [class]="getStatusClass(attendance()?.checkEatInStatus)"
             >
               {{ attendance()?.checkEatInTime || '--:--' }}
             </span>
-            @if (attendance()?.checkEatInStatus) {
-              <span class="status-badge" [class]="getStatusClass(attendance()?.checkEatInStatus)">
-                {{ attendance()?.checkEatInStatus }}
-              </span>
-            }
           </div>
         </div>
 
         <div class="status-item">
           <div class="status-left">
-            <app-eat-out-icon
-              class="status-icon eatout-icon"
-              [size]="28"
-              [color]="getStatusColor(attendance()?.checkEatOutStatus, 'var(--text-secondary)')"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-            </app-eat-out-icon>
+              <path d="M9 4.55a8 8 0 0 1 6 14.9m0 -4.45v5h5" />
+              <path d="M5.63 7.16l0 .01" />
+              <path d="M4.06 11l0 .01" />
+              <path d="M4.63 15.1l0 .01" />
+              <path d="M7.16 18.37l0 .01" />
+              <path d="M11 19.94l0 .01" />
+            </svg>
             <span class="status-label">{{ 'attendance.checkEatOut' | translate }}</span>
           </div>
           <div class="status-right">
             <span
               class="status-value"
-              [class.has-value]="attendance()?.checkEatOutTime"
-              [class]="getStatusClass(attendance()?.checkEatOutStatus)"
             >
               {{ attendance()?.checkEatOutTime || '--:--' }}
             </span>
-            @if (attendance()?.checkEatOutStatus) {
-              <span class="status-badge" [class]="getStatusClass(attendance()?.checkEatOutStatus)">
-                {{ attendance()?.checkEatOutStatus }}
-              </span>
-            }
           </div>
         </div>
 
         <div class="status-item">
           <div class="status-left">
-            <app-check-out-icon
-              class="status-icon checkout-icon"
-              [size]="28"
-              [color]="getStatusColor(attendance()?.checkOutStatus, 'var(--text-secondary)')"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-            </app-check-out-icon>
+              <path d="M13 4m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+              <path d="M4 17l5 1l.75 -1.5" />
+              <path d="M15 21l0 -4l-4 -3l1 -6" />
+              <path d="M7 12l0 -3l5 -1l3 3l3 1" />
+            </svg>
             <span class="status-label">{{ 'attendance.checkOut' | translate }}</span>
           </div>
           <div class="status-right">
             <span
               class="status-value"
-              [class.has-value]="attendance()?.checkOutTime"
-              [class]="getStatusClass(attendance()?.checkOutStatus)"
             >
               {{ attendance()?.checkOutTime || '--:--' }}
             </span>
-            @if (attendance()?.checkOutStatus) {
-              <span class="status-badge" [class]="getStatusClass(attendance()?.checkOutStatus)">
-                {{ attendance()?.checkOutStatus }}
-              </span>
-            }
           </div>
         </div>
       </div>
@@ -378,181 +418,35 @@
 </div>
 
 <!-- Datepicker Drawer -->
-@if (showDatePicker) {
-  <div
-    class="drawer-overlay"
-    [@fadeIn]
-    (click)="closeDatePicker()"
-    (keydown.escape)="closeDatePicker()"
-    role="button"
-    tabindex="0"
-    [attr.aria-label]="'attendance.close' | translate"
-  >
-    <div
-      class="drawer-container"
-      [@slideUpDrawer]
-      (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
-      role="dialog"
-      [attr.aria-label]="'attendance.selectDate' | translate"
-    >
-      <!-- Header del drawer -->
-      <div class="drawer-header drawer-calendar">
-        <button type="button" class="drawer-cancel-button" (click)="closeDatePicker()">
-          {{ 'attendance.cancel' | translate }}
-        </button>
-      </div>
+<app-date-picker-drawer
+  [(visible)]="showDatePicker"
+  [selectedDate]="selectedDate()"
+  [cancelButtonText]="'attendance.cancel' | translate"
+  (dateSelected)="onDatePickerDateSelected($event)"
+></app-date-picker-drawer>
 
-      <!-- Navegación del mes -->
-      <div class="calendar-month-navigation">
-        <button type="button" class="calendar-nav-button" (click)="previousCalendarMonth()">
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <span class="calendar-month-label">{{ formatCalendarMonth(calendarDate()) }}</span>
-        <button type="button" class="calendar-nav-button" (click)="nextCalendarMonth()">
-          <i class="pi pi-chevron-right"></i>
-        </button>
-      </div>
+<!-- Exceptions Drawer -->
+<app-exceptions-drawer
+  [(visible)]="showExceptionsDrawer"
+  [exceptions]="getExceptions()"
+  [title]="'attendance.exceptions' | translate"
+  [cancelButtonText]="'attendance.cancel' | translate"
+></app-exceptions-drawer>
 
-      <!-- Calendario -->
-      <div class="calendar-grid">
-        @if (calendarLoading()) {
-          <!-- Loader mientras se cargan los datos -->
-          <div class="calendar-loader">
-            <i class="pi pi-spin pi-spinner"></i>
-            <span>{{ 'attendance.loading' | translate }}</span>
-          </div>
-        } @else {
-          <!-- Días de la semana -->
-          <div class="calendar-weekdays">
-            @for (day of weekDays(); track day) {
-              <div class="calendar-weekday">{{ day }}</div>
-            }
-          </div>
+<!-- Records Drawer -->
+<app-records-drawer
+  [(visible)]="showRecordsDrawer"
+  [records]="getRecords()"
+  [title]="'attendance.records' | translate"
+  [cancelButtonText]="'attendance.cancel' | translate"
+></app-records-drawer>
 
-          <!-- Días del mes -->
-          <div class="calendar-days">
-            @for (day of calendarDays(); track day.date) {
-              <button
-                type="button"
-                class="calendar-day"
-                [class.calendar-day-other-month]="!day.isCurrentMonth"
-                [class.calendar-day-selected]="day.isSelected"
-                [class.calendar-day-today]="day.isToday"
-                [class.calendar-day-in-range]="day.isInRange"
-                (click)="selectCalendarDate(day.date)"
-              >
-                {{ day.day }}
-              </button>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Exceptions Dialog -->
-<p-dialog
-  [(visible)]="showExceptionsDialog"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '600px' }"
-  [header]="'attendance.exceptions' | translate"
-  (onHide)="closeExceptionsDialog()"
->
-  <div class="exceptions-list">
-    @if (getExceptions().length === 0) {
-      <div class="no-exceptions">
-        <i class="pi pi-info-circle"></i>
-        <p>{{ 'attendance.noExceptions' | translate }}</p>
-      </div>
-    } @else {
-      @for (exception of getExceptions(); track exception.shiftExceptionId) {
-        <div class="exception-item">
-          <div class="exception-header">
-            <div class="exception-type">
-              <i class="pi pi-info-circle"></i>
-              <span class="exception-type-name">{{
-                exception.exceptionType.exceptionTypeTypeName
-              }}</span>
-            </div>
-            <span class="exception-date">{{
-              formatExceptionDate(exception.shiftExceptionsDate)
-            }}</span>
-          </div>
-          @if (exception.shiftExceptionsDescription) {
-            <div class="exception-description">
-              {{ exception.shiftExceptionsDescription }}
-            </div>
-          }
-          <div class="exception-times">
-            @if (exception.shiftExceptionCheckInTime) {
-              <div class="exception-time">
-                <span class="time-label">{{ 'attendance.checkIn' | translate }}:</span>
-                <span class="time-value">{{ exception.shiftExceptionCheckInTime }}</span>
-              </div>
-            }
-            @if (exception.shiftExceptionCheckOutTime) {
-              <div class="exception-time">
-                <span class="time-label">{{ 'attendance.checkOut' | translate }}:</span>
-                <span class="time-value">{{ exception.shiftExceptionCheckOutTime }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    }
-  </div>
-</p-dialog>
-
-<!-- Records Dialog -->
-<p-dialog
-  [(visible)]="showRecordsDialog"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '600px' }"
-  [header]="'attendance.records' | translate"
-  (onHide)="closeRecordsDialog()"
->
-  <div class="records-list">
-    @if (getRecords().length === 0) {
-      <div class="no-records">
-        <i class="pi pi-info-circle"></i>
-        <p>{{ 'attendance.noRecords' | translate }}</p>
-      </div>
-    } @else {
-      @for (record of getRecords(); track record.assistId) {
-        <div class="record-item">
-          <div class="record-header">
-            <div class="record-time">
-              <i class="pi pi-clock"></i>
-              <span class="time-value">{{ formatRecordTime(record.assistPunchTime) }}</span>
-            </div>
-            <span class="record-date">{{ formatRecordDateTime(record.assistPunchTime) }}</span>
-          </div>
-          <div class="record-details">
-            @if (record.assistTerminalAlias) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.terminal' | translate }}:</span>
-                <span class="detail-value">{{ record.assistTerminalAlias }}</span>
-              </div>
-            }
-            @if (record.assistAreaAlias) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.area' | translate }}:</span>
-                <span class="detail-value">{{ record.assistAreaAlias }}</span>
-              </div>
-            }
-            @if (record.assistLatitude && record.assistLongitude) {
-              <div class="record-detail-item">
-                <span class="detail-label">{{ 'attendance.location' | translate }}:</span>
-                <span class="detail-value"
-                  >{{ record.assistLatitude }}, {{ record.assistLongitude }}</span
-                >
-              </div>
-            }
-          </div>
-        </div>
-      }
-    }
-  </div>
-</p-dialog>
+<!-- Error Modal -->
+<app-error-modal
+  [visible]="showErrorModal()"
+  (visibleChange)="showErrorModal.set($event)"
+  [type]="errorModalType()"
+  [title]="errorModalTitle()"
+  [message]="errorModalMessage()"
+  closeButtonText="Entendido"
+></app-error-modal>

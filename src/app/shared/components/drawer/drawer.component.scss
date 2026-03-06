@@ -1,0 +1,11 @@
+// Los estilos base de drawer están en src/styles/_drawer.scss (importados globalmente)
+// Este archivo contiene solo estilos adicionales específicos del componente
+
+.drawer-header-no-title {
+  justify-content: flex-end;
+}
+
+.drawer-content {
+  // El contenido proyectado se renderiza aquí
+  // Los estilos específicos vienen de los componentes que usan el drawer
+}

@@ -1,3 +1,4 @@
+import { INoticeFileInterface } from './notice-file.interface';
 import { INoticeRecipient } from './notice-recipient.interface';
 
 /**
@@ -14,4 +15,5 @@ export interface INotice {
   noticeUpdatedAt: string;
   deletedAt: string | null;
   recipients?: INoticeRecipient[];
+  files?: INoticeFileInterface[];
 }

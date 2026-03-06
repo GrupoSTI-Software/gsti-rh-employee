@@ -1,0 +1,61 @@
+@if (showOverlay()) {
+  <div class="no-connection-overlay">
+    <div
+      class="overlay-backdrop"
+      role="presentation"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"></div>
+
+    <div class="overlay-content">
+      <div class="icon-container">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--danger)"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M20 16l-4 4" />
+          <path d="M7 12l5 5l-1.5 1.5a3.536 3.536 0 1 1 -5 -5l1.5 -1.5z" />
+          <path d="M17 12l-5 -5l1.5 -1.5a3.536 3.536 0 1 1 5 5l-1.5 1.5z" />
+          <path d="M3 21l2.5 -2.5" />
+          <path d="M18.5 5.5l2.5 -2.5" />
+          <path d="M10 11l-2 2" />
+          <path d="M13 14l-2 2" />
+          <path d="M16 16l4 4" />
+        </svg>
+      </div>
+
+      <h2 class="overlay-title">
+        {{ 'connection.noConnection' | translate }}
+      </h2>
+
+      <p class="overlay-message">
+        {{ 'connection.noConnectionMessage' | translate }}
+      </p>
+
+      <button
+        class="retry-button"
+        (click)="retry()"
+        [disabled]="isRetrying()"
+        type="button">
+        @if (isRetrying()) {
+          <span class="spinner"></span>
+          {{ 'connection.retrying' | translate }}
+        } @else {
+          <svg class="retry-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 12C4 7.58172 7.58172 4 12 4C14.5264 4 16.7792 5.17108 18.2454 7M20 12C20 16.4183 16.4183 20 12 20C9.47362 20 7.22082 18.8289 5.75463 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M18 3V7H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 21V17H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ 'connection.retry' | translate }}
+        }
+      </button>
+    </div>
+  </div>
+}

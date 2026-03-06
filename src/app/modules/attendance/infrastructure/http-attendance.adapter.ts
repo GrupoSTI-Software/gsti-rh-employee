@@ -110,7 +110,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
         assist.isVacationDate ||
         assist.isHoliday;
 
-      return {
+      const checkResponse = {
         // Solo usar los valores de checkIn, checkOut, checkEatIn, checkEatOut si no son null
         // No usar checkInDateTime o checkOutDateTime como respaldo
         checkInTime: formatTimeFromObject(assist.checkIn),
@@ -154,6 +154,8 @@ export class HttpAttendanceAdapter implements IAttendancePort {
           }),
         ),
       };
+
+      return checkResponse;
     } catch (error: unknown) {
       this.logger.error('Error al obtener asistencia:', error);
       return null;
