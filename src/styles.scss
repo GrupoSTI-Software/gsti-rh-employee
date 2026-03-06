@@ -144,6 +144,17 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100dvh;
+  
+  /* Deshabilitar gestos de navegación (swipe back/forward) en PWA */
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+}
+
+html {
+  /* Prevenir scroll horizontal y gestos de navegación */
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
 }
 
 /* Ocultar scrollbar pero mantener funcionalidad */

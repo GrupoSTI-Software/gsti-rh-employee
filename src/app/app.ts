@@ -44,8 +44,60 @@ export class App implements OnInit {
       const savedLang = this.secureStorage.getItem(LANGUAGE_STORAGE_KEY);
       const langToUse = savedLang === 'en' || savedLang === 'es' ? savedLang : 'es';
       this.translate.use(langToUse);
+
+      // Deshabilitar gestos de navegación del navegador (swipe back/forward)
+      this.disableNavigationGestures();
     } else {
       this.translate.use('es');
     }
+  }
+
+  /**
+   * Deshabilita los gestos de navegación del navegador (deslizar para ir atrás/adelante)
+   * en dispositivos móviles para evitar comportamientos no deseados en la PWA.
+   */
+  private disableNavigationGestures(): void {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    // Prevenir gestos de navegación en los bordes de la pantalla
+    window.addEventListener(
+      'touchstart',
+      (e: TouchEvent) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      },
+      { passive: false },
+    );
+
+    window.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        const touchEndX = e.touches[0].clientX;
+        const touchEndY = e.touches[0].clientY;
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        // Si el gesto es principalmente horizontal y comienza cerca del borde
+        if (
+          Math.abs(deltaX) > Math.abs(deltaY) &&
+          (touchStartX < 50 || touchStartX > window.innerWidth - 50)
+        ) {
+          e.preventDefault();
+        }
+      },
+      { passive: false },
+    );
+
+    // Prevenir navegación con gestos del historial
+    window.addEventListener('popstate', (e: PopStateEvent) => {
+      // Permitir la navegación interna de Angular pero prevenir gestos del navegador
+      if (e.state === null) {
+        history.pushState(null, '', window.location.href);
+      }
+    });
+
+    // Establecer estado inicial para prevenir navegación hacia atrás en el primer load
+    history.pushState(null, '', window.location.href);
   }
 }
