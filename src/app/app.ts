@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, AfterViewInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
@@ -12,6 +12,15 @@ import { NoConnectionOverlayComponent } from '@shared/components/no-connection-o
  */
 const LANGUAGE_STORAGE_KEY = 'app-language';
 
+/**
+ * Declaración de la función global del splash screen en el objeto window
+ */
+declare global {
+  interface Window {
+    hideSplashScreen?: () => void;
+  }
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -19,7 +28,7 @@ const LANGUAGE_STORAGE_KEY = 'app-language';
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
-export class App implements OnInit {
+export class App implements OnInit, AfterViewInit {
   protected readonly title = signal('gsti-pwa-empleado');
   private readonly translate = inject(TranslateService);
   private readonly theme = inject(ThemeService);
@@ -100,5 +109,19 @@ export class App implements OnInit {
 
     // Establecer estado inicial para prevenir navegación hacia atrás en el primer load
     history.pushState(null, '', window.location.href);
+  }
+
+  ngAfterViewInit(): void {
+    // Ocultar el splash screen una vez que Angular terminó de renderizar la vista
+    setTimeout(() => this.hideSplashScreen(), 300);
+  }
+
+  /**
+   * Oculta el splash screen inicial de carga
+   */
+  private hideSplashScreen(): void {
+    if (typeof window !== 'undefined' && window.hideSplashScreen) {
+      window.hideSplashScreen();
+    }
   }
 }
