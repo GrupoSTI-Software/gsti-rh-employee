@@ -490,7 +490,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   /**
    * Maneja el registro de check-in con cámara
    */
-  async handleRegisterCheckIn(): Promise<void> {
+  async handleRegisterCheckIn(type: string): Promise<void> {
     this.loading.set(true);
     this.messageAttendanceLock.set(null);
 
@@ -690,6 +690,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         location.coords.latitude,
         location.coords.longitude,
         location.coords.accuracy ?? 0,
+        type,
       );
       if (success) {
         // Recargar asistencia
@@ -1545,6 +1546,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
         location.coords.latitude,
         location.coords.longitude,
         location.coords.accuracy ?? 0,
+        'check',
       );
 
       if (success) {

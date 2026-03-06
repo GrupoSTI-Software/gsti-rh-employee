@@ -21,5 +21,6 @@ export interface IAttendancePort {
     latitude: number,
     longitude: number,
     precision: number,
+    type: string,
   ): Promise<boolean>;
 }

@@ -170,6 +170,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
     latitude: number,
     longitude: number,
     precision: number,
+    type: string,
   ): Promise<boolean> {
     try {
       const payload = {
@@ -177,6 +178,7 @@ export class HttpAttendanceAdapter implements IAttendancePort {
         assistLatitude: latitude,
         assistLongitude: longitude,
         assistPrecision: precision,
+        assistType: type,
       };
 
       await firstValueFrom(this.http.post(`${this.apiUrl}/v1/assists`, payload));

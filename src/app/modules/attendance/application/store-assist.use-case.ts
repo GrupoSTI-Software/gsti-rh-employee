@@ -21,9 +21,16 @@ export class StoreAssistUseCase {
     latitude: number,
     longitude: number,
     precision: number,
+    type: string,
   ): Promise<boolean> {
     try {
-      return await this.attendancePort.storeAssist(employeeId, latitude, longitude, precision);
+      return await this.attendancePort.storeAssist(
+        employeeId,
+        latitude,
+        longitude,
+        precision,
+        type,
+      );
     } catch (error) {
       this.logger.error('Error al registrar asistencia:', error);
       return false;
