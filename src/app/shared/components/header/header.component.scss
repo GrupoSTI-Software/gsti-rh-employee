@@ -149,10 +149,6 @@
     min-width: 44px;
     height: 44px;
     padding: $spacing-xs;
-
-    i {
-      font-size: 20px;
-    }
   }
 
   .nav-badge {
@@ -182,3 +178,35 @@
   }
 }
 
+.nav-item {
+  span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Usar ::ng-deep para alcanzar el SVG insertado dinámicamente
+  ::ng-deep svg {
+    width: 1.75rem;
+    height: 1.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    path {
+      stroke: var(--text-tertiary);
+    }
+  }
+
+  &:hover:not(.active) {
+    ::ng-deep svg {
+      transform: translateY(-1px);
+    }
+  }
+
+  &.active {
+    ::ng-deep svg {
+      path {
+        stroke: #fff;
+      }
+    }
+  }
+}

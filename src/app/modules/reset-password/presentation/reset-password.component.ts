@@ -28,8 +28,8 @@ export class ResetPasswordComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
-  // Logo del branding o logo por defecto
-  readonly logoUrl = computed(() => this.branding.getLogoUrl());
+  readonly bannerUrl = computed(() => this.branding.getBannerUrl());
+  readonly faviconUrl = computed(() => this.branding.getFaviconUrl());
 
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
@@ -119,5 +119,9 @@ export class ResetPasswordComponent {
     } else {
       return false;
     }
+  }
+
+  async goBack(): Promise<void> {
+    await this.router.navigate(['/login']);
   }
 }

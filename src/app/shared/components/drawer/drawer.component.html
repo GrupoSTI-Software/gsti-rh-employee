@@ -1,0 +1,41 @@
+@if (visible) {
+  <div
+    class="drawer-overlay"
+    [@fadeOverlay]
+    (click)="onOverlayClick()"
+    (keydown.escape)="close()"
+    role="button"
+    tabindex="0"
+    aria-label="Cerrar"
+  >
+    <div
+      #drawer
+      class="drawer-container"
+      [@slideUpDrawer]
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+      (touchstart)="onDrawerTouchStart($event)"
+      (touchmove)="onDrawerTouchMove($event, drawer)"
+      (touchend)="onDrawerTouchEnd(drawer)"
+      role="dialog"
+      [attr.aria-label]="title"
+    >
+      @if (showHeader) {
+        <div class="drawer-header" [class.drawer-header-no-title]="!title">
+          @if (title) {
+            <h2 class="drawer-title">{{ title }}</h2>
+          }
+          @if (showCancelButton) {
+            <button type="button" class="drawer-cancel-button" (click)="close()">
+              {{ cancelButtonText }}
+            </button>
+          }
+        </div>
+      }
+
+      <div class="drawer-content">
+        <ng-content></ng-content>
+      </div>
+    </div>
+  </div>
+}

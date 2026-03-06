@@ -4,7 +4,7 @@
     <div class="glass-filter"></div>
     <div class="glass-overlay"></div>
     <div class="glass-specular"></div>
-    
+
     <!-- Contenido sobre las capas de vidrio -->
     <div class="glass-content">
       @for (item of menuItems; track item.route) {
@@ -15,7 +15,11 @@
           class="nav-item"
           [attr.aria-label]="item.translationKey | translate"
         >
-          <i [class]="'pi ' + item.icon"></i>
+          @if (item.icon.startsWith('<')) {
+            <span [innerHTML]="getSafeIcon(item.icon)"></span>
+          } @else {
+            <i [class]="'pi ' + item.icon"></i>
+          }
           @if (item.badgeCount && item.badgeCount() > 0) {
             <span class="nav-badge">{{ item.badgeCount() }}</span>
           }
@@ -23,11 +27,11 @@
       }
       <button
         type="button"
-        class="nav-item nav-item-menu"
+        class="nav-item"
         (click)="toggleSidebar()"
         [attr.aria-label]="'menu.menu' | translate"
       >
-        <i class="pi pi-bars"></i>
+        <span [innerHTML]="getSafeIcon(menuIcon())"></span>
       </button>
     </div>
   </div>

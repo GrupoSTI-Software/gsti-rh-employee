@@ -39,6 +39,9 @@ export class LoginComponent implements OnInit {
   // Logo del branding o logo por defecto
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
 
+  readonly bannerUrl = computed(() => this.branding.getBannerUrl());
+  readonly faviconUrl = computed(() => this.branding.getFaviconUrl());
+
   // Mostrar logo solo cuando el branding esté cargado
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
 

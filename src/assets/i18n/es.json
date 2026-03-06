@@ -66,7 +66,9 @@
     "skipForNow": "Omitir por ahora",
     "passkeyRegisteredSuccess": "¡Biometría configurada exitosamente!",
     "noUserAuthenticated": "No hay usuario autenticado",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "back": "Regresar",
+    "goToLogin": "Ir al inicio de sesión"
   },
   "validation": {
     "required": "Este campo es requerido",
@@ -123,8 +125,8 @@
     "register": "Iniciar Turno",
     "checkIn": "Entrada",
     "checkOut": "Salida",
-    "checkEatIn": "Entrada a Comer",
-    "checkEatOut": "Salida a Comer",
+    "checkEatIn": "Iniciar Comida",
+    "checkEatOut": "Regreso de Comida",
     "loading": "Cargando asistencia...",
     "starting": "Inicializando…",
     "error": "Error al cargar la asistencia",
@@ -132,11 +134,11 @@
     "checkOutSuccess": "Check-out registrado exitosamente",
     "locationError": "Error al obtener la ubicación",
     "registerError": "Error al registrar la asistencia",
-    "exceptions": "Excepciones",
+    "exceptions": "Permisos",
     "records": "Registro de Asistencia",
     "reload": "Recargar",
     "selectDate": "Seleccionar Fecha",
-    "noExceptions": "No hay excepciones registradas",
+    "noExceptions": "No hay permisos registradas",
     "noRecords": "No hay registros de asistencia",
     "recordId": "ID de Registro",
     "terminal": "Terminal",
@@ -157,7 +159,53 @@
     "nextMonth": "Mes siguiente",
     "more": "Más",
     "done": "Listo",
-    "restDay": "Día de descanso"
+    "restDay": "Día de descanso",
+    "faceRecognition": {
+      "authenticationError": "Error de autenticación",
+      "noEmployeeId": "No se encontró el ID del empleado. Por favor, inicia sesión nuevamente.",
+      "incompleteSetup": "Configuración incompleta",
+      "noFacePhoto": "No se encontró la fotografía del rostro del empleado. Por favor, contacta al administrador.",
+      "modelsLoadError": "Error al cargar modelos",
+      "modelsLoadErrorMessage": "No se pudieron cargar los modelos de reconocimiento facial. Por favor, verifica tu conexión a internet.",
+      "unexpectedError": "Error inesperado",
+      "livenessVerification": "Verificación de liveness",
+      "cameraPermissionRequired": "Permiso de cámara requerido",
+      "cameraPermissionMessage": "Se necesita acceso a la cámara para registrar asistencia. Por favor, habilita el permiso en la configuración de tu navegador.",
+      "captureCancelled": "Captura cancelada",
+      "captureCancelledMessage": "La captura de fotografía fue cancelada. Intenta nuevamente cuando estés listo.",
+      "captureError": "Error al capturar fotografía",
+      "dataNotFound": "Datos no encontrados",
+      "noStoredPhoto": "No se encontró la fotografía del empleado guardada. Por favor, contacta al administrador.",
+      "verificationFailed": "Verificación facial fallida",
+      "verificationFailedMessage": "La fotografía capturada no coincide con la del empleado registrado. Por favor, intenta nuevamente.",
+      "attendanceRegistered": "¡Asistencia registrada!",
+      "attendanceRegisteredMessage": "Tu asistencia ha sido registrada correctamente.",
+      "registerError": "Error al registrar",
+      "registerErrorMessage": "No se pudo registrar la asistencia. Por favor, intenta nuevamente.",
+      "locationPermissionRequired": "Permiso de ubicación requerido",
+      "locationPermissionMessage": "Se necesita acceso a la ubicación para registrar asistencia. Por favor, habilita el permiso en la configuración de tu navegador.",
+      "registerErrorGeneric": "Error al registrar asistencia",
+      "registerErrorGenericMessage": "Ocurrió un error desconocido. Por favor, intenta nuevamente.",
+      "searchingFace": "Buscando rostro...",
+      "noFaceDetected": "No se ha detectado ningún rostro",
+      "detected": "Detectado",
+      "verifying": "Verificando...",
+      "capture": "Capturar",
+      "checking": "🔄 Verificando...",
+      "personVerified": "✓ Persona verificada",
+      "moveToVerify": "⚠ Muévete para verificar",
+      "captureCancelledError": "Captura cancelada",
+      "cameraNotAvailable": "La cámara no está disponible en este navegador",
+      "cameraAccessError": "Se necesita permiso de cámara para registrar asistencia",
+      "noCameraFound": "No se encontró ninguna cámara",
+      "locationPermissionDenied": "Permiso de ubicación denegado. Por favor, permite el acceso a la ubicación en la configuración del navegador.",
+      "locationUnavailable": "Información de ubicación no disponible",
+      "locationTimeout": "Tiempo de espera agotado al obtener la ubicación",
+      "locationUnknownError": "Error desconocido al obtener la ubicación",
+      "verifyingSimilarity": "Verificando similitud...",
+      "faceNotMatch": "El rostro no coincide con el registrado",
+      "faceInstructions": "Acércate, enfoca tu rostro y di que sí con la cabeza"
+    }
   },
   "profile": {
     "title": "Mi Perfil",
@@ -472,6 +520,36 @@
     "dayHasException": "Este día ya tiene una excepción registrada y no puede ser seleccionado",
     "warning": "Advertencia"
   },
+  "routes": {
+    "checkin": {
+      "label": "Asistencia",
+      "subtitle": "Registro y monitorización de asistencia"
+    },
+    "vacations": {
+      "label": "Vacaciones",
+      "subtitle": "Consulta tus periodos y días disponibles"
+    },
+    "calendar": {
+      "label": "Calendario general",
+      "subtitle": "Consulta eventos y registros de la empresa"
+    },
+    "settings": {
+      "label": "Configuración",
+      "subtitle": "Gestiona las preferencias de la aplicación"
+    },
+    "profile": {
+      "label": "Perfil",
+      "subtitle": "Información personal y laboral"
+    },
+    "notices": {
+      "label": "Avisos",
+      "subtitle": "Consulta los avisos y comunicados importantes"
+    },
+    "noticeDetail": {
+      "label": "Detalle de Aviso",
+      "subtitle": "Contenido del aviso seleccionado"
+    }
+  },
   "weekCalendar": {
     "previousWeek": "Semana anterior",
     "nextWeek": "Semana siguiente",
@@ -484,5 +562,12 @@
     "thursday": "Ju",
     "friday": "Vi",
     "saturday": "Sa"
+  },
+  "connection": {
+    "noConnection": "Sin Conexión a Internet",
+    "noConnectionMessage": "No se pudo establecer conexión con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.",
+    "retry": "Reintentar",
+    "retrying": "Reintentando...",
+    "connectionRestored": "Conexión restaurada"
   }
 }
