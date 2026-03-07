@@ -114,7 +114,7 @@
             "liveReload": true,
             "hmr": true,
             "allowedHosts": [
-              "xowp1g-ip-187-190-153-176.tunnelmole.net"
+              "rh-empleadosv2.gsti-demo.com"
             ]
           },
           "builder": "@angular/build:dev-server",

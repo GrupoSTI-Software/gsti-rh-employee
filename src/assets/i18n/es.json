@@ -88,6 +88,27 @@
     "required": {
       "title": "Aplicación PWA Requerida",
       "description": "Esta aplicación solo está disponible como PWA instalada. Por favor, instala la aplicación para continuar.",
+      "whatIsPwa": "¿Qué es una PWA?",
+      "pwaDescription": "Una Progressive Web App (PWA) es una aplicación web moderna que funciona como una aplicación nativa en tu dispositivo, ofreciendo una experiencia rápida, confiable y atractiva.",
+      "installApp": "Instalar Aplicación",
+      "features": {
+        "fast": {
+          "title": "Rápida y Eficiente",
+          "description": "Carga instantánea y responde rápidamente a tus acciones, sin tiempos de espera largos"
+        },
+        "offline": {
+          "title": "Funciona Sin Internet",
+          "description": "Accede a funciones básicas incluso cuando no tengas conexión a internet"
+        },
+        "homescreen": {
+          "title": "Acceso Directo",
+          "description": "Se instala en tu pantalla de inicio como cualquier otra aplicación, sin necesidad de tiendas de apps"
+        },
+        "secure": {
+          "title": "Segura y Confiable",
+          "description": "Protege tu información con conexiones seguras y actualizaciones automáticas"
+        }
+      },
       "checkAgain": "Verificar Nuevamente",
       "loading": "Cargando...",
       "error": "Error",
@@ -100,18 +121,25 @@
       "next": "Siguiente",
       "darkMode": "Modo Oscuro",
       "lightMode": "Modo Claro",
+      "appleRecommended": "Recomendado para Safari o Chrome",
       "instructions": {
-        "title": "Cómo Instalar",
+        "title": "¿Cómo instalar la aplicación?",
         "chrome": {
-          "title": "En Chrome (Android/Desktop)",
-          "step1": "Abre el menú del navegador (tres puntos)",
-          "step2": "Selecciona 'Instalar aplicación' o 'Agregar a pantalla de inicio'",
-          "step3": "Confirma la instalación"
+          "title": "Instalación en Android",
+          "step1": "Busca el ícono de tres puntos en la esquina superior derecha de tu navegador Chrome",
+          "step2": "Toca sobre los tres puntos para abrir el menú",
+          "step3": "Busca y toca la opción que dice 'Instalar aplicación' o 'Agregar a pantalla de inicio'",
+          "step4": "Aparecerá una ventana de confirmación, toca el botón 'Instalar' o 'Agregar'",
+          "step5": "¡Listo! La aplicación ahora aparecerá en tu pantalla de inicio como cualquier otra app"
         },
         "safari": {
-          "title": "En Safari (iOS)",
-          "step1": "Toca el botón de compartir (cuadrado con flecha)",
-          "step2": "Selecciona 'Agregar a pantalla de inicio'"
+          "title": "Instalación en iPhone",
+          "step1": "Busca el ícono de compartir en la parte inferior de la pantalla",
+          "step2": "Toca el ícono de compartir para abrir el menú de opciones",
+          "step3": "Desplázate hacia abajo en el menú (Ver más) hasta encontrar la opción 'Agregar a pantalla de inicio'",
+          "step4": "Toca 'Agregar a pantalla de inicio'",
+          "step5": "Puedes cambiar el nombre de la aplicación si lo deseas, luego toca 'Agregar' en la esquina superior derecha",
+          "step6": "¡Listo! La aplicación ahora aparecerá en tu pantalla de inicio"
         }
       },
       "debug": {

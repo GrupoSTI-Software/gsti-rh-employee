@@ -88,6 +88,27 @@
     "required": {
       "title": "PWA Application Required",
       "description": "This application is only available as an installed PWA. Please install the application to continue.",
+      "whatIsPwa": "What is a PWA?",
+      "pwaDescription": "A Progressive Web App (PWA) is a modern web application that works like a native app on your device, offering a fast, reliable, and engaging experience.",
+      "installApp": "Install App",
+      "features": {
+        "fast": {
+          "title": "Fast and Efficient",
+          "description": "Loads instantly and responds quickly to your actions, without long wait times"
+        },
+        "offline": {
+          "title": "Works Offline",
+          "description": "Access basic features even when you don't have an internet connection"
+        },
+        "homescreen": {
+          "title": "Direct Access",
+          "description": "Installs on your home screen like any other app, without needing app stores"
+        },
+        "secure": {
+          "title": "Secure and Reliable",
+          "description": "Protects your information with secure connections and automatic updates"
+        }
+      },
       "checkAgain": "Check Again",
       "loading": "Loading...",
       "error": "Error",
@@ -100,18 +121,25 @@
       "next": "Next",
       "darkMode": "Dark Mode",
       "lightMode": "Light Mode",
+      "appleRecommended": "Recommended for Apple devices",
       "instructions": {
-        "title": "How to Install",
+        "title": "How to install the application?",
         "chrome": {
-          "title": "In Chrome (Android/Desktop)",
-          "step1": "Open the browser menu (three dots)",
-          "step2": "Select 'Install app' or 'Add to home screen'",
-          "step3": "Confirm the installation"
+          "title": "Installation on Android",
+          "step1": "Look for the three vertical dots icon (⋮) in the top right corner of your Chrome browser",
+          "step2": "Tap on the three dots to open the menu",
+          "step3": "Find and tap the option that says 'Install app' or 'Add to home screen'",
+          "step4": "A confirmation window will appear, tap the 'Install' or 'Add' button",
+          "step5": "Done! The app will now appear on your home screen like any other app"
         },
         "safari": {
-          "title": "In Safari (iOS)",
-          "step1": "Tap the share button (square with arrow)",
-          "step2": "Select 'Add to Home Screen'"
+          "title": "Installation on iPhone",
+          "step1": "Look for the share icon at the bottom of the screen",
+          "step2": "Tap the share icon to open the options menu",
+          "step3": "Scroll down in the menu (More) until you find 'Add to Home Screen'",
+          "step4": "Tap 'Add to Home Screen'",
+          "step5": "You can change the app name if you wish, then tap 'Add' in the top right corner",
+          "step6": "Done! The app will now appear on your home screen"
         }
       },
       "debug": {
