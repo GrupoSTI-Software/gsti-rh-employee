@@ -1,4 +1,77 @@
-<div class="pwa-required-container">
+@if (isBannerMode()) {
+  @if (pwaInstallPrompt.showInstallBanner()) {
+    <div class="pwa-install-banner">
+      <div class="banner-content">
+        <div class="banner-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <div class="banner-text">
+          <h3 class="banner-title">{{ 'pwa.install.banner.title' | translate }}</h3>
+          <p class="banner-description">{{ 'pwa.install.banner.description' | translate }}</p>
+        </div>
+        
+        <div class="banner-actions">
+          <button 
+            type="button"
+            class="btn-install"
+            (click)="installPwa()"
+            [disabled]="pwaInstallPrompt.isInstalling()">
+            @if (pwaInstallPrompt.isInstalling()) {
+              <span class="spinner"></span>
+            }
+            {{ 'pwa.install.banner.install' | translate }}
+          </button>
+          <button 
+            type="button"
+            class="btn-dismiss"
+            (click)="dismissBanner()"
+            [disabled]="pwaInstallPrompt.isInstalling()">
+            {{ 'pwa.install.banner.dismiss' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (pwaInstallPrompt.showOpenAppBanner()) {
+    <div class="pwa-install-banner">
+      <div class="banner-content">
+        <div class="banner-icon banner-icon-success">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <div class="banner-text">
+          <h3 class="banner-title">{{ 'pwa.openApp.banner.title' | translate }}</h3>
+          <p class="banner-description">{{ 'pwa.openApp.banner.description' | translate }}</p>
+        </div>
+        
+        <div class="banner-actions">
+          <button 
+            type="button"
+            class="btn-install"
+            (click)="openApp()">
+            {{ 'pwa.openApp.banner.open' | translate }}
+          </button>
+          <button 
+            type="button"
+            class="btn-dismiss"
+            (click)="dismissOpenAppBanner()">
+            {{ 'pwa.openApp.banner.dismiss' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+} @else {
+  <div class="pwa-required-container">
   <div class="pwa-required-card">
     <div class="logo-container">
       @if (showLogo()) {
@@ -452,4 +525,5 @@
       </div>
     </div>
   }
-</div>
+  </div>
+}

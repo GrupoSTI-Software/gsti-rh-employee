@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, PLATFORM_ID } from '@angular/core';
+import { Component, inject, computed, signal, PLATFORM_ID, input } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -6,6 +6,12 @@ import { PwaDetectionService } from '@core/services/pwa-detection.service';
 import { BrandingService } from '@core/services/branding.service';
 import { ThemeService } from '@core/services/theme.service';
 import { LanguageSelectorComponent } from '@shared/components/language-selector/language-selector.component';
+import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
+
+/**
+ * Tipo de visualización del componente PWA
+ */
+export type PwaDisplayMode = 'full' | 'banner';
 
 @Component({
   selector: 'app-pwa-required',
@@ -20,12 +26,15 @@ export class PwaRequiredComponent {
   private readonly platformId = inject(PLATFORM_ID);
   readonly branding = inject(BrandingService);
   readonly theme = inject(ThemeService);
+  readonly pwaInstallPrompt = inject(PwaInstallPromptService);
 
+  readonly mode = input<PwaDisplayMode>('full');
   private deferredPrompt = signal<Event | null>(null);
   readonly showPwaInfoModal = signal<boolean>(false);
 
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
+  readonly isBannerMode = computed(() => this.mode() === 'banner');
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
@@ -67,6 +76,11 @@ export class PwaRequiredComponent {
    * Instala la PWA en el dispositivo
    */
   async installPwa(): Promise<void> {
+    if (this.isBannerMode()) {
+      await this.pwaInstallPrompt.installPwa();
+      return;
+    }
+
     const promptEvent = this.deferredPrompt();
     if (!promptEvent) {
       return;
@@ -79,6 +93,27 @@ export class PwaRequiredComponent {
     if (choiceResult.outcome === 'accepted') {
       this.deferredPrompt.set(null);
     }
+  }
+
+  /**
+   * Descarta el banner de instalación
+   */
+  dismissBanner(): void {
+    this.pwaInstallPrompt.dismissInstallBanner();
+  }
+
+  /**
+   * Abre la app instalada
+   */
+  openApp(): void {
+    this.pwaInstallPrompt.openInstalledApp();
+  }
+
+  /**
+   * Descarta el banner de abrir app
+   */
+  dismissOpenAppBanner(): void {
+    this.pwaInstallPrompt.dismissOpenAppBanner();
   }
 
   checkAgain(): void {

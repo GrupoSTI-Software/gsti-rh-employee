@@ -287,6 +287,7 @@ export class BrandingService {
       theme_color: `#${sidebarColor}`,
       background_color: '#ffffff',
       display: 'standalone',
+      display_override: ['window-controls-overlay', 'standalone'],
       orientation: 'portrait',
       scope: '/',
       start_url: '/',
@@ -319,6 +320,9 @@ export class BrandingService {
       categories: ['business', 'productivity'],
       lang: 'es',
       prefer_related_applications: false,
+      launch_handler: {
+        client_mode: ['navigate-existing', 'auto'],
+      },
     };
 
     // Crear blob con el manifest

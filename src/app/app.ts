@@ -6,6 +6,8 @@ import { BrandingService } from '@core/services/branding.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
 import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
 import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
+import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-required.component';
+import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
 
 /**
  * Clave para almacenar el idioma de la aplicación
@@ -24,7 +26,12 @@ declare global {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PullToRefreshDirective, NoConnectionOverlayComponent],
+  imports: [
+    RouterOutlet,
+    PullToRefreshDirective,
+    NoConnectionOverlayComponent,
+    PwaRequiredComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -34,6 +41,7 @@ export class App implements OnInit, AfterViewInit {
   private readonly theme = inject(ThemeService);
   private readonly branding = inject(BrandingService);
   private readonly secureStorage = inject(SecureStorageService);
+  private readonly pwaInstallPrompt = inject(PwaInstallPromptService);
 
   constructor() {
     // Inicializar tema

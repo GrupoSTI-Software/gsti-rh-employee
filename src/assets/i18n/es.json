@@ -85,6 +85,22 @@
     "unauthorized": "No tienes permisos para realizar esta acción"
   },
   "pwa": {
+    "install": {
+      "banner": {
+        "title": "Instala la aplicación",
+        "description": "Obtén acceso rápido y una mejor experiencia instalando la aplicación en tu dispositivo",
+        "install": "Instalar",
+        "dismiss": "Ahora no"
+      }
+    },
+    "openApp": {
+      "banner": {
+        "title": "Abre la aplicación instalada",
+        "description": "Ya tienes la aplicación instalada. Ábrela para una mejor experiencia",
+        "open": "Abrir aplicación",
+        "dismiss": "Continuar en el navegador"
+      }
+    },
     "required": {
       "title": "Aplicación PWA Requerida",
       "description": "Esta aplicación solo está disponible como PWA instalada. Por favor, instala la aplicación para continuar.",
