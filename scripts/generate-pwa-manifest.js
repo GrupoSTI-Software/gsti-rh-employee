@@ -31,18 +31,29 @@ const manifestOutputPath = path.join(distDir, 'manifest.webmanifest');
 const envFile = path.join(rootDir, '.env');
 
 /**
- * Angular SSR genera index.csr.html; Angular sin SSR genera index.html.
- * Detectar cuál existe para actualizarlo correctamente.
+ * Busca recursivamente todos los archivos index.html e index.csr.html
+ * dentro del directorio dist/browser.
+ * Angular SSR pre-renderiza cada ruta como su propio index.html,
+ * por lo que puede haber uno por cada ruta (ej: /pwa-required/index.html).
+ * @param {string} dir - Directorio raíz donde buscar
+ * @returns {string[]} Lista de rutas absolutas encontradas
  */
-function resolveIndexHtmlPath() {
-  const candidates = ['index.csr.html', 'index.html'];
-  for (const name of candidates) {
-    const candidate = path.join(distDir, name);
-    if (fs.existsSync(candidate)) {
-      return candidate;
+function findAllIndexHtmlFiles(dir) {
+  const results = [];
+
+  if (!fs.existsSync(dir)) return results;
+
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...findAllIndexHtmlFiles(fullPath));
+    } else if (entry.isFile() && (entry.name === 'index.html' || entry.name === 'index.csr.html')) {
+      results.push(fullPath);
     }
   }
-  return null;
+
+  return results;
 }
 
 /**
@@ -180,22 +191,13 @@ function writeManifest(manifest) {
 }
 
 /**
- * Actualiza el index HTML del dist para agregar cache-busting al manifest
- * y actualizar los meta tags con el branding real.
- * Soporta tanto index.html (Angular sin SSR) como index.csr.html (Angular SSR).
- * @param {Object|null} settings
+ * Aplica el branding y cache-busting del manifest a un único archivo HTML.
+ * @param {string} filePath - Ruta absoluta al archivo HTML
+ * @param {number} cacheBuster - Timestamp para cache-busting
+ * @param {Object|null} settings - Datos del branding desde la API
  */
-function updateIndexHtml(settings) {
-  const indexOutputPath = resolveIndexHtmlPath();
-  if (!indexOutputPath) {
-    console.warn(`⚠️  index HTML no encontrado en: ${distDir}`);
-    console.warn('   Se buscó: index.csr.html, index.html');
-    return;
-  }
-
-  console.log(`📄 Actualizando: ${path.basename(indexOutputPath)}`);
-  let html = fs.readFileSync(indexOutputPath, 'utf8');
-  const cacheBuster = Date.now();
+function patchHtmlFile(filePath, cacheBuster, settings) {
+  let html = fs.readFileSync(filePath, 'utf8');
 
   // Reemplazar el link del manifest para agregar cache-busting
   html = html.replace(
@@ -203,11 +205,11 @@ function updateIndexHtml(settings) {
     `<link rel="manifest" href="/manifest.webmanifest?v=${cacheBuster}">`,
   );
 
-  // Si no había link de manifest, insertarlo
+  // Si no había link de manifest, insertarlo antes de </head>
   if (!html.includes('rel="manifest"') && !html.includes("rel='manifest'")) {
     html = html.replace(
       '</head>',
-      `  <link rel="manifest" href="/manifest.webmanifest?v=${cacheBuster}">\n  </head>`,
+      `<link rel="manifest" href="/manifest.webmanifest?v=${cacheBuster}"></head>`,
     );
   }
 
@@ -220,28 +222,23 @@ function updateIndexHtml(settings) {
       settings.systemSettingFavicon?.trim() ||
       '';
 
-    // Actualizar título
     html = html.replace(/<title>[^<]*<\/title>/i, `<title>${tradeName}</title>`);
 
-    // Actualizar theme-color
     html = html.replace(
       /<meta\s+name=["']theme-color["']\s+content=["'][^"']*["']\s*\/?>/gi,
       `<meta name="theme-color" content="${themeColor}">`,
     );
 
-    // Actualizar apple-mobile-web-app-title
     html = html.replace(
       /<meta\s+name=["']apple-mobile-web-app-title["']\s+content=["'][^"']*["']\s*\/?>/gi,
       `<meta name="apple-mobile-web-app-title" content="${tradeName}">`,
     );
 
-    // Actualizar application-name
     html = html.replace(
       /<meta\s+name=["']application-name["']\s+content=["'][^"']*["']\s*\/?>/gi,
       `<meta name="application-name" content="${tradeName}">`,
     );
 
-    // Actualizar favicon si hay icono disponible
     if (iconUrl) {
       html = html.replace(
         /<link\s+rel=["']icon["'][^>]*>/gi,
@@ -250,8 +247,36 @@ function updateIndexHtml(settings) {
     }
   }
 
-  fs.writeFileSync(indexOutputPath, html, 'utf8');
-  console.log(`✅ ${path.basename(indexOutputPath)} actualizado con branding y cache-busting del manifest`);
+  fs.writeFileSync(filePath, html, 'utf8');
+}
+
+/**
+ * Actualiza todos los archivos index HTML del dist con el branding real
+ * y cache-busting del manifest.
+ * Angular SSR pre-renderiza cada ruta como su propio index.html,
+ * por lo que hay que actualizar todos (ej: /pwa-required/index.html).
+ * @param {Object|null} settings
+ */
+function updateAllIndexHtmlFiles(settings) {
+  const indexFiles = findAllIndexHtmlFiles(distDir);
+
+  if (indexFiles.length === 0) {
+    console.warn(`⚠️  No se encontraron archivos index HTML en: ${distDir}`);
+    return;
+  }
+
+  // Usar el mismo cacheBuster para todos los archivos del mismo build
+  const cacheBuster = Date.now();
+
+  for (const filePath of indexFiles) {
+    const relativePath = path.relative(distDir, filePath);
+    try {
+      patchHtmlFile(filePath, cacheBuster, settings);
+      console.log(`✅ ${relativePath}`);
+    } catch (error) {
+      console.warn(`⚠️  No se pudo actualizar ${relativePath}: ${error.message}`);
+    }
+  }
 }
 
 /**
@@ -276,7 +301,8 @@ async function main() {
     process.exit(0);
   }
 
-  updateIndexHtml(settings);
+  console.log('\n📄 Actualizando archivos HTML del dist:');
+  updateAllIndexHtmlFiles(settings);
 
   if (!settings) {
     console.log('\n⚠️  Se usó el manifest genérico (sin datos de la API).');
