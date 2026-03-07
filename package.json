@@ -12,6 +12,7 @@
     "start:dev-only": "ng serve",
     "prebuild": "node scripts/ensure-env.js && node scripts/load-env.js",
     "build": "ng build",
+    "postbuild": "node scripts/generate-pwa-manifest.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html",

@@ -62,19 +62,21 @@ export class BrandingService {
   }
 
   /**
-   * Remueve cualquier manifest estático que pueda estar presente
+   * Remueve manifests anteriores excepto el estático actual.
+   * El manifest estático (manifest.webmanifest) ya tiene el branding correcto
+   * gracias al script de post-build. Solo se eliminan manifests dinámicos obsoletos
+   * (data: URLs de sesiones anteriores) para evitar duplicados.
    */
   private removeStaticManifest(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Remover todos los links de manifest que apunten al archivo estático
     const allManifests = document.querySelectorAll("link[rel='manifest']");
     allManifests.forEach((link) => {
       const href = (link as HTMLLinkElement).href;
-      // Si el href apunta al manifest estático, removerlo
-      if (href.includes('manifest.webmanifest') && !href.startsWith('blob:')) {
+      // Solo remover manifests dinámicos (data: URLs), no el estático del servidor
+      if (href.startsWith('data:')) {
         link.remove();
       }
     });
@@ -365,10 +367,19 @@ export class BrandingService {
 
     // Actualizar el <link rel="manifest"> con el manifest dinámico como data URL.
     // Esto hace que Chrome re-evalúe el manifest inmediatamente en la sesión actual.
+    // IMPORTANTE: primero insertar el nuevo manifest, luego remover los anteriores
+    // para evitar que Chrome quede sin manifest durante el reemplazo.
     const manifestDataUrl = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
 
+    const newManifestLink = document.createElement('link');
+    newManifestLink.rel = 'manifest';
+    newManifestLink.href = manifestDataUrl;
+    document.getElementsByTagName('head')[0].appendChild(newManifestLink);
+
+    // Ahora remover los manifests anteriores (estáticos y data: URLs viejos)
     const existingManifests = document.querySelectorAll("link[rel='manifest']");
     existingManifests.forEach((link) => {
+      if (link === newManifestLink) return;
       const oldHref = (link as HTMLLinkElement).href;
       link.remove();
       if (oldHref?.startsWith('blob:')) {
@@ -377,11 +388,6 @@ export class BrandingService {
     });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
-
-    const newManifestLink = document.createElement('link');
-    newManifestLink.rel = 'manifest';
-    newManifestLink.href = manifestDataUrl;
-    document.getElementsByTagName('head')[0].appendChild(newManifestLink);
 
     window.dispatchEvent(
       new CustomEvent('manifest-updated', {
