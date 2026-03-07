@@ -111,10 +111,9 @@ export class PwaDetectionService {
     }
 
     return (
-      this.checkDisplayModeStandalone() ||
-      this.checkIOSStandalone() ||
-      this.checkNativeApp() ||
-      this.getPersistedStandaloneState()
+      // this.checkDisplayModeStandalone() ||
+      this.checkIOSStandalone() || this.checkNativeApp()
+      // this.getPersistedStandaloneState()
     );
   }
 

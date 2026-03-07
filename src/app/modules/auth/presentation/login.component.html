@@ -1,86 +1,72 @@
 <div class="login-container" [style.backgroundImage]="'url(' + bannerUrl() + ')'">
   <div class="login-header">
     @if (showLogo()) {
-      <img [src]="faviconUrl()" [alt]="'auth.login' | translate" class="login-logo" id="app-logo" />
+    <img [src]="faviconUrl()" [alt]="'auth.login' | translate" class="login-logo" id="app-logo" />
     } @else {
-      <div class="login-logo-placeholder">
-        <i class="pi pi-spin pi-spinner"></i>
-      </div>
+    <div class="login-logo-placeholder">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
     }
   </div>
   <div class="login-card">
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
         <label for="email">{{ 'auth.email' | translate }}</label>
-        <input
-          id="email"
-          type="email"
-          formControlName="email"
-          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-        />
+        <input id="email" type="email" formControlName="email"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" />
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
-          <span class="error-message">
-            @if (loginForm.get('email')?.hasError('required')) {
-              {{ 'auth.emailRequired' | translate }}
-            } @else if (loginForm.get('email')?.hasError('email')) {
-              {{ 'auth.emailInvalid' | translate }}
-            }
-          </span>
+        <span class="error-message">
+          @if (loginForm.get('email')?.hasError('required')) {
+          {{ 'auth.emailRequired' | translate }}
+          } @else if (loginForm.get('email')?.hasError('email')) {
+          {{ 'auth.emailInvalid' | translate }}
+          }
+        </span>
         }
       </div>
 
       <div class="form-group">
         <label for="password">{{ 'auth.password' | translate }}</label>
         <div class="password-input-wrapper">
-          <input
-            id="password"
-            [type]="showPassword() ? 'text' : 'password'"
-            formControlName="password"
-            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          />
-          <button
-            type="button"
-            class="password-toggle-button"
-            (click)="togglePasswordVisibility()"
-            [attr.aria-label]="
+          <input id="password" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" />
+          <button type="button" class="password-toggle-button" (click)="togglePasswordVisibility()" [attr.aria-label]="
               showPassword() ? ('auth.hidePassword' | translate) : ('auth.showPassword' | translate)
-            "
-            tabindex="-1"
-          >
+            " tabindex="-1">
             <i [class]="showPassword() ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
           </button>
         </div>
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-          <span class="error-message">
-            @if (loginForm.get('password')?.hasError('required')) {
-              {{ 'auth.passwordRequired' | translate }}
-            } @else if (loginForm.get('password')?.hasError('minlength')) {
-              {{ 'auth.passwordMinLength' | translate }}
-            }
-          </span>
+        <span class="error-message">
+          @if (loginForm.get('password')?.hasError('required')) {
+          {{ 'auth.passwordRequired' | translate }}
+          } @else if (loginForm.get('password')?.hasError('minlength')) {
+          {{ 'auth.passwordMinLength' | translate }}
+          }
+        </span>
         }
       </div>
       @if (false) {
-        <div class="form-group checkbox-group">
-          <label>
-            <input type="checkbox" formControlName="rememberMe" />
-            <span>{{ 'auth.rememberMe' | translate }}</span>
-          </label>
-          <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
-        </div>
+      <div class="form-group checkbox-group">
+        <label>
+          <input type="checkbox" formControlName="rememberMe" />
+          <span>{{ 'auth.rememberMe' | translate }}</span>
+        </label>
+        <a href="#" class="forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
+      </div>
       }
 
       @if (error()) {
-        <div class="error-alert">
-          {{ error() }}
-        </div>
+      <div class="error-alert">
+        {{ error() }}
+      </div>
       }
 
       <button type="submit" class="btn primary" [disabled]="loading() || loginForm.invalid">
         @if (loading()) {
-          {{ 'auth.loading' | translate }}
+        {{ 'auth.loading' | translate }}
         } @else {
-          {{ 'auth.login' | translate }}
+        {{ 'auth.login' | translate }}
         }
       </button>
 
@@ -99,18 +85,13 @@
       </button> -->
     </form>
     <div class="forgot-password-container">
-      <button
-      type="button"
-      class="forgot-password-button"
-      [disabled]="loading()"
-      (click)="forgotPassword()"
-    >
+      <button type="button" class="forgot-password-button" [disabled]="loading()" (click)="forgotPassword()">
         {{ 'auth.forgotPassword' | translate }}
-    </button>
+      </button>
     </div>
 
-  <div class="version-info">
-    v{{ version }}
-  </div>
+    <div class="version-info">
+      v{{ version }}
+    </div>
   </div>
 </div>

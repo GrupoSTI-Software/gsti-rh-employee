@@ -184,6 +184,8 @@
   color: var(--text-tertiary);
   font-family: var(--font-family);
   line-height: initial;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .logo-container {
@@ -643,6 +645,8 @@
   text-align: center;
   padding: $spacing-3xl $spacing-xl;
   gap: $spacing-xl;
+  max-width: 500px;
+  margin: 0 auto;
 
   .desktop-icon {
     color: var(--text-tertiary);
@@ -690,4 +694,12 @@
       }
     }
   }
+}
+
+.version-info {
+  text-align: center;
+  margin-top: $padding-md;
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  opacity: 0.5;
 }

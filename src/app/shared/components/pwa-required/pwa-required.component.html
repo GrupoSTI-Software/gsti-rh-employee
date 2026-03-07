@@ -4,33 +4,28 @@
       <div class="banner-content">
         <div class="banner-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </div>
-        
+
         <div class="banner-text">
           <h3 class="banner-title">{{ 'pwa.install.banner.title' | translate }}</h3>
           <p class="banner-description">{{ 'pwa.install.banner.description' | translate }}</p>
         </div>
-        
+
         <div class="banner-actions">
-          <button 
-            type="button"
-            class="btn-install"
-            (click)="installPwa()"
-            [disabled]="pwaInstallPrompt.isInstalling()">
+          <button type="button" class="btn-install" (click)="installPwa()" [disabled]="pwaInstallPrompt.isInstalling()">
             @if (pwaInstallPrompt.isInstalling()) {
-              <span class="spinner"></span>
+            <span class="spinner"></span>
             }
             {{ 'pwa.install.banner.install' | translate }}
           </button>
-          <button 
-            type="button"
-            class="btn-dismiss"
-            (click)="dismissBanner()"
-            [disabled]="pwaInstallPrompt.isInstalling()">
+          <button type="button" class="btn-dismiss" (click)="dismissBanner()" [disabled]="pwaInstallPrompt.isInstalling()">
             {{ 'pwa.install.banner.dismiss' | translate }}
           </button>
         </div>
@@ -39,31 +34,28 @@
   }
 
   @if (pwaInstallPrompt.showOpenAppBanner()) {
-    <div class="pwa-install-banner">
+    <div ass="pwa-install-banner">
       <div class="banner-content">
         <div class="banner-icon banner-icon-success">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <path
+              d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
-        
+
         <div class="banner-text">
           <h3 class="banner-title">{{ 'pwa.openApp.banner.title' | translate }}</h3>
           <p class="banner-description">{{ 'pwa.openApp.banner.description' | translate }}</p>
         </div>
-        
+
         <div class="banner-actions">
-          <button 
-            type="button"
-            class="btn-install"
-            (click)="openApp()">
+          <button type="button" class="btn-install" (click)="openApp()">
             {{ 'pwa.openApp.banner.open' | translate }}
           </button>
-          <button 
-            type="button"
-            class="btn-dismiss"
-            (click)="dismissOpenAppBanner()">
+          <button type="button" class="btn-dismiss" (click)="dismissOpenAppBanner()">
             {{ 'pwa.openApp.banner.dismiss' | translate }}
           </button>
         </div>
@@ -72,30 +64,31 @@
   }
 } @else {
   <div class="pwa-required-container">
-  <div class="pwa-required-card">
-    <div class="logo-container">
-      @if (showLogo()) {
-        <img
-          [src]="logoUrl()"
-          [alt]="'pwa.required.title' | translate"
-          class="pwa-logo"
-        />
-      } @else {
+    <div class="pwa-required-card">
+      <div class="logo-container">
+        @if (showLogo()) {
+          @if (!isDesktop()) {
+            <img [src]="logoUrl()" [alt]="'pwa.required.title' | translate" class="pwa-logo" />
+          }
+        } @else {
         <div class="logo-placeholder">
           <i class="pi pi-spin pi-spinner"></i>
         </div>
+        }
+      </div>
+
+      @if (!isDesktop()) {
+        <div class="header-actions">
+          <app-language-selector></app-language-selector>
+        </div>
       }
-    </div>
 
-    <div class="header-actions">
-      <app-language-selector></app-language-selector>
-    </div>
-
-    <div class="content-wrapper">
-      @if (isDesktop()) {
+      <div class="content-wrapper">
+        @if (isDesktop()) {
         <div class="desktop-not-supported">
           <div class="desktop-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
               <line x1="8" y1="21" x2="16" y2="21"></line>
               <line x1="12" y1="17" x2="12" y2="21"></line>
@@ -105,7 +98,7 @@
           </div>
           <h2>{{ 'pwa.required.desktopNotSupported' | translate }}</h2>
           <p class="desktop-description">{{ 'pwa.required.desktopNotSupportedDescription' | translate }}</p>
-          
+
           <div class="mobile-devices">
             <div class="device-badge">
               <i class="pi pi-android"></i>
@@ -117,7 +110,7 @@
             </div>
           </div>
         </div>
-      } @else {
+        } @else {
         <div class="what-is-pwa-card">
           <p class="description">{{ 'pwa.required.description' | translate }}</p>
 
@@ -147,17 +140,8 @@
               <ol class="steps-list">
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
                       <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
                       <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
@@ -167,17 +151,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M13.5 16h-9.5a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v7.5" />
                       <path d="M7 20h5" />
                       <path d="M9 16v4" />
@@ -189,17 +164,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 5l0 14" />
                       <path d="M18 13l-6 6" />
                       <path d="M6 13l6 6" />
@@ -209,43 +175,30 @@
                 </li>
                 <li>
                   <span class="step-number step-success">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                      fill="currentColor">
                       <path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
                       <path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
                       <path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
-                      <path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />
+                      <path
+                        d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />
                     </svg>
                   </span>
                   <span class="step-text">{{ 'pwa.required.instructions.chrome.step5' | translate }}</span>
                 </li>
               </ol>
               <button type="button" class="install-button" (click)="installPwa()">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#88a4bf"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M12.5 21h-6.5a1 1 0 0 1 -1 -1v-16a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v8" />
-                    <path d="M19 16v6" />
-                    <path d="M22 19l-3 3l-3 -3" />
-                    <path d="M11 17a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
-                  </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                  stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12.5 21h-6.5a1 1 0 0 1 -1 -1v-16a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v8" />
+                  <path d="M19 16v6" />
+                  <path d="M22 19l-3 3l-3 -3" />
+                  <path d="M11 17a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+                </svg>
                 <span>{{ 'pwa.required.installApp' | translate }}</span>
               </button>
             </div>
-          } @else if (isIOS()) {
+            } @else if (isIOS()) {
             <div class="platform-card">
               <div class="platform-header">
                 <div class="platform-icon">
@@ -263,17 +216,8 @@
               <ol class="steps-list">
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M5 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
                       <path d="M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
                       <path d="M19 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
@@ -283,17 +227,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M8 9h-1a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-1" />
                       <path d="M12 14v-11" />
                       <path d="M9 6l3 -3l3 3" />
@@ -303,17 +238,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M6 9l6 6l6 -6" />
                     </svg>
                   </span>
@@ -321,17 +247,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
                       <path d="M15 12h-6" />
                       <path d="M12 9v6" />
@@ -341,17 +258,8 @@
                 </li>
                 <li>
                   <span class="step-number">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#88a4bf"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                      stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
                       <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
                       <path d="M16 5l3 3" />
@@ -361,17 +269,13 @@
                 </li>
                 <li>
                   <span class="step-number step-success">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="48"
-                      height="48"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                      fill="currentColor">
                       <path d="M9 3h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
                       <path d="M9 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
                       <path d="M19 13h-4a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h4a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2z" />
-                      <path d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />
+                      <path
+                        d="M17 3a1 1 0 0 1 .993 .883l.007 .117v2h2a1 1 0 0 1 .117 1.993l-.117 .007h-2v2a1 1 0 0 1 -1.993 .117l-.007 -.117v-2h-2a1 1 0 0 1 -.117 -1.993l.117 -.007h2v-2a1 1 0 0 1 1 -1z" />
                     </svg>
                   </span>
                   <span class="step-text">{{ 'pwa.required.instructions.safari.step6' | translate }}</span>
@@ -382,7 +286,7 @@
                 <span>{{ 'pwa.required.appleRecommended' | translate }}</span>
               </div>
             </div>
-          } @else {
+            } @else {
             <div class="platform-card android-card">
               <div class="platform-header">
                 <div class="platform-icon android-icon">
@@ -474,21 +378,23 @@
                 <span>{{ 'pwa.required.appleRecommended' | translate }}</span>
               </div>
             </div>
-          }
+            }
+          </div>
         </div>
-      </div>
 
         <button type="button" class="check-button" (click)="checkAgain()">
           <i class="pi pi-refresh"></i>
           <span>{{ 'pwa.required.checkAgain' | translate }}</span>
         </button>
-      }
+        }
+      </div>
     </div>
-  </div>
 
-  @if (showPwaInfoModal()) {
-    <div class="modal-overlay" (click)="closePwaInfoModal()" (keydown.escape)="closePwaInfoModal()" role="button" tabindex="0" (keydown.enter)="closePwaInfoModal()" (keydown.space)="closePwaInfoModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-title'">
+    @if (showPwaInfoModal()) {
+    <div class="modal-overlay" (click)="closePwaInfoModal()" (keydown.escape)="closePwaInfoModal()" role="button"
+      tabindex="0" (keydown.enter)="closePwaInfoModal()" (keydown.space)="closePwaInfoModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" role="dialog"
+        aria-modal="true" [attr.aria-labelledby]="'modal-title'">
         <div class="modal-header">
           <div class="modal-icon">
             <i class="pi pi-mobile"></i>
@@ -550,6 +456,10 @@
         </div>
       </div>
     </div>
-  }
+    }
   </div>
 }
+
+<div class="version-info">
+  v{{ version }}
+</div>

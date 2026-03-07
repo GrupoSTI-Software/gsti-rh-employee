@@ -7,7 +7,7 @@ import { BrandingService } from '@core/services/branding.service';
 import { ThemeService } from '@core/services/theme.service';
 import { LanguageSelectorComponent } from '@shared/components/language-selector/language-selector.component';
 import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
-
+import packageJson from '../../../../../package.json';
 /**
  * Tipo de visualización del componente PWA
  */
@@ -28,6 +28,8 @@ export class PwaRequiredComponent {
   readonly branding = inject(BrandingService);
   readonly theme = inject(ThemeService);
   readonly pwaInstallPrompt = inject(PwaInstallPromptService);
+
+  readonly version = packageJson.version;
 
   readonly mode = input<PwaDisplayMode>('full');
   private deferredPrompt = signal<Event | null>(null);
