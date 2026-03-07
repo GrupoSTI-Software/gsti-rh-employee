@@ -8,6 +8,8 @@ import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.direc
 import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
 import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-required.component';
 import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
+import { PwaUpdateOverlayComponent } from '@shared/components/pwa-update-overlay/pwa-update-overlay.component';
+import { PwaUpdateService } from '@core/services/pwa-update.service';
 
 /**
  * Clave para almacenar el idioma de la aplicación
@@ -31,6 +33,7 @@ declare global {
     PullToRefreshDirective,
     NoConnectionOverlayComponent,
     PwaRequiredComponent,
+    PwaUpdateOverlayComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -42,6 +45,8 @@ export class App implements OnInit, AfterViewInit {
   private readonly branding = inject(BrandingService);
   private readonly secureStorage = inject(SecureStorageService);
   private readonly pwaInstallPrompt = inject(PwaInstallPromptService);
+  // Inicializa el servicio de actualizaciones al arrancar la app
+  private readonly _pwaUpdate = inject(PwaUpdateService);
 
   constructor() {
     // Inicializar tema

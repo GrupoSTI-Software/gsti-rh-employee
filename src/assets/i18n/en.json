@@ -613,5 +613,11 @@
     "retry": "Retry",
     "retrying": "Retrying...",
     "connectionRestored": "Connection restored"
+  },
+  "update": {
+    "title": "New Version Available",
+    "message": "An update is ready to install. Update now to get the latest improvements and fixes.",
+    "apply": "Update Now",
+    "later": "Later"
   }
 }

@@ -613,5 +613,11 @@
     "retry": "Reintentar",
     "retrying": "Reintentando...",
     "connectionRestored": "Conexión restaurada"
+  },
+  "update": {
+    "title": "Nueva Versión Disponible",
+    "message": "Hay una actualización lista para instalar. Actualiza ahora para obtener las últimas mejoras y correcciones.",
+    "apply": "Actualizar Ahora",
+    "later": "Más Tarde"
   }
 }
