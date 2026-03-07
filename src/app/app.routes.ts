@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { pwaGuard } from '@core/guards/pwa.guard';
+import { pwaGuard, nonPwaGuard } from '@core/guards/pwa.guard';
 import { authGuard } from '@core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -138,6 +138,7 @@ export const routes: Routes = [
   },
   {
     path: 'pwa-required',
+    canActivate: [nonPwaGuard],
     loadComponent: () =>
       import('@shared/components/pwa-required/pwa-required.component').then(
         (m) => m.PwaRequiredComponent,

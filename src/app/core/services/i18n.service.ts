@@ -25,7 +25,7 @@ export class I18nService {
   private readonly logger = inject(LoggerService);
   private readonly secureStorage = inject(SecureStorageService);
 
-  private translations: Record<string, Record<string, string>> = {};
+  private translations: Record<string, Record<string, unknown>> = {};
   private currentLang: Language = 'es';
 
   /**
@@ -40,11 +40,12 @@ export class I18nService {
   }
 
   /**
-   * Traduce una clave
+   * Traduce una clave (soporta claves anidadas con punto: "apiErrors.invalidCredentials")
    */
   translate(key: string, params?: Record<string, string>): string {
     const lang = this.currentLang;
-    const translation = this.translations[lang]?.[key] || this.translations['es']?.[key] || key;
+    const translation =
+      this.getNestedTranslation(lang, key) ?? this.getNestedTranslation('es', key) ?? key;
 
     if (params) {
       return Object.entries(params).reduce(
@@ -54,6 +55,24 @@ export class I18nService {
     }
 
     return translation;
+  }
+
+  /**
+   * Obtiene una traducción anidada usando notación de punto
+   * Ejemplo: "apiErrors.invalidCredentials" -> translations.apiErrors.invalidCredentials
+   */
+  private getNestedTranslation(lang: Language, key: string): string | null {
+    const keys = key.split('.');
+    let current: Record<string, unknown> | unknown = this.translations[lang];
+
+    for (const k of keys) {
+      if (typeof current !== 'object' || current === null || !(k in current)) {
+        return null;
+      }
+      current = (current as Record<string, unknown>)[k];
+    }
+
+    return typeof current === 'string' ? current : null;
   }
 
   /**
@@ -82,7 +101,7 @@ export class I18nService {
 
     try {
       const translations = await firstValueFrom(
-        this.http.get<Record<string, string>>(`/assets/i18n/${lang}.json`),
+        this.http.get<Record<string, unknown>>(`/assets/i18n/${lang}.json`),
       );
       this.translations[lang] = translations;
     } catch (error) {

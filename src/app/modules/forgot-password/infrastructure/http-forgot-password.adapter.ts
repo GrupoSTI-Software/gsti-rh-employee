@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { IForgotPasswordPort, IForgotPasswordResult } from '../domain/forgot-password.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Interfaces para las respuestas de la API (específicas de esta implementación)
@@ -32,6 +33,7 @@ interface IForgotPasswordResponse {
 export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   async forgotPassword(email: string): Promise<IForgotPasswordResult> {
@@ -58,10 +60,11 @@ export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
         };
       }
 
-      // Si la respuesta no es exitosa, devolver error
+      // Si la respuesta no es exitosa, devolver error traducido
+      const errorMessage = forgotPasswordResponse?.message ?? 'Error al recuperar contraseña';
       return {
         success: false,
-        error: forgotPasswordResponse?.message ?? 'Error al recuperar contraseña',
+        error: this.apiErrorTranslator.translateError(errorMessage),
       };
     } catch (error: unknown) {
       this.logger.error('Error al recuperar contraseña');
@@ -72,7 +75,7 @@ export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
         if (errorBody?.message !== undefined) {
           return {
             success: false,
-            error: errorBody.message,
+            error: this.apiErrorTranslator.translateError(errorBody.message),
           };
         }
       }
@@ -80,13 +83,15 @@ export class HttpForgotPasswordAdapter implements IForgotPasswordPort {
       if (error instanceof Error && error.message.length > 0) {
         return {
           success: false,
-          error: error.message,
+          error: this.apiErrorTranslator.translateError(error.message),
         };
       }
 
       return {
         success: false,
-        error: 'Error al recuperar contraseña. Intenta nuevamente.',
+        error: this.apiErrorTranslator.translateError(
+          'Error al recuperar contraseña. Intenta nuevamente.',
+        ),
       };
     }
   }

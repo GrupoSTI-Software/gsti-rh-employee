@@ -32,7 +32,11 @@ export class PwaRequiredComponent {
   private deferredPrompt = signal<Event | null>(null);
   readonly showPwaInfoModal = signal<boolean>(false);
 
-  readonly logoUrl = computed(() => this.branding.getLogoUrl());
+  readonly logoUrl = computed(() => {
+    const settings = this.branding.settings();
+    if (!settings) return '/assets/gsti/icon.png';
+    return this.branding.getPWAApplicationIconUrl(settings);
+  });
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
   readonly isBannerMode = computed(() => this.mode() === 'banner');
 
