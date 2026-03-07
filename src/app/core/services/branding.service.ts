@@ -4,6 +4,7 @@ import { ISystemSettings } from '@modules/system-settings/domain/system-settings
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
 import { LoggerService } from '@core/services/logger.service';
 import { StoragePrefixService } from './storage-prefix.service';
+import { environment } from '@env/environment';
 
 /**
  * Servicio para gestionar el branding de la aplicación
@@ -29,6 +30,10 @@ export class BrandingService {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+
+    // Persistir la URL de la API para que el script inline de index.html
+    // pueda hacer fetch directo al API en la próxima carga, antes de Angular.
+    this.persistApiUrl();
 
     this.loading.set(true);
 
@@ -325,17 +330,6 @@ export class BrandingService {
       },
     };
 
-    // Persistir el manifest en localStorage para que el script inline de index.html
-    // pueda inyectarlo como data URL en el <link rel="manifest"> ANTES de que Chrome
-    // evalúe el manifest para el diálogo de instalación (beforeinstallprompt).
-    // Esta es la única forma confiable de que Chrome lea el nombre e ícono correctos
-    // en Android desde la primera visita.
-    this.persistManifestToLocalStorage(manifest);
-
-    // Enviar también al Service Worker para que intercepte /manifest.webmanifest
-    // en caso de que el script inline no haya podido inyectarlo.
-    await this.sendManifestToServiceWorker(manifest);
-
     // Actualizar el <link rel="manifest"> con el manifest dinámico como data URL.
     // Esto hace que Chrome re-evalúe el manifest inmediatamente en la sesión actual.
     const manifestDataUrl = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
@@ -364,47 +358,15 @@ export class BrandingService {
   }
 
   /**
-   * Persiste el manifest dinámico en localStorage.
-   * El script inline de index.html lo lee en cada carga para inyectarlo
-   * como data URL antes de que Chrome evalúe el manifest.
-   *
-   * @param manifest - Objeto con los datos del manifest a persistir
+   * Persiste la URL de la API en localStorage.
+   * El script inline de index.html la usa para hacer fetch directo
+   * al endpoint de system-settings antes de que Angular cargue.
    */
-  private persistManifestToLocalStorage(manifest: object): void {
+  private persistApiUrl(): void {
     try {
-      localStorage.setItem('pwa_dynamic_manifest', JSON.stringify(manifest));
+      localStorage.setItem('pwa_api_url', environment.API_URL);
     } catch {
-      // Ignorar errores de localStorage (modo privado, cuota excedida, etc.)
-    }
-  }
-
-  /**
-   * Envía el manifest dinámico al Service Worker para que lo sirva
-   * al interceptar peticiones a /manifest.webmanifest.
-   * Si el SW aún no está activo, espera hasta que lo esté.
-   *
-   * @param manifest - Objeto con los datos del manifest a persistir
-   */
-  private async sendManifestToServiceWorker(manifest: object): Promise<void> {
-    if (!('serviceWorker' in navigator)) return;
-
-    const sendMessage = (controller: ServiceWorker): void => {
-      controller.postMessage({ type: 'UPDATE_DYNAMIC_MANIFEST', manifest });
-    };
-
-    if (navigator.serviceWorker.controller) {
-      sendMessage(navigator.serviceWorker.controller);
-      return;
-    }
-
-    // El SW aún no controla la página (primera carga): esperar a que esté listo
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      if (registration.active) {
-        sendMessage(registration.active);
-      }
-    } catch (error) {
-      this.logger.warn('No se pudo enviar manifest al Service Worker:', error);
+      // Ignorar errores de localStorage
     }
   }
 
