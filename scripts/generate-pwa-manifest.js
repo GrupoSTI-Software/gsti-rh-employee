@@ -129,7 +129,7 @@ function buildManifest(settings) {
     '/assets/gsti/icon.png';
 
   // Logo para icono maskable (con fondo)
-  const logoUrl = settings?.systemSettingLogo?.trim() || '/assets/gsti/adaptive-icon.png';
+  const logoUrl = iconUrl || '/assets/gsti/adaptive-icon.png';
 
   const shortName = tradeName.length > 12 ? tradeName.substring(0, 12) : tradeName;
 
