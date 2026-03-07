@@ -325,54 +325,66 @@ export class BrandingService {
       },
     };
 
-    // Crear blob con el manifest
-    const blob = new Blob([JSON.stringify(manifest, null, 2)], {
-      type: 'application/manifest+json',
-    });
+    // Enviar el manifest al Service Worker para que lo sirva en /manifest.webmanifest.
+    // Chrome en Android evalúa el manifest al disparar beforeinstallprompt, antes de que
+    // Angular cargue. Al interceptar la petición en el SW, garantizamos que Chrome siempre
+    // lea el nombre e ícono correctos del cliente, no el manifest estático del servidor.
+    await this.sendManifestToServiceWorker(manifest);
 
-    // Crear URL del blob con timestamp único para evitar caché
-    const timestamp = Date.now();
-    const manifestUrl = URL.createObjectURL(blob);
-
-    // Remover TODOS los links de manifest existentes (incluido el estático)
+    // Actualizar el <link rel="manifest"> para apuntar al manifest estático.
+    // El SW lo interceptará y responderá con el manifest dinámico.
+    // Usamos la URL estática (no blob) para que Chrome pueda hacer el fetch correctamente.
     const existingManifests = document.querySelectorAll("link[rel='manifest']");
     existingManifests.forEach((link) => {
       const oldHref = (link as HTMLLinkElement).href;
       link.remove();
-      // Limpiar URLs blob anteriores
       if (oldHref?.startsWith('blob:')) {
         URL.revokeObjectURL(oldHref);
       }
     });
 
-    // Pequeño delay para asegurar que los links anteriores se hayan removido completamente
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Crear nuevo link con la nueva URL
     const newManifestLink = document.createElement('link');
     newManifestLink.rel = 'manifest';
-    newManifestLink.href = manifestUrl;
-    newManifestLink.setAttribute('crossorigin', 'use-credentials');
+    newManifestLink.href = '/manifest.webmanifest';
     document.getElementsByTagName('head')[0].appendChild(newManifestLink);
 
-    // Forzar actualización del manifest en el navegador
-    // Esto es importante para que el navegador recargue el manifest
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Si hay un service worker, puede que necesite actualizar el manifest
-      navigator.serviceWorker.controller.postMessage({
-        type: 'MANIFEST_UPDATED',
-        manifestUrl: manifestUrl,
-        version: this.manifestVersion,
-        timestamp: timestamp,
-      });
-    }
-
-    // Disparar evento personalizado para notificar que el manifest fue actualizado
     window.dispatchEvent(
       new CustomEvent('manifest-updated', {
-        detail: { manifestUrl, version: this.manifestVersion, timestamp },
+        detail: { version: this.manifestVersion },
       }),
     );
+  }
+
+  /**
+   * Envía el manifest dinámico al Service Worker para que lo sirva
+   * al interceptar peticiones a /manifest.webmanifest.
+   * Si el SW aún no está activo, espera hasta que lo esté.
+   *
+   * @param manifest - Objeto con los datos del manifest a persistir
+   */
+  private async sendManifestToServiceWorker(manifest: object): Promise<void> {
+    if (!('serviceWorker' in navigator)) return;
+
+    const sendMessage = (controller: ServiceWorker): void => {
+      controller.postMessage({ type: 'UPDATE_DYNAMIC_MANIFEST', manifest });
+    };
+
+    if (navigator.serviceWorker.controller) {
+      sendMessage(navigator.serviceWorker.controller);
+      return;
+    }
+
+    // El SW aún no controla la página (primera carga): esperar a que esté listo
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      if (registration.active) {
+        sendMessage(registration.active);
+      }
+    } catch (error) {
+      this.logger.warn('No se pudo enviar manifest al Service Worker:', error);
+    }
   }
 
   /**
