@@ -18,6 +18,7 @@ import { JwtService } from '@core/services/jwt.service';
 import { LoggerService } from '@core/services/logger.service';
 import { WebAuthnAdapter } from './webauthn.adapter';
 import { PushNotificationsService } from '@core/services/push-notifications.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Constante para el nombre de la cookie del token de autenticación
@@ -114,6 +115,7 @@ export class HttpAuthAdapter implements IAuthPort {
   private readonly logger = inject(LoggerService);
   private readonly webAuthnAdapter = inject(WebAuthnAdapter);
   private readonly pushNotificationsService = inject(PushNotificationsService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
   private currentUser: IUser | null = null;
   private userInitialized = false;
@@ -232,21 +234,32 @@ export class HttpAuthAdapter implements IAuthPort {
         }
       }
 
-      // Si la respuesta no es exitosa, devolver error
+      // Si la respuesta no es exitosa, devolver error traducido
+      const errorMessage = loginResponse?.message || 'Credenciales inválidas';
       return {
         success: false,
-        error: loginResponse?.message || 'Credenciales inválidas',
+        error: this.apiErrorTranslator.translateError(errorMessage),
       };
     } catch (error: unknown) {
       this.logger.error('Error en login');
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
-        const errorBody = error.error as { message?: string } | null;
+        const errorBody = error.error as { message?: string; error?: string } | null;
+
+        // Intentar extraer mensaje del campo 'error' primero (para errores 500)
+        if (errorBody?.error !== undefined && errorBody.error.length > 0) {
+          return {
+            success: false,
+            error: this.apiErrorTranslator.translateError(errorBody.error),
+          };
+        }
+
+        // Si no hay campo 'error', intentar con 'message'
         if (errorBody?.message !== undefined) {
           return {
             success: false,
-            error: errorBody.message,
+            error: this.apiErrorTranslator.translateError(errorBody.message),
           };
         }
       }
@@ -254,13 +267,15 @@ export class HttpAuthAdapter implements IAuthPort {
       if (error instanceof Error && error.message.length > 0) {
         return {
           success: false,
-          error: error.message,
+          error: this.apiErrorTranslator.translateError(error.message),
         };
       }
 
       return {
         success: false,
-        error: 'Error al iniciar sesión. Intenta nuevamente.',
+        error: this.apiErrorTranslator.translateError(
+          'Error al iniciar sesión. Intenta nuevamente.',
+        ),
       };
     }
   }
@@ -604,9 +619,13 @@ export class HttpAuthAdapter implements IAuthPort {
       this.logger.error('Error al solicitar opciones de registro de Passkey');
       if (error instanceof HttpErrorResponse) {
         const errorBody = error.error as { message?: string } | null;
-        throw new Error(errorBody?.message ?? 'Error al obtener opciones de registro de Passkey');
+        const errorMessage =
+          errorBody?.message ?? 'Error al obtener opciones de registro de Passkey';
+        throw new Error(this.apiErrorTranslator.translateError(errorMessage));
       }
-      throw new Error('Error al obtener opciones de registro de Passkey');
+      throw new Error(
+        this.apiErrorTranslator.translateError('Error al obtener opciones de registro de Passkey'),
+      );
     }
   }
 
@@ -642,22 +661,24 @@ export class HttpAuthAdapter implements IAuthPort {
         };
       }
 
+      const errorMessage = response.message ?? 'Error al registrar la Passkey';
       return {
         success: false,
-        error: response.message ?? 'Error al registrar la Passkey',
+        error: this.apiErrorTranslator.translateError(errorMessage),
       };
     } catch (error: unknown) {
       this.logger.error('Error al completar el registro de Passkey');
       if (error instanceof HttpErrorResponse) {
         const errorBody = error.error as { message?: string } | null;
+        const errorMessage = errorBody?.message ?? 'Error al registrar la Passkey';
         return {
           success: false,
-          error: errorBody?.message ?? 'Error al registrar la Passkey',
+          error: this.apiErrorTranslator.translateError(errorMessage),
         };
       }
       return {
         success: false,
-        error: 'Error al registrar la Passkey',
+        error: this.apiErrorTranslator.translateError('Error al registrar la Passkey'),
       };
     }
   }
@@ -681,9 +702,10 @@ export class HttpAuthAdapter implements IAuthPort {
       this.logger.error('Error al solicitar opciones de autenticación con Passkey');
       if (error instanceof HttpErrorResponse) {
         const errorBody = error.error as { message?: string } | null;
-        throw new Error(errorBody?.message ?? 'Error al autenticar con Passkey');
+        const errorMessage = errorBody?.message ?? 'Error al autenticar con Passkey';
+        throw new Error(this.apiErrorTranslator.translateError(errorMessage));
       }
-      throw new Error('Error al autenticar con Passkey');
+      throw new Error(this.apiErrorTranslator.translateError('Error al autenticar con Passkey'));
     }
   }
 
@@ -805,21 +827,32 @@ export class HttpAuthAdapter implements IAuthPort {
         }
       }
 
-      // Si la respuesta no es exitosa, devolver error
+      // Si la respuesta no es exitosa, devolver error traducido
+      const errorMessage = loginResponse?.message ?? 'Error al autenticar con Passkey';
       return {
         success: false,
-        error: loginResponse?.message ?? 'Error al autenticar con Passkey',
+        error: this.apiErrorTranslator.translateError(errorMessage),
       };
     } catch (error: unknown) {
       this.logger.error('Error en autenticación con Passkey');
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
-        const errorBody = error.error as { message?: string } | null;
+        const errorBody = error.error as { message?: string; error?: string } | null;
+
+        // Intentar extraer mensaje del campo 'error' primero (para errores 500)
+        if (errorBody?.error !== undefined && errorBody.error.length > 0) {
+          return {
+            success: false,
+            error: this.apiErrorTranslator.translateError(errorBody.error),
+          };
+        }
+
+        // Si no hay campo 'error', intentar con 'message'
         if (errorBody?.message !== undefined) {
           return {
             success: false,
-            error: errorBody.message,
+            error: this.apiErrorTranslator.translateError(errorBody.message),
           };
         }
       }
@@ -827,13 +860,15 @@ export class HttpAuthAdapter implements IAuthPort {
       if (error instanceof Error && error.message.length > 0) {
         return {
           success: false,
-          error: error.message,
+          error: this.apiErrorTranslator.translateError(error.message),
         };
       }
 
       return {
         success: false,
-        error: 'Error al autenticar con Passkey. Intenta nuevamente.',
+        error: this.apiErrorTranslator.translateError(
+          'Error al autenticar con Passkey. Intenta nuevamente.',
+        ),
       };
     }
   }

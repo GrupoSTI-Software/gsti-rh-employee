@@ -19,6 +19,7 @@
     "loginTitle": "Sign In",
     "loginSubtitle": "Enter your credentials to access",
     "invalidCredentials": "Your username and/or password are incorrect",
+    "accountRegisteredOnAnotherDevice": "This account is already registered on another device. Please contact your manager to activate access on this new device.",
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
     "sessionExpired": "Your session has expired",
@@ -84,10 +85,85 @@
     "notFound": "The requested resource was not found",
     "unauthorized": "You don't have permission to perform this action"
   },
+  "apiErrors": {
+    "generic": "An error occurred. Please try again",
+    "invalidCredentials": "Incorrect email or password",
+    "accountRegisteredOnAnotherDevice": "This account is already registered on another device. Please contact your manager to activate access on this new device.",
+    "userNotFound": "User not found",
+    "employeeNotFound": "Employee not found",
+    "incorrectPassword": "Incorrect password",
+    "invalidToken": "Invalid token",
+    "expiredToken": "Token expired",
+    "sessionExpired": "Your session has expired",
+    "unauthorized": "Unauthorized",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Email format is not valid",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "recoveryEmailError": "Error sending recovery email",
+    "invalidVerificationCode": "Invalid verification code",
+    "expiredVerificationCode": "Verification code expired",
+    "passkeyRegistrationError": "Error registering biometrics",
+    "passkeyAuthenticationError": "Error authenticating with biometrics",
+    "passkeyNotFound": "Biometrics not found",
+    "attendanceRegistrationError": "Error registering attendance",
+    "locationOutOfRange": "Location out of range",
+    "attendanceAlreadyExists": "Attendance record already exists",
+    "noVacationDaysAvailable": "No vacation days available",
+    "vacationPeriodNotFound": "Vacation period not found",
+    "vacationRequestAlreadyExists": "Vacation request already exists for this date",
+    "exceptionRequestAlreadyExists": "Exception request already exists for this date",
+    "exceptionTypeNotFound": "Exception type not found",
+    "internalServerError": "Internal server error",
+    "resourceNotFound": "Resource not found",
+    "accessDenied": "Access denied",
+    "insufficientPermissions": "Insufficient permissions",
+    "connectionError": "Connection error",
+    "timeout": "Request timeout"
+  },
   "pwa": {
+    "install": {
+      "banner": {
+        "title": "Install the app",
+        "description": "Get quick access and a better experience by installing the app on your device",
+        "install": "Install",
+        "dismiss": "Not now"
+      }
+    },
+    "openApp": {
+      "banner": {
+        "title": "Open the installed app",
+        "description": "You already have the app installed. Open it for a better experience",
+        "open": "Open app",
+        "dismiss": "Continue in browser"
+      }
+    },
     "required": {
       "title": "PWA Application Required",
       "description": "This application is only available as an installed PWA. Please install the application to continue.",
+      "desktopNotSupported": "Device not supported",
+      "desktopNotSupportedDescription": "This application is designed exclusively for mobile devices (Android and iOS). Please access from your phone or tablet to install and use the application.",
+      "whatIsPwa": "What is a PWA?",
+      "pwaDescription": "A Progressive Web App (PWA) is a modern web application that works like a native app on your device, offering a fast, reliable, and engaging experience.",
+      "installApp": "Install App",
+      "features": {
+        "fast": {
+          "title": "Fast and Efficient",
+          "description": "Loads instantly and responds quickly to your actions, without long wait times"
+        },
+        "offline": {
+          "title": "Works Offline",
+          "description": "Access basic features even when you don't have an internet connection"
+        },
+        "homescreen": {
+          "title": "Direct Access",
+          "description": "Installs on your home screen like any other app, without needing app stores"
+        },
+        "secure": {
+          "title": "Secure and Reliable",
+          "description": "Protects your information with secure connections and automatic updates"
+        }
+      },
       "checkAgain": "Check Again",
       "loading": "Loading...",
       "error": "Error",
@@ -100,18 +176,25 @@
       "next": "Next",
       "darkMode": "Dark Mode",
       "lightMode": "Light Mode",
+      "appleRecommended": "Recommended for Apple devices",
       "instructions": {
-        "title": "How to Install",
+        "title": "How to install the application?",
         "chrome": {
-          "title": "In Chrome (Android/Desktop)",
-          "step1": "Open the browser menu (three dots)",
-          "step2": "Select 'Install app' or 'Add to home screen'",
-          "step3": "Confirm the installation"
+          "title": "Installation on Android",
+          "step1": "Look for the three vertical dots icon (⋮) in the top right corner of your Chrome browser",
+          "step2": "Tap on the three dots to open the menu",
+          "step3": "Find and tap the option that says 'Install app' or 'Add to home screen'",
+          "step4": "A confirmation window will appear, tap the 'Install' or 'Add' button",
+          "step5": "Done! The app will now appear on your home screen like any other app"
         },
         "safari": {
-          "title": "In Safari (iOS)",
-          "step1": "Tap the share button (square with arrow)",
-          "step2": "Select 'Add to Home Screen'"
+          "title": "Installation on iPhone",
+          "step1": "Look for the share icon at the bottom of the screen",
+          "step2": "Tap the share icon to open the options menu",
+          "step3": "Scroll down in the menu (More) until you find 'Add to Home Screen'",
+          "step4": "Tap 'Add to Home Screen'",
+          "step5": "You can change the app name if you wish, then tap 'Add' in the top right corner",
+          "step6": "Done! The app will now appear on your home screen"
         }
       },
       "debug": {
@@ -569,5 +652,11 @@
     "retry": "Retry",
     "retrying": "Retrying...",
     "connectionRestored": "Connection restored"
+  },
+  "update": {
+    "title": "New Version Available",
+    "message": "An update is ready to install. Update now to get the latest improvements and fixes.",
+    "apply": "Update Now",
+    "later": "Later"
   }
 }

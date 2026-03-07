@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IVacationPort, IYearWorked, IYearsWorkedApiResponse } from '../domain/vacation.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador HTTP para vacaciones
@@ -16,6 +17,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpVacationAdapter implements IVacationPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -67,6 +69,18 @@ export class HttpVacationAdapter implements IVacationPort {
       return true;
     } catch (error: unknown) {
       this.logger.error('Error al firmar excepciones de turno:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return false;
     }
   }

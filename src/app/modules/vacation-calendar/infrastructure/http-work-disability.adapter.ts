@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IWorkDisabilityPort } from '../domain/entities/work-disability-port.interface';
 import { IWorkDisability } from '../domain/entities/work-disability.interface';
 import { IWorkDisabilitiesApiResponse } from '../domain/entities/work-disabilities-api-response.interface';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador HTTP para incapacidades laborales
@@ -18,6 +19,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpWorkDisabilityAdapter implements IWorkDisabilityPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -34,6 +36,18 @@ export class HttpWorkDisabilityAdapter implements IWorkDisabilityPort {
       return response.data?.workDisabilities ?? [];
     } catch (error: unknown) {
       this.logger.error('Error al obtener incapacidades laborales:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return [];
     }
   }

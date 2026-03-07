@@ -1,0 +1,155 @@
+@use '../../../../styles/variables' as *;
+@use '../../../../styles/mixins' as *;
+
+.update-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: $z-index-modal;
+  @include flex-center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.overlay-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.overlay-content {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-primary);
+  border-radius: $radius-lg;
+  padding: $spacing-3xl;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: var(--shadow-lg);
+  @include flex-column;
+  align-items: center;
+  gap: $spacing-xl;
+  animation: slideUp 0.4s ease-out;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-2xl;
+    width: 85%;
+  }
+}
+
+.icon-container {
+  @include flex-center;
+  width: 80px;
+  height: 80px;
+  border-radius: $radius-full;
+  background: rgba(var(--primary-rgb, 9, 48, 87), 0.1);
+  color: var(--primary);
+  animation: pulse 2.5s ease-in-out infinite;
+}
+
+.overlay-title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.overlay-message {
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.overlay-actions {
+  @include flex-column;
+  width: 100%;
+  gap: $spacing-md;
+}
+
+.update-button {
+  @include button-primary;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.update-icon {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.dismiss-button {
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  cursor: pointer;
+  transition: all $transition-base;
+  text-align: center;
+
+  &:hover {
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}

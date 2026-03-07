@@ -5,31 +5,28 @@ import { PwaDetectionService } from '@core/services/pwa-detection.service';
 import { environment } from '@env/environment';
 
 /**
- * Guard que protege rutas para que solo sean accesibles desde una PWA instalada
- * Si el usuario intenta acceder desde un navegador normal, será redirigido
+ * Guard que protege rutas para que solo sean accesibles desde una PWA instalada.
+ * Usa verificación asíncrona en Android para cubrir el retraso de display-mode.
  */
-export const pwaGuard: CanActivateFn = (route, state) => {
+export const pwaGuard: CanActivateFn = async (_route, state) => {
   const pwaService = inject(PwaDetectionService);
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
 
-  // En desarrollo, permitir acceso directo desde el navegador web
   if (!environment.PRODUCTION) {
     return true;
   }
 
-  // En SSR, retornar false sin redirigir para que el cliente maneje la verificación
-  // después de la hidratación
   if (!isPlatformBrowser(platformId)) {
     return false;
   }
 
-  // En producción y en el navegador, solo permitir si está instalada como PWA
-  if (pwaService.isRunningAsPwa()) {
+  // Verificación asíncrona: en Android espera brevemente si la detección inicial falla
+  const isPwa = await pwaService.isRunningAsPwaAsync();
+  if (isPwa) {
     return true;
   }
 
-  // Si no está en modo PWA en producción, redirigir a página de información
   void router.navigate(['/pwa-required'], {
     queryParams: { returnUrl: state.url },
   });
@@ -37,17 +34,18 @@ export const pwaGuard: CanActivateFn = (route, state) => {
 };
 
 /**
- * Guard inverso: permite acceso solo si NO está en modo PWA
- * Útil para páginas de información o instalación
+ * Guard inverso: permite acceso solo si NO está en modo PWA.
+ * Útil para la página de información o instalación.
  */
-export const nonPwaGuard: CanActivateFn = (_route, _state) => {
+export const nonPwaGuard: CanActivateFn = async () => {
   const pwaService = inject(PwaDetectionService);
   const router = inject(Router);
-  if (!pwaService.isRunningAsPwa()) {
+
+  const isPwa = await pwaService.isRunningAsPwaAsync();
+  if (!isPwa) {
     return true;
   }
 
-  // Si está en modo PWA, redirigir al login o dashboard
   void router.navigate(['/login']);
   return false;
 };

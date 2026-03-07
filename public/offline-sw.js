@@ -6,6 +6,8 @@
  * para que la app pueda arrancar aunque no haya conexión a internet.
  *
  * Este SW trabaja en paralelo con el ngsw-worker.js de Angular.
+ * IMPORTANTE: Solo gestiona sus propios cachés (prefijo 'gsti-').
+ * No debe interferir con los cachés del ngsw.
  */
 
 var CACHE_NAME = 'gsti-offline-v1';
@@ -30,14 +32,17 @@ self.addEventListener('install', function (event) {
 
 /**
  * Al activar, toma control de todos los clientes inmediatamente
- * y elimina cachés antiguas de versiones anteriores.
+ * y elimina solo los cachés propios de versiones anteriores.
+ * No toca los cachés de ngsw (prefijo 'ngsw:').
  */
 self.addEventListener('activate', function (event) {
   event.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(
         keys
-          .filter(function (key) { return key !== CACHE_NAME; })
+          .filter(function (key) {
+            return key.startsWith('gsti-') && key !== CACHE_NAME;
+          })
           .map(function (key) { return caches.delete(key); })
       );
     }).then(function () {
@@ -47,24 +52,19 @@ self.addEventListener('activate', function (event) {
 });
 
 /**
- * Intercepta todas las peticiones de navegación (HTML).
+ * Intercepta peticiones de navegación (HTML).
  * Estrategia: Network First con fallback a caché.
- * - Intenta obtener la respuesta de la red.
- * - Si falla (sin conexión), sirve el index.html cacheado.
- * - Las peticiones de assets (JS, CSS, imágenes) se dejan pasar al ngsw-worker.js.
+ * Las peticiones de assets se dejan al ngsw-worker.js.
  */
 self.addEventListener('fetch', function (event) {
   var request = event.request;
 
-  // Solo interceptar peticiones de navegación (GET de páginas HTML)
   if (request.method !== 'GET') return;
   if (request.mode !== 'navigate') return;
 
-  // Dejar que el ngsw-worker.js maneje el resto
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: 'no-store' })
       .then(function (response) {
-        // Si la respuesta es válida, actualizar el caché con el index.html más reciente
         if (response && response.status === 200) {
           var responseClone = response.clone();
           caches.open(CACHE_NAME).then(function (cache) {
@@ -74,10 +74,8 @@ self.addEventListener('fetch', function (event) {
         return response;
       })
       .catch(function () {
-        // Sin conexión: servir el index.html desde caché
         return caches.match('/index.html').then(function (cached) {
           if (cached) return cached;
-          // Si por alguna razón no hay caché, devolver una respuesta mínima
           return new Response(
             '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sin conexion</title></head><body></body></html>',
             { headers: { 'Content-Type': 'text/html' } }

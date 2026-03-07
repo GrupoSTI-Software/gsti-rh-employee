@@ -4,6 +4,7 @@ import { ISystemSettings } from '@modules/system-settings/domain/system-settings
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
 import { LoggerService } from '@core/services/logger.service';
 import { StoragePrefixService } from './storage-prefix.service';
+import { environment } from '@env/environment';
 
 /**
  * Servicio para gestionar el branding de la aplicación
@@ -29,6 +30,10 @@ export class BrandingService {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
+
+    // Persistir la URL de la API para que el script inline de index.html
+    // pueda hacer fetch directo al API en la próxima carga, antes de Angular.
+    this.persistApiUrl();
 
     this.loading.set(true);
 
@@ -57,19 +62,21 @@ export class BrandingService {
   }
 
   /**
-   * Remueve cualquier manifest estático que pueda estar presente
+   * Remueve manifests anteriores excepto el estático actual.
+   * El manifest estático (manifest.webmanifest) ya tiene el branding correcto
+   * gracias al script de post-build. Solo se eliminan manifests dinámicos obsoletos
+   * (data: URLs de sesiones anteriores) para evitar duplicados.
    */
   private removeStaticManifest(): void {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
-    // Remover todos los links de manifest que apunten al archivo estático
     const allManifests = document.querySelectorAll("link[rel='manifest']");
     allManifests.forEach((link) => {
       const href = (link as HTMLLinkElement).href;
-      // Si el href apunta al manifest estático, removerlo
-      if (href.includes('manifest.webmanifest') && !href.startsWith('blob:')) {
+      // Solo remover manifests dinámicos (data: URLs), no el estático del servidor
+      if (href.startsWith('data:')) {
         link.remove();
       }
     });
@@ -129,18 +136,13 @@ export class BrandingService {
     // Actualizar meta tags PRIMERO (antes del manifest)
     this.updateMetaTags(settings);
 
-    // Actualizar favicon (primero para que se cargue rápido)
-    this.updateFavicon(this.getPWAApplicationIconUrl(settings));
-
-    // Actualizar logo en el documento
-    this.updateLogo(settings.systemSettingLogo);
+    // Actualizar favicon e iconos de Apple (async por generación de fondo blanco en iOS)
+    await this.updateFavicon(this.getPWAApplicationIconUrl(settings));
 
     // Actualizar colores del tema
     this.updateThemeColors(settings.systemSettingSidebarColor);
 
     // Actualizar manifest de PWA (importante para la instalación)
-    // Esto debe hacerse después de pre-cargar los iconos
-    // Pero creamos un manifest inicial inmediatamente sin esperar los iconos
     await this.updateManifest(settings);
   }
 
@@ -176,9 +178,11 @@ export class BrandingService {
   }
 
   /**
-   * Actualiza el favicon de la aplicación y los iconos de Apple
+   * Actualiza el favicon de la aplicación y los iconos de Apple.
+   * En iOS genera el apple-touch-icon con fondo blanco para evitar
+   * que las áreas transparentes se muestren en negro.
    */
-  private updateFavicon(faviconUrl: string): void {
+  private async updateFavicon(faviconUrl: string): Promise<void> {
     if (!faviconUrl) return;
 
     const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
@@ -194,6 +198,9 @@ export class BrandingService {
     link.type = 'image/png';
     document.getElementsByTagName('head')[0].appendChild(link);
 
+    // Generar icono con fondo blanco para iOS (evita el fondo negro en transparencias)
+    const appleIconUrl = await this.generateIconWithWhiteBackground(faviconUrl);
+
     // Actualizar apple-touch-icon
     const appleIcon = document.querySelector(
       "link[rel='apple-touch-icon']",
@@ -203,11 +210,11 @@ export class BrandingService {
     }
     const newAppleIcon = document.createElement('link');
     newAppleIcon.rel = 'apple-touch-icon';
-    newAppleIcon.href = faviconUrlWithCache;
+    newAppleIcon.href = appleIconUrl;
     document.getElementsByTagName('head')[0].appendChild(newAppleIcon);
 
     // Actualizar apple-touch-icon con tamaños específicos
-    const sizes = ['192x192', '512x512'];
+    const sizes = ['180x180', '192x192', '512x512'];
     sizes.forEach((size) => {
       const existingIcon = document.querySelector(
         `link[rel='apple-touch-icon'][sizes='${size}']`,
@@ -218,9 +225,42 @@ export class BrandingService {
       const sizedIcon = document.createElement('link');
       sizedIcon.rel = 'apple-touch-icon';
       sizedIcon.setAttribute('sizes', size);
-      sizedIcon.href = faviconUrlWithCache;
+      sizedIcon.href = appleIconUrl;
       document.getElementsByTagName('head')[0].appendChild(sizedIcon);
     });
+  }
+
+  /**
+   * Genera una versión del icono con fondo blanco usando canvas.
+   * Necesario para iOS que renderiza áreas transparentes como negro.
+   * Si no se puede procesar (CORS, etc.), retorna la URL original.
+   */
+  private async generateIconWithWhiteBackground(originalUrl: string): Promise<string> {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = (): void => resolve();
+        img.onerror = (): void => reject(new Error('No se pudo cargar el icono'));
+        img.src = this.addCacheBusting(originalUrl);
+      });
+
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return this.addCacheBusting(originalUrl);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+
+      return canvas.toDataURL('image/png');
+    } catch {
+      return this.addCacheBusting(originalUrl);
+    }
   }
 
   /**
@@ -275,7 +315,7 @@ export class BrandingService {
 
     // Agregar cache busting a las URLs de los iconos
     const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
-    const logoUrlWithCache = this.addCacheBusting(logoUrl);
+    // const logoUrlWithCache = this.addCacheBusting(logoUrl);
 
     // Crear nuevo manifest con los iconos actualizados y cache busting
     // Asegurar que el nombre no tenga espacios extra ni caracteres especiales
@@ -287,6 +327,7 @@ export class BrandingService {
       theme_color: `#${sidebarColor}`,
       background_color: '#ffffff',
       display: 'standalone',
+      display_override: ['window-controls-overlay', 'standalone'],
       orientation: 'portrait',
       scope: '/',
       start_url: '/',
@@ -304,13 +345,13 @@ export class BrandingService {
           purpose: 'any',
         },
         {
-          src: logoUrlWithCache,
+          src: faviconUrlWithCache,
           sizes: '512x512',
           type: 'image/png',
           purpose: 'maskable',
         },
         {
-          src: logoUrlWithCache,
+          src: faviconUrlWithCache,
           sizes: '192x192',
           type: 'image/png',
           purpose: 'maskable',
@@ -319,71 +360,52 @@ export class BrandingService {
       categories: ['business', 'productivity'],
       lang: 'es',
       prefer_related_applications: false,
+      launch_handler: {
+        client_mode: ['navigate-existing', 'auto'],
+      },
     };
 
-    // Crear blob con el manifest
-    const blob = new Blob([JSON.stringify(manifest, null, 2)], {
-      type: 'application/manifest+json',
-    });
+    // Actualizar el <link rel="manifest"> con el manifest dinámico como data URL.
+    // Esto hace que Chrome re-evalúe el manifest inmediatamente en la sesión actual.
+    // IMPORTANTE: primero insertar el nuevo manifest, luego remover los anteriores
+    // para evitar que Chrome quede sin manifest durante el reemplazo.
+    const manifestDataUrl = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
 
-    // Crear URL del blob con timestamp único para evitar caché
-    const timestamp = Date.now();
-    const manifestUrl = URL.createObjectURL(blob);
+    const newManifestLink = document.createElement('link');
+    newManifestLink.rel = 'manifest';
+    newManifestLink.href = manifestDataUrl;
+    document.getElementsByTagName('head')[0].appendChild(newManifestLink);
 
-    // Remover TODOS los links de manifest existentes (incluido el estático)
+    // Ahora remover los manifests anteriores (estáticos y data: URLs viejos)
     const existingManifests = document.querySelectorAll("link[rel='manifest']");
     existingManifests.forEach((link) => {
+      if (link === newManifestLink) return;
       const oldHref = (link as HTMLLinkElement).href;
       link.remove();
-      // Limpiar URLs blob anteriores
       if (oldHref?.startsWith('blob:')) {
         URL.revokeObjectURL(oldHref);
       }
     });
 
-    // Pequeño delay para asegurar que los links anteriores se hayan removido completamente
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    // Crear nuevo link con la nueva URL
-    const newManifestLink = document.createElement('link');
-    newManifestLink.rel = 'manifest';
-    newManifestLink.href = manifestUrl;
-    newManifestLink.setAttribute('crossorigin', 'use-credentials');
-    document.getElementsByTagName('head')[0].appendChild(newManifestLink);
-
-    // Forzar actualización del manifest en el navegador
-    // Esto es importante para que el navegador recargue el manifest
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      // Si hay un service worker, puede que necesite actualizar el manifest
-      navigator.serviceWorker.controller.postMessage({
-        type: 'MANIFEST_UPDATED',
-        manifestUrl: manifestUrl,
-        version: this.manifestVersion,
-        timestamp: timestamp,
-      });
-    }
-
-    // Disparar evento personalizado para notificar que el manifest fue actualizado
     window.dispatchEvent(
       new CustomEvent('manifest-updated', {
-        detail: { manifestUrl, version: this.manifestVersion, timestamp },
+        detail: { version: this.manifestVersion },
       }),
     );
   }
 
   /**
-   * Actualiza el logo en el documento (si existe un elemento con id 'app-logo')
+   * Persiste la URL de la API en localStorage.
+   * El script inline de index.html la usa para hacer fetch directo
+   * al endpoint de system-settings antes de que Angular cargue.
    */
-  private updateLogo(logoUrl: string): void {
-    if (!logoUrl) return;
-
-    const logoElement = document.getElementById('app-logo') as HTMLImageElement | null;
-    if (logoElement) {
-      // Agregar cache busting para forzar la actualización del logo
-      const logoUrlWithCache = this.addCacheBusting(logoUrl);
-      logoElement.src = logoUrlWithCache;
-      const tradeName = this.settings()?.systemSettingTradeName;
-      logoElement.alt = tradeName ?? 'Logo';
+  private persistApiUrl(): void {
+    try {
+      localStorage.setItem('pwa_api_url', environment.API_URL);
+    } catch {
+      // Ignorar errores de localStorage
     }
   }
 

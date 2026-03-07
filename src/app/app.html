@@ -1,4 +1,9 @@
 <div appPullToRefresh class="app-container">
-  <router-outlet></router-outlet>
-  <app-no-connection-overlay></app-no-connection-overlay>
+  @if (shouldShowPwaRequired()) {
+    <app-pwa-required></app-pwa-required>
+  } @else {
+    <router-outlet></router-outlet>
+    <app-no-connection-overlay></app-no-connection-overlay>
+    <app-pwa-update-overlay></app-pwa-update-overlay>
+  }
 </div>
