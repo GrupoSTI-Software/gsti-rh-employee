@@ -325,15 +325,21 @@ export class BrandingService {
       },
     };
 
-    // Enviar el manifest al Service Worker para que lo sirva en /manifest.webmanifest.
-    // Chrome en Android evalúa el manifest al disparar beforeinstallprompt, antes de que
-    // Angular cargue. Al interceptar la petición en el SW, garantizamos que Chrome siempre
-    // lea el nombre e ícono correctos del cliente, no el manifest estático del servidor.
+    // Persistir el manifest en localStorage para que el script inline de index.html
+    // pueda inyectarlo como data URL en el <link rel="manifest"> ANTES de que Chrome
+    // evalúe el manifest para el diálogo de instalación (beforeinstallprompt).
+    // Esta es la única forma confiable de que Chrome lea el nombre e ícono correctos
+    // en Android desde la primera visita.
+    this.persistManifestToLocalStorage(manifest);
+
+    // Enviar también al Service Worker para que intercepte /manifest.webmanifest
+    // en caso de que el script inline no haya podido inyectarlo.
     await this.sendManifestToServiceWorker(manifest);
 
-    // Actualizar el <link rel="manifest"> para apuntar al manifest estático.
-    // El SW lo interceptará y responderá con el manifest dinámico.
-    // Usamos la URL estática (no blob) para que Chrome pueda hacer el fetch correctamente.
+    // Actualizar el <link rel="manifest"> con el manifest dinámico como data URL.
+    // Esto hace que Chrome re-evalúe el manifest inmediatamente en la sesión actual.
+    const manifestDataUrl = `data:application/manifest+json,${encodeURIComponent(JSON.stringify(manifest))}`;
+
     const existingManifests = document.querySelectorAll("link[rel='manifest']");
     existingManifests.forEach((link) => {
       const oldHref = (link as HTMLLinkElement).href;
@@ -347,7 +353,7 @@ export class BrandingService {
 
     const newManifestLink = document.createElement('link');
     newManifestLink.rel = 'manifest';
-    newManifestLink.href = '/manifest.webmanifest';
+    newManifestLink.href = manifestDataUrl;
     document.getElementsByTagName('head')[0].appendChild(newManifestLink);
 
     window.dispatchEvent(
@@ -355,6 +361,21 @@ export class BrandingService {
         detail: { version: this.manifestVersion },
       }),
     );
+  }
+
+  /**
+   * Persiste el manifest dinámico en localStorage.
+   * El script inline de index.html lo lee en cada carga para inyectarlo
+   * como data URL antes de que Chrome evalúe el manifest.
+   *
+   * @param manifest - Objeto con los datos del manifest a persistir
+   */
+  private persistManifestToLocalStorage(manifest: object): void {
+    try {
+      localStorage.setItem('pwa_dynamic_manifest', JSON.stringify(manifest));
+    } catch {
+      // Ignorar errores de localStorage (modo privado, cuota excedida, etc.)
+    }
   }
 
   /**
