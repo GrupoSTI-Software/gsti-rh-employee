@@ -28,8 +28,22 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 const distDir = path.join(rootDir, 'dist', 'gsti-pwa-empleado', 'browser');
 const manifestOutputPath = path.join(distDir, 'manifest.webmanifest');
-const indexOutputPath = path.join(distDir, 'index.html');
 const envFile = path.join(rootDir, '.env');
+
+/**
+ * Angular SSR genera index.csr.html; Angular sin SSR genera index.html.
+ * Detectar cuál existe para actualizarlo correctamente.
+ */
+function resolveIndexHtmlPath() {
+  const candidates = ['index.csr.html', 'index.html'];
+  for (const name of candidates) {
+    const candidate = path.join(distDir, name);
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
 
 /**
  * Lee la API_URL desde el archivo .env
@@ -166,16 +180,20 @@ function writeManifest(manifest) {
 }
 
 /**
- * Actualiza el index.html del dist para agregar cache-busting al manifest
+ * Actualiza el index HTML del dist para agregar cache-busting al manifest
  * y actualizar los meta tags con el branding real.
+ * Soporta tanto index.html (Angular sin SSR) como index.csr.html (Angular SSR).
  * @param {Object|null} settings
  */
 function updateIndexHtml(settings) {
-  if (!fs.existsSync(indexOutputPath)) {
-    console.warn(`⚠️  index.html no encontrado en: ${indexOutputPath}`);
+  const indexOutputPath = resolveIndexHtmlPath();
+  if (!indexOutputPath) {
+    console.warn(`⚠️  index HTML no encontrado en: ${distDir}`);
+    console.warn('   Se buscó: index.csr.html, index.html');
     return;
   }
 
+  console.log(`📄 Actualizando: ${path.basename(indexOutputPath)}`);
   let html = fs.readFileSync(indexOutputPath, 'utf8');
   const cacheBuster = Date.now();
 
@@ -233,7 +251,7 @@ function updateIndexHtml(settings) {
   }
 
   fs.writeFileSync(indexOutputPath, html, 'utf8');
-  console.log('✅ index.html actualizado con branding y cache-busting del manifest');
+  console.log(`✅ ${path.basename(indexOutputPath)} actualizado con branding y cache-busting del manifest`);
 }
 
 /**
