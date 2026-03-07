@@ -315,7 +315,7 @@ export class BrandingService {
 
     // Agregar cache busting a las URLs de los iconos
     const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
-    const logoUrlWithCache = this.addCacheBusting(logoUrl);
+    // const logoUrlWithCache = this.addCacheBusting(logoUrl);
 
     // Crear nuevo manifest con los iconos actualizados y cache busting
     // Asegurar que el nombre no tenga espacios extra ni caracteres especiales
@@ -345,13 +345,13 @@ export class BrandingService {
           purpose: 'any',
         },
         {
-          src: logoUrlWithCache,
+          src: faviconUrlWithCache,
           sizes: '512x512',
           type: 'image/png',
           purpose: 'maskable',
         },
         {
-          src: logoUrlWithCache,
+          src: faviconUrlWithCache,
           sizes: '192x192',
           type: 'image/png',
           purpose: 'maskable',

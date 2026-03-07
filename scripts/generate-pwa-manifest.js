@@ -164,8 +164,8 @@ function buildManifest(settings) {
     icons: [
       { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: logoUrl, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-      { src: logoUrl, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+      { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   };
 }
