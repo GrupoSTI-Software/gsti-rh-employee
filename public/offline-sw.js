@@ -63,7 +63,7 @@ self.addEventListener('fetch', function (event) {
   if (request.mode !== 'navigate') return;
 
   event.respondWith(
-    fetch(request)
+    fetch(request, { cache: 'no-store' })
       .then(function (response) {
         if (response && response.status === 200) {
           var responseClone = response.clone();

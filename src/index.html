@@ -16,7 +16,7 @@
 
     <!-- iOS PWA meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="GSTI" />
 
     <!-- Android PWA meta tags -->
@@ -28,9 +28,9 @@
     <meta name="msapplication-tap-highlight" content="no" />
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
 
-    <!-- NO agregar <link rel="manifest"> estático aquí.
-         El manifest se genera dinámicamente desde el API de branding.
-         El script inline a continuación lo inyecta ANTES de que Chrome evalúe el manifest. -->
+    <!-- Manifest estático como fallback. El script inline y BrandingService lo reemplazan
+         con uno dinámico que contiene datos del branding del cliente. -->
+    <link rel="manifest" href="manifest.webmanifest" />
     <script>
       (function () {
         var apiUrl = localStorage.getItem('pwa_api_url');

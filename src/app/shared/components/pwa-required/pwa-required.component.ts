@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, PLATFORM_ID, input } from '@angular/core';
+import { Component, inject, computed, signal, PLATFORM_ID, input, DestroyRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@shared/pipes/translate.pipe';
@@ -24,6 +24,7 @@ export class PwaRequiredComponent {
   private readonly router = inject(Router);
   private readonly pwaService = inject(PwaDetectionService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
   readonly branding = inject(BrandingService);
   readonly theme = inject(ThemeService);
   readonly pwaInstallPrompt = inject(PwaInstallPromptService);
@@ -40,9 +41,13 @@ export class PwaRequiredComponent {
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
   readonly isBannerMode = computed(() => this.mode() === 'banner');
 
+  private standaloneHandler: ((e: MediaQueryListEvent) => void) | null = null;
+  private standaloneQuery: MediaQueryList | null = null;
+
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.setupInstallPrompt();
+      this.setupStandaloneAutoRedirect();
     }
   }
 
@@ -54,6 +59,42 @@ export class PwaRequiredComponent {
       e.preventDefault();
       this.deferredPrompt.set(e);
     });
+  }
+
+  /**
+   * Escucha cambios en display-mode para redirigir automáticamente
+   * al usuario cuando la PWA se abre en modo standalone.
+   * Esto cubre el caso en Android donde el display-mode se propaga
+   * después de que la página ya cargó y el guard redirigió aquí.
+   */
+  private setupStandaloneAutoRedirect(): void {
+    this.standaloneQuery = window.matchMedia('(display-mode: standalone)');
+
+    if (this.standaloneQuery.matches) {
+      this.redirectToApp();
+      return;
+    }
+
+    this.standaloneHandler = (e: MediaQueryListEvent): void => {
+      if (e.matches) {
+        this.redirectToApp();
+      }
+    };
+
+    this.standaloneQuery.addEventListener('change', this.standaloneHandler);
+
+    this.destroyRef.onDestroy(() => {
+      if (this.standaloneQuery && this.standaloneHandler) {
+        this.standaloneQuery.removeEventListener('change', this.standaloneHandler);
+      }
+    });
+  }
+
+  /**
+   * Redirige al login cuando se confirma modo standalone
+   */
+  private redirectToApp(): void {
+    void this.router.navigate(['/login']);
   }
 
   /**

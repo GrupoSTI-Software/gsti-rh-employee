@@ -8,6 +8,11 @@ import { isPlatformBrowser } from '@angular/common';
  */
 const PWA_STANDALONE_PERSISTED_KEY = 'pwa_standalone_confirmed';
 
+/**
+ * Tiempo máximo de espera (ms) para que display-mode se propague en Android.
+ */
+const DISPLAY_MODE_WAIT_MS = 300;
+
 @Injectable({
   providedIn: 'root',
 })
@@ -17,6 +22,7 @@ export class PwaDetectionService {
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.persistStandaloneStateIfDetected();
+      this.setupStandaloneListeners();
     }
   }
 
@@ -26,18 +32,71 @@ export class PwaDetectionService {
    * puede no estar disponible inmediatamente al lanzar la PWA.
    */
   private persistStandaloneStateIfDetected(): void {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
-    const isFromNativeApp =
-      document.referrer.includes('android-app://') || document.referrer.includes('ios-app://');
-
-    if (isStandalone || isIOSStandalone || isFromNativeApp) {
-      try {
-        localStorage.setItem(PWA_STANDALONE_PERSISTED_KEY, 'true');
-      } catch {
-        // Ignorar errores de localStorage (modo privado, cuota excedida, etc.)
-      }
+    if (this.checkDisplayModeStandalone() || this.checkIOSStandalone() || this.checkNativeApp()) {
+      this.persistStandaloneState();
     }
+  }
+
+  /**
+   * Configura listeners reactivos para detectar cambios en el modo standalone.
+   * Cubre dos escenarios críticos:
+   * 1. El display-mode cambia después de que el constructor ya ejecutó la verificación inicial
+   * 2. El evento appinstalled confirma que la PWA fue instalada desde el navegador
+   */
+  private setupStandaloneListeners(): void {
+    const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+    standaloneQuery.addEventListener('change', (e) => {
+      if (e.matches) {
+        this.persistStandaloneState();
+      }
+    });
+
+    const fullscreenQuery = window.matchMedia('(display-mode: fullscreen)');
+    fullscreenQuery.addEventListener('change', (e) => {
+      if (e.matches) {
+        this.persistStandaloneState();
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      this.persistStandaloneState();
+    });
+  }
+
+  /**
+   * Guarda la confirmación de modo standalone en localStorage.
+   */
+  private persistStandaloneState(): void {
+    try {
+      localStorage.setItem(PWA_STANDALONE_PERSISTED_KEY, 'true');
+    } catch {
+      // Ignorar errores de localStorage (modo privado, cuota excedida, etc.)
+    }
+  }
+
+  /**
+   * Verifica display-mode standalone o fullscreen vía media query.
+   */
+  private checkDisplayModeStandalone(): boolean {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches
+    );
+  }
+
+  /**
+   * Verifica navigator.standalone para iOS Safari.
+   */
+  private checkIOSStandalone(): boolean {
+    return (window.navigator as { standalone?: boolean }).standalone === true;
+  }
+
+  /**
+   * Verifica si fue abierta desde una app nativa (TWA).
+   */
+  private checkNativeApp(): boolean {
+    return document.referrer.includes('android-app://') || document.referrer.includes('ios-app://');
   }
 
   /**
@@ -51,23 +110,60 @@ export class PwaDetectionService {
       return false;
     }
 
-    // Método 1: Verificar display-mode standalone (estándar para Chrome, Edge, etc.)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    return (
+      this.checkDisplayModeStandalone() ||
+      this.checkIOSStandalone() ||
+      this.checkNativeApp() ||
+      this.getPersistedStandaloneState()
+    );
+  }
 
-    // Método 2: Verificar navigator.standalone (iOS Safari)
-    const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
+  /**
+   * Verificación asíncrona de modo PWA con espera para Android.
+   * En Android Chrome, el display-mode puede tardar unos milisegundos en
+   * propagarse al iniciar la PWA desde el ícono de inicio.
+   * Este método espera brevemente antes de dar un resultado negativo.
+   * @returns Promesa que resuelve a true si está en modo PWA
+   */
+  async isRunningAsPwaAsync(): Promise<boolean> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
 
-    // Método 3: Verificar si fue abierta desde una app nativa (TWA)
-    const isFromNativeApp =
-      document.referrer.includes('android-app://') || document.referrer.includes('ios-app://');
+    if (this.isRunningAsPwa()) {
+      return true;
+    }
 
-    // Método 4: Verificar estado persistido en localStorage.
-    // En Android, al lanzar la PWA desde el ícono, el display-mode puede tardar
-    // en propagarse. Si en una sesión anterior se confirmó el modo standalone,
-    // confiamos en ese estado para evitar mostrar la pantalla de instalación.
-    const isPersistedStandalone = this.getPersistedStandaloneState();
+    // En Android, esperar a que display-mode se propague
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    if (!isAndroid) {
+      return false;
+    }
 
-    return isStandalone || isIOSStandalone || isFromNativeApp || isPersistedStandalone;
+    return new Promise<boolean>((resolve) => {
+      const mql = window.matchMedia('(display-mode: standalone)');
+
+      const cleanup = (): void => {
+        clearTimeout(timeout);
+        mql.removeEventListener('change', handler);
+      };
+
+      const handler = (e: MediaQueryListEvent): void => {
+        if (e.matches) {
+          cleanup();
+          this.persistStandaloneState();
+          resolve(true);
+        }
+      };
+
+      const timeout = setTimeout(() => {
+        mql.removeEventListener('change', handler);
+        // Último intento de detección tras el timeout
+        resolve(this.isRunningAsPwa());
+      }, DISPLAY_MODE_WAIT_MS);
+
+      mql.addEventListener('change', handler);
+    });
   }
 
   /**
@@ -103,7 +199,6 @@ export class PwaDetectionService {
       return false;
     }
 
-    // Verificar si el navegador soporta instalación de PWA
     return 'serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window;
   }
 

@@ -134,18 +134,13 @@ export class BrandingService {
     // Actualizar meta tags PRIMERO (antes del manifest)
     this.updateMetaTags(settings);
 
-    // Actualizar favicon (primero para que se cargue rápido)
-    this.updateFavicon(this.getPWAApplicationIconUrl(settings));
-
-    // Actualizar logo en el documento
-    this.updateLogo(settings.systemSettingLogo);
+    // Actualizar favicon e iconos de Apple (async por generación de fondo blanco en iOS)
+    await this.updateFavicon(this.getPWAApplicationIconUrl(settings));
 
     // Actualizar colores del tema
     this.updateThemeColors(settings.systemSettingSidebarColor);
 
     // Actualizar manifest de PWA (importante para la instalación)
-    // Esto debe hacerse después de pre-cargar los iconos
-    // Pero creamos un manifest inicial inmediatamente sin esperar los iconos
     await this.updateManifest(settings);
   }
 
@@ -181,9 +176,11 @@ export class BrandingService {
   }
 
   /**
-   * Actualiza el favicon de la aplicación y los iconos de Apple
+   * Actualiza el favicon de la aplicación y los iconos de Apple.
+   * En iOS genera el apple-touch-icon con fondo blanco para evitar
+   * que las áreas transparentes se muestren en negro.
    */
-  private updateFavicon(faviconUrl: string): void {
+  private async updateFavicon(faviconUrl: string): Promise<void> {
     if (!faviconUrl) return;
 
     const faviconUrlWithCache = this.addCacheBusting(faviconUrl);
@@ -199,6 +196,9 @@ export class BrandingService {
     link.type = 'image/png';
     document.getElementsByTagName('head')[0].appendChild(link);
 
+    // Generar icono con fondo blanco para iOS (evita el fondo negro en transparencias)
+    const appleIconUrl = await this.generateIconWithWhiteBackground(faviconUrl);
+
     // Actualizar apple-touch-icon
     const appleIcon = document.querySelector(
       "link[rel='apple-touch-icon']",
@@ -208,11 +208,11 @@ export class BrandingService {
     }
     const newAppleIcon = document.createElement('link');
     newAppleIcon.rel = 'apple-touch-icon';
-    newAppleIcon.href = faviconUrlWithCache;
+    newAppleIcon.href = appleIconUrl;
     document.getElementsByTagName('head')[0].appendChild(newAppleIcon);
 
     // Actualizar apple-touch-icon con tamaños específicos
-    const sizes = ['192x192', '512x512'];
+    const sizes = ['180x180', '192x192', '512x512'];
     sizes.forEach((size) => {
       const existingIcon = document.querySelector(
         `link[rel='apple-touch-icon'][sizes='${size}']`,
@@ -223,9 +223,42 @@ export class BrandingService {
       const sizedIcon = document.createElement('link');
       sizedIcon.rel = 'apple-touch-icon';
       sizedIcon.setAttribute('sizes', size);
-      sizedIcon.href = faviconUrlWithCache;
+      sizedIcon.href = appleIconUrl;
       document.getElementsByTagName('head')[0].appendChild(sizedIcon);
     });
+  }
+
+  /**
+   * Genera una versión del icono con fondo blanco usando canvas.
+   * Necesario para iOS que renderiza áreas transparentes como negro.
+   * Si no se puede procesar (CORS, etc.), retorna la URL original.
+   */
+  private async generateIconWithWhiteBackground(originalUrl: string): Promise<string> {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      await new Promise<void>((resolve, reject) => {
+        img.onload = (): void => resolve();
+        img.onerror = (): void => reject(new Error('No se pudo cargar el icono'));
+        img.src = this.addCacheBusting(originalUrl);
+      });
+
+      const size = 512;
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return this.addCacheBusting(originalUrl);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(img, 0, 0, size, size);
+
+      return canvas.toDataURL('image/png');
+    } catch {
+      return this.addCacheBusting(originalUrl);
+    }
   }
 
   /**
@@ -367,22 +400,6 @@ export class BrandingService {
       localStorage.setItem('pwa_api_url', environment.API_URL);
     } catch {
       // Ignorar errores de localStorage
-    }
-  }
-
-  /**
-   * Actualiza el logo en el documento (si existe un elemento con id 'app-logo')
-   */
-  private updateLogo(logoUrl: string): void {
-    if (!logoUrl) return;
-
-    const logoElement = document.getElementById('app-logo') as HTMLImageElement | null;
-    if (logoElement) {
-      // Agregar cache busting para forzar la actualización del logo
-      const logoUrlWithCache = this.addCacheBusting(logoUrl);
-      logoElement.src = logoUrlWithCache;
-      const tradeName = this.settings()?.systemSettingTradeName;
-      logoElement.alt = tradeName ?? 'Logo';
     }
   }
 
