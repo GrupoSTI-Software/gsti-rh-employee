@@ -35,7 +35,7 @@ export class LanguageSelectorComponent {
   private readonly secureStorage = inject(SecureStorageService);
 
   readonly languages: { code: Language; label: string; flag: string }[] = [
-    { code: 'es', label: 'Español', flag: '🇪🇸' },
+    { code: 'es', label: 'Español', flag: '🇲🇽' },
     { code: 'en', label: 'English', flag: '🇺🇸' },
   ];
   showDropdown = false;

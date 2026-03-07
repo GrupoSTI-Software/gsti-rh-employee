@@ -1,0 +1,78 @@
+@if (updateAvailable()) {
+  <div class="update-overlay">
+    <div
+      class="overlay-backdrop"
+      role="presentation"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    ></div>
+
+    <div class="overlay-content" role="dialog" aria-modal="true" aria-labelledby="update-title">
+      <div class="icon-container">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+      </div>
+
+      <h2 id="update-title" class="overlay-title">
+        {{ 'update.title' | translate }}
+      </h2>
+
+      <p class="overlay-message">
+        {{ 'update.message' | translate }}
+      </p>
+
+      <div class="overlay-actions">
+        <button class="update-button" (click)="applyUpdate()" type="button">
+          <svg
+            class="update-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 12C4 7.58172 7.58172 4 12 4C14.5264 4 16.7792 5.17108 18.2454 7M20 12C20 16.4183 16.4183 20 12 20C9.47362 20 7.22082 18.8289 5.75463 17"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+            <path
+              d="M18 3V7H14"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M6 21V17H10"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          {{ 'update.apply' | translate }}
+        </button>
+
+        <button class="dismiss-button" (click)="dismiss()" type="button">
+          {{ 'update.later' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
