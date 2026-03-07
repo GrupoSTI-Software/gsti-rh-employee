@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IExceptionPort } from '../domain/entities/exception-port.interface';
 import { IExceptionType } from '../domain/entities/exception-type.interface';
@@ -14,6 +14,7 @@ import {
 } from '../domain/entities/exception-request-detail.interface';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador HTTP para excepciones de turno
@@ -26,6 +27,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpExceptionAdapter implements IExceptionPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -65,6 +67,23 @@ export class HttpExceptionAdapter implements IExceptionPort {
       return response;
     } catch (error: unknown) {
       this.logger.error('Error al crear solicitud de excepción:', error);
+
+      // Traducir el mensaje de error antes de lanzarlo
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          const translatedError = new Error(
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+          throw translatedError;
+        }
+      }
+
+      if (error instanceof Error) {
+        const translatedError = new Error(this.apiErrorTranslator.translateError(error.message));
+        throw translatedError;
+      }
+
       throw error;
     }
   }

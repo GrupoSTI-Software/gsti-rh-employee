@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IAttendancePort, IAttendance, IAttendanceApiResponse } from '../domain/attendance.port';
 import { IWorkHoliday } from '../domain/entities/work-holiday.interface';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador HTTP para asistencia
@@ -17,6 +18,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpAttendanceAdapter implements IAttendancePort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -158,6 +160,18 @@ export class HttpAttendanceAdapter implements IAttendancePort {
       return checkResponse;
     } catch (error: unknown) {
       this.logger.error('Error al obtener asistencia:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return null;
     }
   }
@@ -184,6 +198,18 @@ export class HttpAttendanceAdapter implements IAttendancePort {
       return true;
     } catch (error: unknown) {
       this.logger.error('Error al registrar asistencia:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return false;
     }
   }

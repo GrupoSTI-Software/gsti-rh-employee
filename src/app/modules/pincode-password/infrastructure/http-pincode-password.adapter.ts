@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { IPincodePasswordPort, IPincodePasswordResult } from '../domain/pincode-password.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Interfaces para las respuestas de la API (específicas de esta implementación)
@@ -32,6 +33,7 @@ interface IPincodePasswordResponse {
 export class HttpPincodePasswordAdapter implements IPincodePasswordPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   async verifyPincode(pinCode: string): Promise<IPincodePasswordResult> {
@@ -54,10 +56,12 @@ export class HttpPincodePasswordAdapter implements IPincodePasswordPort {
         };
       }
 
-      // Si la respuesta no es exitosa, devolver error
+      // Si la respuesta no es exitosa, devolver error traducido
+      const errorMessage =
+        pincodePasswordResponse?.message ?? 'Error al verificar código de verificación';
       return {
         success: false,
-        error: pincodePasswordResponse?.message ?? 'Error al verificar código de verificación',
+        error: this.apiErrorTranslator.translateError(errorMessage),
       };
     } catch (error: unknown) {
       this.logger.error('Error al verificar código de verificación');
@@ -68,7 +72,7 @@ export class HttpPincodePasswordAdapter implements IPincodePasswordPort {
         if (errorBody?.message !== undefined) {
           return {
             success: false,
-            error: errorBody.message,
+            error: this.apiErrorTranslator.translateError(errorBody.message),
           };
         }
       }
@@ -76,13 +80,15 @@ export class HttpPincodePasswordAdapter implements IPincodePasswordPort {
       if (error instanceof Error && error.message.length > 0) {
         return {
           success: false,
-          error: error.message,
+          error: this.apiErrorTranslator.translateError(error.message),
         };
       }
 
       return {
         success: false,
-        error: 'Error al verificar código de verificación. Intenta nuevamente.',
+        error: this.apiErrorTranslator.translateError(
+          'Error al verificar código de verificación. Intenta nuevamente.',
+        ),
       };
     }
   }

@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
   IVerificationAttendanceLockPort,
@@ -7,12 +7,14 @@ import {
 } from '../domain/verification-attendance-lock.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 @Injectable({
   providedIn: 'root',
 })
 export class HttpVerificationAttendanceLockAdapter implements IVerificationAttendanceLockPort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -30,6 +32,18 @@ export class HttpVerificationAttendanceLockAdapter implements IVerificationAtten
       return response;
     } catch (error: unknown) {
       this.logger.error('Error al verificar el bloqueo de asistencia:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return null;
     }
   }

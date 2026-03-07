@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
   INoticePort,
@@ -11,6 +11,7 @@ import {
 } from '../domain/notices.port';
 import { environment } from '@env/environment';
 import { LoggerService } from '@core/services/logger.service';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador HTTP para avisos
@@ -23,6 +24,7 @@ import { LoggerService } from '@core/services/logger.service';
 export class HttpNoticesAdapter implements INoticePort {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   private readonly apiUrl = environment.API_URL;
 
   /**
@@ -56,6 +58,18 @@ export class HttpNoticesAdapter implements INoticePort {
       return response.data?.notices ?? null;
     } catch (error: unknown) {
       this.logger.error('Error al obtener avisos:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return null;
     }
   }
@@ -74,6 +88,18 @@ export class HttpNoticesAdapter implements INoticePort {
       return response.data?.notice ?? null;
     } catch (error: unknown) {
       this.logger.error('Error al obtener el aviso:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return null;
     }
   }
@@ -96,6 +122,18 @@ export class HttpNoticesAdapter implements INoticePort {
       return response.type === 'success';
     } catch (error: unknown) {
       this.logger.error('Error al marcar el aviso como leído:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return false;
     }
   }
@@ -123,6 +161,18 @@ export class HttpNoticesAdapter implements INoticePort {
       return response.data?.unreadCount ?? 0;
     } catch (error: unknown) {
       this.logger.error('Error al obtener el conteo de avisos no leídos:', error);
+
+      // Traducir el mensaje de error si es posible
+      if (error instanceof HttpErrorResponse) {
+        const errorBody = error.error as { message?: string } | null;
+        if (errorBody?.message !== undefined) {
+          this.logger.error(
+            'Mensaje del API:',
+            this.apiErrorTranslator.translateError(errorBody.message),
+          );
+        }
+      }
+
       return 0;
     }
   }

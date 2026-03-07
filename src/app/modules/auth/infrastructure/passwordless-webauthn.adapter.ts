@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { AuthenticationJSON, client } from '@passwordless-id/webauthn';
+import { ApiErrorTranslatorService } from '@core/services/api-error-translator.service';
 
 /**
  * Adaptador para la librería @passwordless-id/webauthn
@@ -9,6 +10,7 @@ import { AuthenticationJSON, client } from '@passwordless-id/webauthn';
   providedIn: 'root',
 })
 export class PasswordlessWebAuthnAdapter {
+  private readonly apiErrorTranslator = inject(ApiErrorTranslatorService);
   /**
    * Verifica si el navegador soporta WebAuthn
    */
@@ -78,9 +80,14 @@ export class PasswordlessWebAuthnAdapter {
       };
     } catch (error: unknown) {
       if (error instanceof Error) {
-        throw new Error(`Error al registrar credencial: ${error.message}`);
+        const translatedMessage = this.apiErrorTranslator.translateError(
+          `Error al registrar credencial: ${error.message}`,
+        );
+        throw new Error(translatedMessage);
       }
-      throw new Error('Error desconocido al registrar credencial');
+      throw new Error(
+        this.apiErrorTranslator.translateError('Error desconocido al registrar credencial'),
+      );
     }
   }
 
@@ -103,9 +110,12 @@ export class PasswordlessWebAuthnAdapter {
       return authentication;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        throw new Error(`Error al autenticar: ${error.message}`);
+        const translatedMessage = this.apiErrorTranslator.translateError(
+          `Error al autenticar: ${error.message}`,
+        );
+        throw new Error(translatedMessage);
       }
-      throw new Error('Error desconocido al autenticar');
+      throw new Error(this.apiErrorTranslator.translateError('Error desconocido al autenticar'));
     }
   }
 
