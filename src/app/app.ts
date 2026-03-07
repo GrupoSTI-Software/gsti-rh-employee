@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, AfterViewInit } from '@angular/core';
+import { Component, signal, inject, OnInit, AfterViewInit, computed } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
@@ -10,6 +10,8 @@ import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-requir
 import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
 import { PwaUpdateOverlayComponent } from '@shared/components/pwa-update-overlay/pwa-update-overlay.component';
 import { PwaUpdateService } from '@core/services/pwa-update.service';
+import { PwaDetectionService } from '@core/services/pwa-detection.service';
+import { environment } from '@env/environment';
 
 /**
  * Clave para almacenar el idioma de la aplicación
@@ -45,8 +47,22 @@ export class App implements OnInit, AfterViewInit {
   private readonly branding = inject(BrandingService);
   private readonly secureStorage = inject(SecureStorageService);
   private readonly pwaInstallPrompt = inject(PwaInstallPromptService);
+  private readonly pwaDetection = inject(PwaDetectionService);
   // Inicializa el servicio de actualizaciones al arrancar la app
   private readonly _pwaUpdate = inject(PwaUpdateService);
+
+  /**
+   * Signal que indica si la PWA está instalada
+   */
+  private readonly isPwaInstalled = signal(false);
+
+  /**
+   * Determina si debe mostrar el componente PWA Required.
+   * Solo se muestra cuando PRODUCTION es true Y la PWA no está instalada.
+   */
+  protected readonly shouldShowPwaRequired = computed(() => {
+    return environment.PRODUCTION && !this.isPwaInstalled();
+  });
 
   constructor() {
     // Inicializar tema
@@ -55,6 +71,9 @@ export class App implements OnInit, AfterViewInit {
     // Cargar branding lo más temprano posible (antes de ngOnInit)
     // Esto asegura que el favicon y manifest se actualicen antes de que el usuario instale la PWA
     void this.branding.loadBranding();
+
+    // Inicializar estado de PWA
+    this.isPwaInstalled.set(this.pwaDetection.isRunningAsPwa());
   }
 
   ngOnInit(): void {

@@ -635,3 +635,59 @@
   text-align: center;
   border-top: 1px solid var(--bg-secondary);
 }
+
+.desktop-not-supported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: $spacing-3xl $spacing-xl;
+  gap: $spacing-xl;
+
+  .desktop-icon {
+    color: var(--text-tertiary);
+    opacity: 0.5;
+
+    svg {
+      width: 80px;
+      height: 80px;
+    }
+  }
+
+  h2 {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .desktop-description {
+    font-size: $font-size-base;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0;
+  }
+
+  .mobile-devices {
+    display: flex;
+    gap: $spacing-lg;
+    margin-top: $spacing-lg;
+
+    .device-badge {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      padding: $spacing-md $spacing-xl;
+      background: var(--bg-secondary);
+      border-radius: $radius-md;
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      color: var(--text-primary);
+
+      i {
+        font-size: $font-size-xl;
+      }
+    }
+  }
+}

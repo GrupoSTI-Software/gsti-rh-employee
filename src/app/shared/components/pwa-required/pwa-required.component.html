@@ -92,18 +92,44 @@
     </div>
 
     <div class="content-wrapper">
-      <div class="what-is-pwa-card">
-        <p class="description">{{ 'pwa.required.description' | translate }}</p>
+      @if (isDesktop()) {
+        <div class="desktop-not-supported">
+          <div class="desktop-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+              <line x1="6" y1="9" x2="18" y2="15"></line>
+              <line x1="18" y1="9" x2="6" y2="15"></line>
+            </svg>
+          </div>
+          <h2>{{ 'pwa.required.desktopNotSupported' | translate }}</h2>
+          <p class="desktop-description">{{ 'pwa.required.desktopNotSupportedDescription' | translate }}</p>
+          
+          <div class="mobile-devices">
+            <div class="device-badge">
+              <i class="pi pi-android"></i>
+              <span>Android</span>
+            </div>
+            <div class="device-badge">
+              <i class="pi pi-apple"></i>
+              <span>iOS</span>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="what-is-pwa-card">
+          <p class="description">{{ 'pwa.required.description' | translate }}</p>
 
-        <button type="button" class="pwa-info-button" (click)="openPwaInfoModal()">
-          <i class="pi pi-info-circle"></i>
-          <span>{{ 'pwa.required.whatIsPwa' | translate }}</span>
-        </button>
-      </div>
+          <button type="button" class="pwa-info-button" (click)="openPwaInfoModal()">
+            <i class="pi pi-info-circle"></i>
+            <span>{{ 'pwa.required.whatIsPwa' | translate }}</span>
+          </button>
+        </div>
 
-      <div class="instructions-section">
-        <div class="platform-instructions">
-          @if (isAndroid()) {
+        <div class="instructions-section">
+          <div class="platform-instructions">
+            @if (isAndroid()) {
             <div class="platform-card">
               <div class="platform-header">
                 <div class="platform-icon">
@@ -452,10 +478,11 @@
         </div>
       </div>
 
-      <button type="button" class="check-button" (click)="checkAgain()">
-        <i class="pi pi-refresh"></i>
-        <span>{{ 'pwa.required.checkAgain' | translate }}</span>
-      </button>
+        <button type="button" class="check-button" (click)="checkAgain()">
+          <i class="pi pi-refresh"></i>
+          <span>{{ 'pwa.required.checkAgain' | translate }}</span>
+        </button>
+      }
     </div>
   </div>
 

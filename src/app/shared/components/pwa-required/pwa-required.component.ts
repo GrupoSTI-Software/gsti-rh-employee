@@ -36,8 +36,9 @@ export class PwaRequiredComponent {
   readonly logoUrl = computed(() => {
     const settings = this.branding.settings();
     if (!settings) return '/assets/gsti/icon.png';
-    return this.branding.getPWAApplicationIconUrl(settings);
+    return this.branding.getLogoUrl();
   });
+
   readonly showLogo = computed(() => !this.branding.loading() && !!this.branding.settings());
   readonly isBannerMode = computed(() => this.mode() === 'banner');
 
@@ -115,6 +116,16 @@ export class PwaRequiredComponent {
       return false;
     }
     return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  }
+
+  /**
+   * Verifica si el dispositivo es desktop/computadora
+   */
+  isDesktop(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    return !this.isAndroid() && !this.isIOS();
   }
 
   /**

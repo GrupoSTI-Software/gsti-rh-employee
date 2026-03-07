@@ -139,6 +139,8 @@
     "required": {
       "title": "PWA Application Required",
       "description": "This application is only available as an installed PWA. Please install the application to continue.",
+      "desktopNotSupported": "Device not supported",
+      "desktopNotSupportedDescription": "This application is designed exclusively for mobile devices (Android and iOS). Please access from your phone or tablet to install and use the application.",
       "whatIsPwa": "What is a PWA?",
       "pwaDescription": "A Progressive Web App (PWA) is a modern web application that works like a native app on your device, offering a fast, reliable, and engaging experience.",
       "installApp": "Install App",
