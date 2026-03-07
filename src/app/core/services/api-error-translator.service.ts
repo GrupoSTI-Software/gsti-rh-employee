@@ -31,6 +31,8 @@ export class ApiErrorTranslatorService {
     es: {
       'apiErrors.generic': 'Ha ocurrido un error. Por favor intenta nuevamente',
       'apiErrors.invalidCredentials': 'Correo electrónico o contraseña incorrectos',
+      'apiErrors.accountRegisteredOnAnotherDevice':
+        'Esta cuenta ya está registrada en otro dispositivo. Por favor, contacta a tu gerente para activar el acceso en este nuevo dispositivo.',
       'apiErrors.employeeNotFound': 'Empleado no encontrado',
       'apiErrors.userNotFound': 'Usuario no encontrado',
       'apiErrors.incorrectPassword': 'Contraseña incorrecta',
@@ -68,6 +70,8 @@ export class ApiErrorTranslatorService {
     en: {
       'apiErrors.generic': 'An error occurred. Please try again',
       'apiErrors.invalidCredentials': 'Incorrect email or password',
+      'apiErrors.accountRegisteredOnAnotherDevice':
+        'This account is already registered on another device. Please contact your manager to activate access on this new device.',
       'apiErrors.employeeNotFound': 'Employee not found',
       'apiErrors.userNotFound': 'User not found',
       'apiErrors.incorrectPassword': 'Incorrect password',
@@ -111,6 +115,11 @@ export class ApiErrorTranslatorService {
     'Correo electrónico o contraseña incorrectos': 'apiErrors.invalidCredentials',
     'Credenciales inválidas': 'apiErrors.invalidCredentials',
     'Invalid credentials': 'apiErrors.invalidCredentials',
+    'Invalid user credentials': 'apiErrors.invalidCredentials',
+    'This account is already registered on another device. Please contact your manager to activate access on this new device.':
+      'apiErrors.accountRegisteredOnAnotherDevice',
+    'Esta cuenta ya está registrada en otro dispositivo. Por favor, contacta a tu gerente para activar el acceso en este nuevo dispositivo.':
+      'apiErrors.accountRegisteredOnAnotherDevice',
     'Employee not found': 'apiErrors.employeeNotFound',
     'Empleado no encontrado': 'apiErrors.employeeNotFound',
     'User not found': 'apiErrors.userNotFound',

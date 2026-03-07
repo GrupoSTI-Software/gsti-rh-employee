@@ -19,6 +19,7 @@
     "loginTitle": "Sign In",
     "loginSubtitle": "Enter your credentials to access",
     "invalidCredentials": "Your username and/or password are incorrect",
+    "accountRegisteredOnAnotherDevice": "This account is already registered on another device. Please contact your manager to activate access on this new device.",
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
     "sessionExpired": "Your session has expired",
@@ -87,6 +88,7 @@
   "apiErrors": {
     "generic": "An error occurred. Please try again",
     "invalidCredentials": "Incorrect email or password",
+    "accountRegisteredOnAnotherDevice": "This account is already registered on another device. Please contact your manager to activate access on this new device.",
     "userNotFound": "User not found",
     "employeeNotFound": "Employee not found",
     "incorrectPassword": "Incorrect password",

@@ -19,6 +19,7 @@
     "loginTitle": "Iniciar Sesión",
     "loginSubtitle": "Ingresa tus credenciales para acceder",
     "invalidCredentials": "Tu usuario y/o contraseña son incorrectas",
+    "accountRegisteredOnAnotherDevice": "Esta cuenta ya está registrada en otro dispositivo. Por favor, contacta a tu gerente para activar el acceso en este nuevo dispositivo.",
     "loginSuccess": "Inicio de sesión exitoso",
     "logoutSuccess": "Sesión cerrada correctamente",
     "sessionExpired": "Tu sesión ha expirado",
@@ -87,6 +88,7 @@
   "apiErrors": {
     "generic": "Ha ocurrido un error. Por favor intenta nuevamente",
     "invalidCredentials": "Correo electrónico o contraseña incorrectos",
+    "accountRegisteredOnAnotherDevice": "Esta cuenta ya está registrada en otro dispositivo. Por favor, contacta a tu gerente para activar el acceso en este nuevo dispositivo.",
     "userNotFound": "Usuario no encontrado",
     "employeeNotFound": "Empleado no encontrado",
     "incorrectPassword": "Contraseña incorrecta",

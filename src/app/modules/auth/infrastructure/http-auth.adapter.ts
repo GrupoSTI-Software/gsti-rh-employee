@@ -245,7 +245,17 @@ export class HttpAuthAdapter implements IAuthPort {
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
-        const errorBody = error.error as { message?: string } | null;
+        const errorBody = error.error as { message?: string; error?: string } | null;
+
+        // Intentar extraer mensaje del campo 'error' primero (para errores 500)
+        if (errorBody?.error !== undefined && errorBody.error.length > 0) {
+          return {
+            success: false,
+            error: this.apiErrorTranslator.translateError(errorBody.error),
+          };
+        }
+
+        // Si no hay campo 'error', intentar con 'message'
         if (errorBody?.message !== undefined) {
           return {
             success: false,
@@ -828,7 +838,17 @@ export class HttpAuthAdapter implements IAuthPort {
 
       // Si el error tiene una respuesta del servidor, intentar extraer el mensaje
       if (error instanceof HttpErrorResponse) {
-        const errorBody = error.error as { message?: string } | null;
+        const errorBody = error.error as { message?: string; error?: string } | null;
+
+        // Intentar extraer mensaje del campo 'error' primero (para errores 500)
+        if (errorBody?.error !== undefined && errorBody.error.length > 0) {
+          return {
+            success: false,
+            error: this.apiErrorTranslator.translateError(errorBody.error),
+          };
+        }
+
+        // Si no hay campo 'error', intentar con 'message'
         if (errorBody?.message !== undefined) {
           return {
             success: false,
