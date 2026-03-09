@@ -19,6 +19,9 @@
             (click)="openExceptionsDrawer()"
             [attr.aria-label]="'attendance.exceptions' | translate"
           >
+            @if (hasExceptions()) {
+              <span class="notification-dot"></span>
+            }
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -94,7 +97,14 @@
     <div class="checkin-card" [@fadeInUp]>
       <!-- Zona azul: Información del turno -->
       <div class="shift-info-section" [@fadeInUp]>
-        @if (attendance()?.shiftInfo) {
+        @if (specialDayInfo(); as specialDay) {
+          <div class="shift-info-content special-day">
+            @if (specialDayIconHtml()) {
+              <div class="special-day-icon" [innerHTML]="specialDayIconHtml()"></div>
+            }
+            <div class="shift-name">{{ specialDay.translationKey | translate }}</div>
+          </div>
+        } @else if (attendance()?.shiftInfo) {
           <div class="shift-info-content">
             <div class="shift-name">{{ displayShiftName() }}</div>
           </div>
@@ -103,39 +113,12 @@
             <div class="shift-name">Sin turno asignado</div>
           </div>
         }
-        @if (getExceptions().length > 0) {
-          <div class="shift-exceptions">
-            <i class="pi pi-exclamation-circle"></i>
-            <span>{{ getExceptions().length }} excepción(es)</span>
-          </div>
-        }
       </div>
 
       <div class="main-layout" [class.main-layout--timer-only]="!isSelectedDateToday()">
         <div class="time-info-section" [@fadeInUp]>
             <div class="time-display">{{ currentTime() }}</div>
             <div class="date-display">{{ formattedDate() }}</div>
-            @if (attendance()?.isRestDay) {
-              <div class="day-badge">
-                <div class="day-badge-icon">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="48"
-                    height="48"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--info)"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    >
-                    <path d="M4 12h6l-6 8h6" />
-                    <path d="M14 4h6l-6 8h6" />
-                  </svg>
-                </div>
-                <span>{{ 'attendance.restDay' | translate }}</span>
-              </div>
-            }
             @if (attendance()?.isHoliday) {
               <div class="day-badge">
                 @if (holidayIconHtml()) {
@@ -146,14 +129,39 @@
             }
         </div>
 
-        @if (isSelectedDateToday()) {
+        @if (isSelectedDateToday() && canShowCheckButtons()) {
           <div class="action-column" [@fadeInUp]>
-            @if (!attendance()?.checkEatOutTime) {
+            <button
+              type="button"
+              class="checkin-button"
+              (click)="handleRegisterCheckIn('check')"
+              [disabled]="!canCheckIn() || loading()"
+              [attr.aria-label]="'attendance.register' | translate"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#fff"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                >
+                <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                <path d="M11.87 21.48a1.992 1.992 0 0 1 -1.283 -.58l-4.244 -4.243a8 8 0 1 1 13.355 -3.474" />
+                <path d="M15 19l2 2l4 -4" />
+              </svg>
+              <span class="button-label">{{ 'attendance.check' | translate }}</span>
+            </button>
+
+            <!-- @if (!attendance()?.checkEatOutTime) {
               @if (!attendance()?.checkInTime) {
                 <button
                   type="button"
                   class="checkin-button"
-                  (click)="handleRegisterCheckIn()"
+                  (click)="handleRegisterCheckIn('check')"
                   [disabled]="!canCheckIn() || loading()"
                   [attr.aria-label]="'attendance.register' | translate"
                 >
@@ -178,7 +186,7 @@
                 <button
                   type="button"
                   class="checkin-button checkin-button--warning"
-                  (click)="handleRegisterCheckIn()"
+                  (click)="handleRegisterCheckIn('eatin')"
                   [disabled]="!canCheckIn() || loading()"
                   [attr.aria-label]="'attendance.checkEatIn' | translate"
                 >
@@ -203,7 +211,7 @@
                 <button
                   type="button"
                   class="checkin-button checkin-button--warning"
-                  (click)="handleRegisterCheckIn()"
+                  (click)="handleRegisterCheckIn('eatout')"
                   [disabled]="!canCheckIn() || loading()"
                   [attr.aria-label]="'attendance.checkEatOut' | translate"
                 >
@@ -228,13 +236,13 @@
                   <span class="button-label">{{ 'attendance.checkEatOut' | translate }}</span>
                 </button>
               }
-            }
+            } -->
 
-            @if (attendance()?.checkInTime) {
+            <!-- @if (attendance()?.checkInTime) {
               <button
                 type="button"
                 class="checkout-button"
-                (click)="handleRegisterCheckIn()"
+                (click)="handleRegisterCheckIn('check')"
                 [disabled]="!canCheckIn() || loading()"
                 [attr.aria-label]="'attendance.checkOut' | translate"
               >
@@ -254,7 +262,7 @@
                 </svg>
                 <span class="button-label">{{ 'attendance.checkOut' | translate }}</span>
               </button>
-            }
+            } -->
           </div>
         }
       </div>
@@ -263,7 +271,7 @@
       <div class="attendance-status" [@fadeInUp]>
         <div class="status-item">
           <div class="status-left">
-            <svg
+            <!-- <svg
               xmlns="http://www.w3.org/2000/svg"
               width="48"
               height="48"
@@ -277,6 +285,21 @@
               <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
               <path d="M11.87 21.48a1.992 1.992 0 0 1 -1.283 -.58l-4.244 -4.243a8 8 0 1 1 13.355 -3.474" />
               <path d="M15 19l2 2l4 -4" />
+            </svg> -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M12 12l3 -2" />
+              <path d="M12 7v5" />
             </svg>
             <span class="status-label">{{ 'attendance.checkIn' | translate }}</span>
           </div>
@@ -291,7 +314,7 @@
 
         <div class="status-item">
           <div class="status-left">
-            <svg
+            <!-- <svg
               xmlns="http://www.w3.org/2000/svg"
               width="48"
               height="48"
@@ -305,7 +328,22 @@
               <path d="M4 11h16a1 1 0 0 1 1 1v.5c0 1.5 -2.517 5.573 -4 6.5v1a1 1 0 0 1 -1 1h-8a1 1 0 0 1 -1 -1v-1c-1.687 -1.054 -4 -5 -4 -6.5v-.5a1 1 0 0 1 1 -1z" />
               <path d="M8 7c1.657 0 3 -.895 3 -2s-1.343 -2 -3 -2s-3 .895 -3 2s1.343 2 3 2" />
               <path d="M11 5h9" />
-            </svg>
+            </svg> -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#88a4bf"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                <path d="M12 12l3 -2" />
+                <path d="M12 7v5" />
+              </svg>
             <span class="status-label">{{ 'attendance.checkEatIn' | translate }}</span>
           </div>
           <div class="status-right">
@@ -319,7 +357,7 @@
 
         <div class="status-item">
           <div class="status-left">
-            <svg
+            <!-- <svg
               xmlns="http://www.w3.org/2000/svg"
               width="48"
               height="48"
@@ -336,6 +374,21 @@
               <path d="M4.63 15.1l0 .01" />
               <path d="M7.16 18.37l0 .01" />
               <path d="M11 19.94l0 .01" />
+            </svg> -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M12 12l3 -2" />
+              <path d="M12 7v5" />
             </svg>
             <span class="status-label">{{ 'attendance.checkEatOut' | translate }}</span>
           </div>
@@ -350,7 +403,7 @@
 
         <div class="status-item">
           <div class="status-left">
-            <svg
+            <!-- <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="none"
@@ -363,6 +416,21 @@
               <path d="M4 17l5 1l.75 -1.5" />
               <path d="M15 21l0 -4l-4 -3l1 -6" />
               <path d="M7 12l0 -3l5 -1l3 3l3 1" />
+            </svg> -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+              <path d="M12 12l3 -2" />
+              <path d="M12 7v5" />
             </svg>
             <span class="status-label">{{ 'attendance.checkOut' | translate }}</span>
           </div>
