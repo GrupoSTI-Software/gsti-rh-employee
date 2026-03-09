@@ -207,6 +207,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
   });
 
   /**
+   * Indica si existen excepciones en la asistencia actual
+   */
+  readonly hasExceptions = computed(() => {
+    const exceptions = this.attendance()?.exceptions ?? [];
+    return exceptions.length > 0;
+  });
+
+  /**
    * Nombre del feriado truncado a 20 caracteres con "..." si es demasiado largo.
    */
   readonly displayHolidayName = computed(() => {
@@ -275,6 +283,162 @@ export class CheckinComponent implements OnInit, OnDestroy {
       return null;
     }
     return this.sanitizer.bypassSecurityTrustHtml(icon);
+  });
+
+  /**
+   * Información sobre el tipo de día especial (vacaciones, incapacidad, etc.)
+   */
+  readonly specialDayInfo = computed(
+    (): {
+      type: 'vacation' | 'rest-day' | 'work-disability' | 'absence-from-work' | 'new-entry' | null;
+      svgIcon: string;
+      translationKey: string;
+    } | null => {
+      const att = this.attendance();
+      if (!att) return null;
+
+      if (att.isVacationDate) {
+        return {
+          type: 'vacation',
+          svgIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.553 16.75a7.5 7.5 0 0 0 -10.606 0" />
+          <path d="M18 3.804a6 6 0 0 0 -8.196 2.196l10.392 6a6 6 0 0 0 -2.196 -8.196z" />
+          <path d="M16.732 10c1.658 -2.87 2.225 -5.644 1.268 -6.196c-.957 -.552 -3.075 1.326 -4.732 4.196" />
+          <path d="M15 9l-3 5.196" />
+          <path d="M3 19.25a2.4 2.4 0 0 1 1 -.25a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 1 .25" />
+        </svg>`,
+          translationKey: 'vacations.vacationDay',
+        };
+      }
+
+      if (att.isRestDay) {
+        return {
+          type: 'rest-day',
+          svgIcon: `<svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#88a4bf"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M16 5l3 3l-2 1l4 4l-3 1l4 4h-9" />
+            <path d="M15 21l0 -3" />
+            <path d="M8 13l-2 -2" />
+            <path d="M8 12l2 -2" />
+            <path d="M8 21v-13" />
+            <path d="M5.824 16a3 3 0 0 1 -2.743 -3.69a3 3 0 0 1 .304 -4.833a3 3 0 0 1 4.615 -3.707a3 3 0 0 1 4.614 3.707a3 3 0 0 1 .305 4.833a3 3 0 0 1 -2.919 3.695h-4z" />
+          </svg>`,
+          translationKey: 'attendance.restDay',
+        };
+      }
+
+      if (att.isWorkDisabilityDate) {
+        return {
+          type: 'work-disability',
+          svgIcon: `<svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#88a4bf"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M11 5m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+            <path d="M11 7l0 8l4 0l4 5" />
+            <path d="M11 11l5 0" />
+            <path d="M7 11.5a5 5 0 1 0 6 7.5" />
+          </svg>`,
+          translationKey: 'attendance.workDisability',
+        };
+      }
+
+      const exceptions = att.exceptions ?? [];
+      if (exceptions.length > 0) {
+        const exception = exceptions[0];
+        const slug = exception.exceptionType?.exceptionTypeSlug?.toLowerCase() ?? '';
+
+        if (slug.includes('absence-from-work') || slug.includes('ausencia')) {
+          return {
+            type: 'absence-from-work',
+            svgIcon: `<svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M9 5h9a2 2 0 0 1 2 2v9m-.184 3.839a2 2 0 0 1 -1.816 1.161h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 1.158 -1.815" />
+              <path d="M16 3v4" />
+              <path d="M8 3v1" />
+              <path d="M4 11h7m4 0h5" />
+              <path d="M3 3l18 18" />
+            </svg>`,
+            translationKey: 'attendance.absenceFromWork',
+          };
+        }
+
+        if (slug.includes('nuevo-ingreso') || slug.includes('new-entry')) {
+          return {
+            type: 'new-entry',
+            svgIcon: `<svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+              <path d="M6 21v-2a4 4 0 0 1 4 -4h.5" />
+              <path d="M17.8 20.817l-2.172 1.138a.392 .392 0 0 1 -.568 -.41l.415 -2.411l-1.757 -1.707a.389 .389 0 0 1 .217 -.665l2.428 -.352l1.086 -2.193a.392 .392 0 0 1 .702 0l1.086 2.193l2.428 .352a.39 .39 0 0 1 .217 .665l-1.757 1.707l.414 2.41a.39 .39 0 0 1 -.567 .411l-2.172 -1.138z" />
+            </svg>`,
+            translationKey: 'attendance.newEntry',
+          };
+        }
+      }
+
+      return null;
+    },
+  );
+
+  /**
+   * Obtiene el HTML sanitizado del icono del día especial
+   */
+  readonly specialDayIconHtml = computed((): SafeHtml | null => {
+    const specialDay = this.specialDayInfo();
+    if (!specialDay?.svgIcon) {
+      return null;
+    }
+    return this.sanitizer.bypassSecurityTrustHtml(specialDay.svgIcon);
+  });
+
+  /**
+   * Indica si se debe mostrar el turno normal o un día especial
+   */
+  readonly shouldShowShift = computed((): boolean => {
+    return this.specialDayInfo() === null;
+  });
+
+  /**
+   * Indica si se deben mostrar los botones de check-in/check-out
+   * No se muestran para días especiales excepto para nuevo ingreso
+   */
+  readonly canShowCheckButtons = computed((): boolean => {
+    const specialDay = this.specialDayInfo();
+    if (!specialDay) return true;
+    return specialDay.type === 'new-entry';
   });
 
   ngOnInit(): void {

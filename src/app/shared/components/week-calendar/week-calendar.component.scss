@@ -101,7 +101,6 @@
   }
 
   &:hover {
-    background: var(--bg-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
   }
@@ -126,10 +125,6 @@
     .day-name,
     .day-number {
       color: white;
-    }
-
-    &:hover {
-      background: var(--primary-dark);
     }
   }
 

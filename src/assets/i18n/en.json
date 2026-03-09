@@ -203,6 +203,7 @@
     }
   },
   "attendance": {
+    "check": "Register",
     "title": "Attendance Check",
     "subtitle": "Register your check-in and check-out",
     "register": "Start Shift",
@@ -243,6 +244,9 @@
     "more": "More",
     "done": "Done",
     "restDay": "Rest day",
+    "workDisability": "Work disability",
+    "absenceFromWork": "Absence from work",
+    "newEntry": "New entry",
     "faceRecognition": {
       "authenticationError": "Authentication error",
       "noEmployeeId": "Employee ID not found. Please sign in again.",

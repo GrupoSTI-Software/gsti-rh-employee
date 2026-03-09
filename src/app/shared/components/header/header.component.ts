@@ -99,84 +99,84 @@ export class HeaderComponent implements OnInit, OnDestroy {
       </svg>`,
       translationKey: 'menu.attendance',
     },
-    {
-      label: 'Vacaciones',
-      route: '/dashboard/vacations',
-      icon: `<svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#88a4bf"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M17.553 16.75a7.5 7.5 0 0 0 -10.606 0" />
-        <path d="M18 3.804a6 6 0 0 0 -8.196 2.196l10.392 6a6 6 0 0 0 -2.196 -8.196z" />
-        <path d="M16.732 10c1.658 -2.87 2.225 -5.644 1.268 -6.196c-.957 -.552 -3.075 1.326 -4.732 4.196" />
-        <path d="M15 9l-3 5.196" />
-        <path d="M3 19.25a2.4 2.4 0 0 1 1 -.25a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 1 .25" />
-      </svg>`,
-      translationKey: 'menu.vacations',
-    },
-    {
-      label: 'Calendario general',
-      route: '/dashboard/calendar',
-      icon: `<svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#88a4bf"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
-        <path d="M16 3v4" />
-        <path d="M8 3v4" />
-        <path d="M4 11h16" />
-        <path d="M7 14h.013" />
-        <path d="M10.01 14h.005" />
-        <path d="M13.01 14h.005" />
-        <path d="M16.015 14h.005" />
-        <path d="M13.015 17h.005" />
-        <path d="M7.01 17h.005" />
-        <path d="M10.01 17h.005" />
-      </svg>`,
-      translationKey: 'menu.calendarGeneral',
-    },
-    {
-      label: 'Avisos',
-      route: '/dashboard/notices',
-      icon: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8a3 3 0 0 1 0 6"></path>
-        <path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"></path>
-        <path d="M12 8h0l4.524 -3.77a.9 .9 0 0 1 1.476 .692v12.156a.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8"></path>
-      </svg>`,
-      translationKey: 'menu.notices',
-      badgeCount: () => this.unreadCount(),
-    },
-    {
-      label: 'Perfil',
-      route: '/dashboard/profile',
-      icon: `<svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#88a4bf"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
-        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
-      </svg>`,
-      translationKey: 'menu.profile',
-    },
+    // {
+    //   label: 'Vacaciones',
+    //   route: '/dashboard/vacations',
+    //   icon: `<svg
+    //     xmlns="http://www.w3.org/2000/svg"
+    //     viewBox="0 0 24 24"
+    //     fill="none"
+    //     stroke="#88a4bf"
+    //     stroke-width="2"
+    //     stroke-linecap="round"
+    //     stroke-linejoin="round"
+    //   >
+    //     <path d="M17.553 16.75a7.5 7.5 0 0 0 -10.606 0" />
+    //     <path d="M18 3.804a6 6 0 0 0 -8.196 2.196l10.392 6a6 6 0 0 0 -2.196 -8.196z" />
+    //     <path d="M16.732 10c1.658 -2.87 2.225 -5.644 1.268 -6.196c-.957 -.552 -3.075 1.326 -4.732 4.196" />
+    //     <path d="M15 9l-3 5.196" />
+    //     <path d="M3 19.25a2.4 2.4 0 0 1 1 -.25a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 2 1a2.4 2.4 0 0 0 2 1a2.4 2.4 0 0 0 2 -1a2.4 2.4 0 0 1 2 -1a2.4 2.4 0 0 1 1 .25" />
+    //   </svg>`,
+    //   translationKey: 'menu.vacations',
+    // },
+    // {
+    //   label: 'Calendario general',
+    //   route: '/dashboard/calendar',
+    //   icon: `<svg
+    //     xmlns="http://www.w3.org/2000/svg"
+    //     width="48"
+    //     height="48"
+    //     viewBox="0 0 24 24"
+    //     fill="none"
+    //     stroke="#88a4bf"
+    //     stroke-width="2"
+    //     stroke-linecap="round"
+    //     stroke-linejoin="round"
+    //   >
+    //     <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" />
+    //     <path d="M16 3v4" />
+    //     <path d="M8 3v4" />
+    //     <path d="M4 11h16" />
+    //     <path d="M7 14h.013" />
+    //     <path d="M10.01 14h.005" />
+    //     <path d="M13.01 14h.005" />
+    //     <path d="M16.015 14h.005" />
+    //     <path d="M13.015 17h.005" />
+    //     <path d="M7.01 17h.005" />
+    //     <path d="M10.01 17h.005" />
+    //   </svg>`,
+    //   translationKey: 'menu.calendarGeneral',
+    // },
+    // {
+    //   label: 'Avisos',
+    //   route: '/dashboard/notices',
+    //   icon: `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#88a4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    //     <path d="M18 8a3 3 0 0 1 0 6"></path>
+    //     <path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"></path>
+    //     <path d="M12 8h0l4.524 -3.77a.9 .9 0 0 1 1.476 .692v12.156a.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8"></path>
+    //   </svg>`,
+    //   translationKey: 'menu.notices',
+    //   badgeCount: () => this.unreadCount(),
+    // },
+    // {
+    //   label: 'Perfil',
+    //   route: '/dashboard/profile',
+    //   icon: `<svg
+    //     xmlns="http://www.w3.org/2000/svg"
+    //     width="48"
+    //     height="48"
+    //     viewBox="0 0 24 24"
+    //     fill="none"
+    //     stroke="#88a4bf"
+    //     stroke-width="2"
+    //     stroke-linecap="round"
+    //     stroke-linejoin="round"
+    //   >
+    //     <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+    //     <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+    //   </svg>`,
+    //   translationKey: 'menu.profile',
+    // },
   ];
 
   ngOnInit(): void {
