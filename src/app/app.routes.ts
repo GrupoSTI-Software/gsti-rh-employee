@@ -60,18 +60,6 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'vacations',
-        data: {
-          breadcrumb: 'vacations',
-          label: 'routes.vacations.label',
-          subtitle: 'routes.vacations.subtitle',
-        },
-        loadComponent: () =>
-          import('@modules/vacations/presentation/vacations-page/vacations-page.component').then(
-            (m) => m.VacationsPageComponent,
-          ),
-      },
-      {
         path: 'calendar',
         data: {
           breadcrumb: 'calendar',
@@ -79,8 +67,8 @@ export const routes: Routes = [
           subtitle: 'routes.calendar.subtitle',
         },
         loadComponent: () =>
-          import('@modules/vacation-calendar/presentation/vacation-calendar/vacation-calendar.component').then(
-            (m) => m.VacationCalendarComponent,
+          import('@modules/calendar/presentation/calendar/calendar.component').then(
+            (m) => m.CalendarComponent,
           ),
       },
       {

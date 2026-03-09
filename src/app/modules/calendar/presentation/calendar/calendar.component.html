@@ -1,5 +1,22 @@
-<div class="vacation-calendar-container">
-  <div class="vacation-calendar-wrapper">
+<div class="calendar-container">
+  <div class="calendar-wrapper">
+    <!-- Sección Días disponibles (abre sidebar con vacaciones por periodo) -->
+    <button
+      type="button"
+      class="card card-available-days"
+      (click)="openAvailableDaysDrawer()"
+      [attr.aria-label]="'vacationsModule.availableDays' | translate"
+    >
+      <div class="card-available-header">
+        <i class="pi pi-calendar-plus"></i>
+        <span class="card-available-title">{{ 'vacationsModule.availableDays' | translate }}</span>
+      </div>
+      <div class="card-available-value">
+        <span class="days-number">{{ totalDaysAvailable() }}</span>
+        <span class="days-label">{{ 'vacationsModule.days' | translate }}</span>
+      </div>
+    </button>
+
     <!-- Header compacto con navegación y controles -->
     <div class="calendar-header-compact">
       <div class="header-left">
@@ -491,6 +508,14 @@
   [selectedDates]="selectedDaysForException()"
   (visibleChange)="closeExceptionRequestDrawer()"
   (requestCreated)="onExceptionRequestCreated()"
+/>
+
+<!-- Drawer de días disponibles (vacaciones del empleado por periodo) -->
+<app-available-days-drawer
+  [visible]="showAvailableDaysDrawer()"
+  [periodSummaries]="periodSummaries()"
+  [loading]="availableDaysDrawerLoading()"
+  (visibleChange)="onAvailableDaysDrawerVisibleChange($event)"
 />
 
 <!-- Toast para mensajes -->

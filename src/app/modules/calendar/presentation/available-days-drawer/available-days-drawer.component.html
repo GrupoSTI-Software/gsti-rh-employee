@@ -1,0 +1,51 @@
+<app-drawer
+  [visible]="visible"
+  [title]="'vacationsModule.employeeVacations' | translate"
+  [cancelButtonText]="'menu.close' | translate"
+  [enableSwipe]="true"
+  (visibleChange)="visibleChange.emit($event)"
+  (closed)="close()"
+>
+  <div class="drawer-body">
+    @if (loading) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'vacationsModule.loading' | translate }}</span>
+      </div>
+    } @else if (periodSummaries.length === 0) {
+      <p class="empty-message">{{ 'vacationsModule.noPeriods' | translate }}</p>
+    } @else {
+      <div class="period-cards">
+        @for (period of periodSummaries; track period.year) {
+          <article class="card period-card">
+            <div class="period-dates">{{ period.periodLabel }}</div>
+            <div class="period-badges">
+              <span class="badge">
+                <span class="badge-label">{{ 'vacationsModule.yearsActive' | translate }}</span>
+                <span class="badge-value">{{ period.yearsPassed | number: '2.0-0' }}</span>
+              </span>
+              <span class="badge">
+                <span class="badge-label">{{ 'vacationsModule.daysCorresponding' | translate }}</span>
+                <span class="badge-value">{{ period.daysCorresponding | number: '2.0-0' }}</span>
+              </span>
+              <span class="badge">
+                <span class="badge-label">{{ 'vacationsModule.daysUsed' | translate }}</span>
+                <span class="badge-value">{{ period.daysUsed | number: '2.0-0' }}</span>
+              </span>
+              <span class="badge">
+                <span class="badge-label">{{ 'vacationsModule.daysAvailable' | translate }}</span>
+                <span class="badge-value">{{ period.daysAvailable | number: '2.0-0' }}</span>
+              </span>
+              @if (period.previousPeriodDaysAvailable !== null && period.previousPeriodDaysAvailable > 0) {
+                <span class="badge">
+                  <span class="badge-label">{{ 'vacationsModule.previousDaysAvailable' | translate }}</span>
+                  <span class="badge-value">{{ period.previousPeriodDaysAvailable }}</span>
+                </span>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</app-drawer>

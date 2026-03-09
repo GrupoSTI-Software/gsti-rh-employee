@@ -7,8 +7,8 @@
 /* Estilos globales para botones */
 @use './styles/_buttons.scss' as *;
 
-/* Estilos compartidos del calendario de vacaciones (vistas semanal y diaria) */
-@use './styles/_vacation-calendar.scss' as *;
+/* Estilos compartidos del calendario (vistas semanal y diaria) */
+@use './styles/_calendar.scss' as *;
 
 /* Estilos compartidos para todos los drawers del proyecto */
 @use './styles/_drawer.scss' as *;
