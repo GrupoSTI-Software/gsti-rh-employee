@@ -67,43 +67,6 @@ app.use((_req, res, next) => {
 });
 
 /**
- * Middleware para scripts de Service Worker.
- *
- * Los SW scripts son el ÚNICO punto que bypasea el SW activo por especificación:
- * el navegador los fetcha directamente al servidor para comprobar actualizaciones,
- * sin que el SW instalado pueda interceptarlos.
- *
- * Cache-Control: no-cache (sin no-store) permite al navegador usar ETags para
- * revalidación condicional, reduciendo el ancho de banda. El navegador siempre
- * consulta al servidor pero obtiene 304 si el archivo no cambió.
- *
- * Clear-Site-Data: TEMPORAL para migración desde app anterior en el mismo dominio.
- * Se envía solo durante el período de migración definido por SW_MIGRATION_DEADLINE.
- * Una vez vencida la fecha, eliminar esta constante y el bloque condicional.
- * ⚠️  Extender la fecha si aún hay usuarios con la app anterior instalada.
- */
-
-// Fecha límite del período de migración. Después de esta fecha no se envía
-// Clear-Site-Data y el caché de la PWA funciona con normalidad.
-// TODO: Eliminar esta constante y el bloque condicional tras la migración completa.
-const SW_MIGRATION_DEADLINE = new Date('2026-05-15T00:00:00Z');
-
-app.get(['/ngsw-worker.js', '/offline-sw.js'], (_req, res, next) => {
-  // no-cache permite ETags (304 condicional); no-store los inhabilitaría.
-  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-
-  // Solo limpiar cachés durante el período de migración.
-  // Fuera de ese período la PWA cachea con normalidad.
-  if (new Date() < SW_MIGRATION_DEADLINE) {
-    res.setHeader('Clear-Site-Data', '"cache"');
-  }
-
-  next();
-});
-
-/**
  * Serve static files from /browser
  */
 app.use(

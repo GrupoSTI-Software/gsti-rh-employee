@@ -343,51 +343,9 @@
       window.addEventListener('offline', showNoConnection);
       window.addEventListener('online', hideNoConnection);
 
-      // Desregistrar Service Workers de apps anteriores y limpiar sus cachés
-      // antes de registrar el nuevo SW. Esto resuelve el problema de que una app
-      // anterior en el mismo dominio (ej. "SAE") siga sirviendo contenido obsoleto.
+      // Registrar el Service Worker offline inmediatamente (sin esperar a Angular)
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
-          var cleanupPromises = registrations.map(function (registration) {
-            // Desregistrar cualquier SW que no sea el nuestro
-            var swUrl = registration.active
-              ? registration.active.scriptURL
-              : registration.installing
-                ? registration.installing.scriptURL
-                : registration.waiting
-                  ? registration.waiting.scriptURL
-                  : '';
-            var isOurs =
-              swUrl.indexOf('offline-sw.js') !== -1 ||
-              swUrl.indexOf('ngsw-worker.js') !== -1;
-            if (!isOurs) {
-              return registration.unregister();
-            }
-            return Promise.resolve();
-          });
-
-          return Promise.all(cleanupPromises);
-        }).then(function () {
-          // Limpiar todos los cachés que no pertenezcan a esta app
-          return caches.keys().then(function (cacheNames) {
-            return Promise.all(
-              cacheNames
-                .filter(function (name) {
-                  // Conservar solo cachés de esta app; eliminar los de "SAE" y otros
-                  return (
-                    name.indexOf('gsti-employee') === -1 &&
-                    name.indexOf('ngsw') === -1
-                  );
-                })
-                .map(function (name) {
-                  return caches.delete(name);
-                })
-            );
-          });
-        }).then(function () {
-          // Registrar el Service Worker offline inmediatamente (sin esperar a Angular)
-          return navigator.serviceWorker.register('/offline-sw.js', { scope: '/' });
-        }).catch(function () {
+        navigator.serviceWorker.register('/offline-sw.js', { scope: '/' }).catch(function () {
           /* silencioso si falla */
         });
       }
