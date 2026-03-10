@@ -31,8 +31,10 @@ self.addEventListener('install', function (event) {
 });
 
 /**
- * Al activar, toma control de todos los clientes inmediatamente
- * y elimina solo los cachés propios de versiones anteriores.
+ * Al activar, toma control de todos los clientes inmediatamente y elimina:
+ * - Cachés propios de versiones anteriores (prefijo 'gsti-' distinto al actual)
+ * - Cualquier caché externo heredado de apps anteriores en el mismo dominio
+ *   (ej. la app "SAE" que usaba este mismo dominio antes de esta app)
  * No toca los cachés de ngsw (prefijo 'ngsw:').
  */
 self.addEventListener('activate', function (event) {
@@ -41,7 +43,11 @@ self.addEventListener('activate', function (event) {
       return Promise.all(
         keys
           .filter(function (key) {
-            return key.startsWith('gsti-') && key !== CACHE_NAME;
+            // Eliminar cachés propios desactualizados
+            var isOldGsti = key.startsWith('gsti-') && key !== CACHE_NAME;
+            // Eliminar cachés de apps externas heredadas (no son de esta app ni de ngsw)
+            var isExternal = !key.startsWith('gsti-') && !key.startsWith('ngsw:');
+            return isOldGsti || isExternal;
           })
           .map(function (key) { return caches.delete(key); })
       );
