@@ -67,6 +67,32 @@ app.use((_req, res, next) => {
 });
 
 /**
+ * Middleware para scripts de Service Worker.
+ *
+ * Los SW scripts son el ÚNICO punto que bypasea el SW activo por especificación:
+ * el navegador los fetcha directamente al servidor para comprobar actualizaciones,
+ * sin que el SW instalado pueda interceptarlos.
+ *
+ * Esto resuelve el problema de migración cuando una app anterior (ej. "SAE")
+ * tiene un SW cacheando el dominio: el navegador fetcha el nuevo ngsw-worker.js,
+ * recibe Clear-Site-Data y limpia todos los cachés del origen antes de activar
+ * el nuevo SW. A partir de ese momento, las navegaciones llegan al servidor.
+ *
+ * Cache-Control: no-cache asegura que el navegador siempre revalide el script
+ * (en lugar de servirlo desde caché HTTP por el maxAge:'1y' del static general).
+ */
+app.get(['/ngsw-worker.js', '/offline-sw.js'], (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  // Limpia el Cache Storage del origen en el navegador del cliente.
+  // Solo afecta cuando el archivo realmente cambió (respuesta 200).
+  // Cuando no hay cambio (304), el navegador no procesa este header.
+  res.setHeader('Clear-Site-Data', '"cache"');
+  next();
+});
+
+/**
  * Serve static files from /browser
  */
 app.use(
