@@ -216,6 +216,12 @@
     "checkInSuccess": "Check-in registered successfully",
     "checkOutSuccess": "Check-out registered successfully",
     "locationError": "Error getting location",
+    "locationMessages": {
+      "errorTitle": "Location error",
+      "noZonesAssigned": "You have no access zones assigned. Contact your administrator.",
+      "outsideZoneTitle": "Outside allowed zone",
+      "outsideZoneMessage": "You are not within any authorized zone. You are {{distance}} from the nearest zone."
+    },
     "registerError": "Error registering attendance",
     "exceptions": "Permissions",
     "records": "Attendance Records",

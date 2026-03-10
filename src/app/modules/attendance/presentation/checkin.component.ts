@@ -41,6 +41,8 @@ import { environment } from '../../../../environments/environment';
 import { GetVerificationAttendanceLockUseCase } from '@modules/verification-attendance-lock/application/get-verification-attendance-lock-use-case';
 import { GetSystemSettingsUseCase } from '@modules/system-settings/application/get-system-settings.use-case';
 import { formatLocalDate } from '@shared/utils/date.utils';
+import { GetAuthorizeAnyZoneUseCase } from '@modules/authorize-any-zone/application/get-authorize-any-zone.use-case';
+import { GetZoneCoordinatesUseCase } from '@modules/zones-authorization/application/get-zone-coordinates.use-case';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -114,6 +116,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private readonly getAttendanceUseCase = inject(GetAttendanceUseCase);
   private readonly getEmployeeBiometricFaceIdUseCase = inject(GetEmployeeBiometricFaceIdUseCase);
   private readonly storeAssistUseCase = inject(StoreAssistUseCase);
+  private readonly getAuthorizeAnyZoneUseCase = inject(GetAuthorizeAnyZoneUseCase);
+  private readonly getZoneCoordinatesUseCase = inject(GetZoneCoordinatesUseCase);
   private readonly authPort = inject<IAuthPort>(AUTH_PORT);
   private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
@@ -550,6 +554,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
       return;
     }
     this.starting.set(true);
+    const canCheckInZone = await this.canCheckInZone();
+    if (!canCheckInZone) {
+      this.starting.set(false);
+      return;
+    }
     const employeeBiometricFaceId = await this.getEmployeeBiometricFaceIdUseCase.execute(
       user.employeeId,
     );
@@ -2310,5 +2319,172 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.errorModalTitle.set(title);
     this.errorModalMessage.set(message);
     this.showErrorModal.set(true);
+  }
+
+  /**
+   * Verifica si el empleado tiene permiso para registrar asistencia desde su ubicación actual.
+   * - Si tiene autorización de cualquier zona, retorna true sin validar coordenadas.
+   * - Si tiene zonas asignadas, valida que esté dentro del perímetro permitido.
+   * - Si no tiene zonas asignadas, muestra error y retorna false.
+   *
+   * @returns true si puede registrar asistencia, false en caso contrario
+   */
+  private async canCheckInZone(): Promise<boolean> {
+    const employeeId = this.authPort.getCurrentUser()?.employeeId;
+    if (typeof employeeId !== 'number') {
+      return false;
+    }
+
+    // Si tiene permiso para cualquier zona, no se valida ubicación
+    const authorizeAnyZone = await this.getAuthorizeAnyZoneUseCase.execute(employeeId);
+    if (authorizeAnyZone) {
+      return true;
+    }
+
+    // Obtener ubicación actual
+    let position: GeolocationPosition;
+    try {
+      position = await this.getCurrentLocation();
+    } catch {
+      this.showErrorModalWithMessage(
+        'error',
+        this.translateService.instant('attendance.locationMessages.errorTitle'),
+        this.translateService.instant('attendance.faceRecognition.locationUnavailable'),
+      );
+      return false;
+    }
+
+    // Obtener zonas asignadas al empleado
+    const zones = await this.getZoneCoordinatesUseCase.execute(employeeId);
+
+    if (!zones || zones.length === 0) {
+      this.showErrorModalWithMessage(
+        'error',
+        this.translateService.instant('attendance.locationMessages.errorTitle'),
+        this.translateService.instant('attendance.locationMessages.noZonesAssigned'),
+      );
+      return false;
+    }
+
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    // Validar si el empleado está dentro de alguna zona
+    const isInsideAnyZone = zones.some((zone) => this.isPointInPolygon(lat, lng, zone));
+
+    if (!isInsideAnyZone) {
+      // Calcular distancia al borde de la zona más cercana para informar al usuario
+      const metersToNearestZone = Math.min(
+        ...zones.map((zone) => this.distanceToPolygonMeters(lat, lng, zone)),
+      );
+      const distanceText =
+        metersToNearestZone < 1000
+          ? `${Math.round(metersToNearestZone)} m`
+          : `${(metersToNearestZone / 1000).toFixed(2)} km`;
+
+      this.showErrorModalWithMessage(
+        'warning',
+        this.translateService.instant('attendance.locationMessages.outsideZoneTitle'),
+        this.translateService.instant('attendance.locationMessages.outsideZoneMessage', {
+          distance: distanceText,
+        }),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Algoritmo Ray Casting para determinar si un punto está dentro de un polígono.
+   * Las coordenadas del polígono deben estar en formato GeoJSON: [longitud, latitud].
+   *
+   * @param lat - Latitud del punto a validar
+   * @param lng - Longitud del punto a validar
+   * @param polygon - Array de coordenadas en formato [longitud, latitud]
+   * @returns true si el punto está dentro del polígono
+   */
+  private isPointInPolygon(lat: number, lng: number, polygon: number[][]): boolean {
+    let inside = false;
+    const n = polygon.length;
+
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      // Formato GeoJSON: [0] = longitud, [1] = latitud
+      const iLat = polygon[i]?.[1] ?? 0;
+      const iLng = polygon[i]?.[0] ?? 0;
+      const jLat = polygon[j]?.[1] ?? 0;
+      const jLng = polygon[j]?.[0] ?? 0;
+
+      const intersects =
+        iLng > lng !== jLng > lng && lat < ((jLat - iLat) * (lng - iLng)) / (jLng - iLng) + iLat;
+
+      if (intersects) inside = !inside;
+    }
+
+    return inside;
+  }
+
+  /**
+   * Calcula la distancia en metros entre dos coordenadas geográficas usando la fórmula de Haversine.
+   *
+   * @param lat1 - Latitud del punto 1
+   * @param lng1 - Longitud del punto 1
+   * @param lat2 - Latitud del punto 2
+   * @param lng2 - Longitud del punto 2
+   * @returns Distancia en metros
+   */
+  private haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const EARTH_RADIUS_M = 6_371_000;
+    const toRad = (deg: number): number => (deg * Math.PI) / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+
+    return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+  }
+
+  /**
+   * Calcula la distancia mínima en metros desde un punto hasta el borde de un polígono.
+   * Proyecta el punto sobre cada segmento del polígono y toma el mínimo.
+   * Las coordenadas del polígono deben estar en formato GeoJSON: [longitud, latitud].
+   *
+   * @param lat - Latitud del punto
+   * @param lng - Longitud del punto
+   * @param polygon - Array de coordenadas en formato [longitud, latitud]
+   * @returns Distancia mínima en metros al borde del polígono
+   */
+  private distanceToPolygonMeters(lat: number, lng: number, polygon: number[][]): number {
+    let minDistance = Infinity;
+    const n = polygon.length;
+
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      // Formato GeoJSON: [0] = longitud, [1] = latitud
+      const aLat = polygon[i]?.[1] ?? 0;
+      const aLng = polygon[i]?.[0] ?? 0;
+      const bLat = polygon[j]?.[1] ?? 0;
+      const bLng = polygon[j]?.[0] ?? 0;
+
+      // Proyección del punto sobre el segmento [A, B] en espacio plano (válido para distancias cortas)
+      const abLat = bLat - aLat;
+      const abLng = bLng - aLng;
+      const apLat = lat - aLat;
+      const apLng = lng - aLng;
+
+      const abLenSq = abLat ** 2 + abLng ** 2;
+      // t = parámetro de proyección (0 = punto A, 1 = punto B)
+      const t =
+        abLenSq === 0 ? 0 : Math.max(0, Math.min(1, (apLat * abLat + apLng * abLng) / abLenSq));
+
+      const closestLat = aLat + t * abLat;
+      const closestLng = aLng + t * abLng;
+
+      const dist = this.haversineMeters(lat, lng, closestLat, closestLng);
+      if (dist < minDistance) minDistance = dist;
+    }
+
+    return minDistance;
   }
 }

@@ -13,6 +13,7 @@ export interface IEmployee {
   employeeWorkSchedule?: string;
   employeeTypeOfContract?: string;
   employeeBusinessEmail?: string;
+  employeeAuthorizeAnyZones?: number;
   departmentId?: number;
   positionId?: number;
   companyId?: number;
