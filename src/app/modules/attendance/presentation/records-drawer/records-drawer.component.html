@@ -1,51 +1,24 @@
-<app-drawer
-  [(visible)]="visible"
-  [title]="title"
-  [cancelButtonText]="cancelButtonText"
-  [enableSwipe]="true"
-  (closed)="close()"
->
+<app-drawer [(visible)]="visible" [title]="title" [cancelButtonText]="cancelButtonText" [enableSwipe]="true"
+  (closed)="close()">
   <!-- Contenido de registros -->
-      <div class="records-list">
-        @if (records.length === 0) {
-          <div class="no-records">
-            <i class="pi pi-info-circle"></i>
-            <p>{{ 'attendance.noRecords' | translate }}</p>
-          </div>
-        } @else {
-          @for (record of records; track record.assistId) {
-            <div class="record-item">
-              <div class="record-header">
-                <div class="record-time">
-                  <i class="pi pi-clock"></i>
-                  <span class="time-value">{{ formatRecordTime(record.assistPunchTime) }}</span>
-                </div>
-                <span class="record-date">{{ formatRecordDateTime(record.assistPunchTime) }}</span>
-              </div>
-              <div class="record-details">
-                @if (record.assistTerminalAlias) {
-                  <div class="record-detail-item">
-                    <span class="detail-label">{{ 'attendance.terminal' | translate }}:</span>
-                    <span class="detail-value">{{ record.assistTerminalAlias }}</span>
-                  </div>
-                }
-                @if (record.assistAreaAlias) {
-                  <div class="record-detail-item">
-                    <span class="detail-label">{{ 'attendance.area' | translate }}:</span>
-                    <span class="detail-value">{{ record.assistAreaAlias }}</span>
-                  </div>
-                }
-                @if (record.assistLatitude && record.assistLongitude) {
-                  <div class="record-detail-item">
-                    <span class="detail-label">{{ 'attendance.location' | translate }}:</span>
-                    <span class="detail-value"
-                      >{{ record.assistLatitude }}, {{ record.assistLongitude }}</span
-                    >
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        }
+  <div class="records-list">
+    @if (records.length === 0) {
+    <div class="no-records">
+      <i class="pi pi-info-circle"></i>
+      <p>{{ 'attendance.noRecords' | translate }}</p>
+    </div>
+    } @else {
+    @for (record of records; track record.assistId) {
+    <div class="record-item">
+      <div class="record-header">
+        <div class="record-time">
+          <i class="pi pi-clock"></i>
+          <span class="time-value">{{ formatRecordTime(record.assistPunchTime) }}</span>
+        </div>
+        <span class="record-date">{{ formatRecordDateTime(record.assistPunchTime) }}</span>
       </div>
+    </div>
+    }
+    }
+  </div>
 </app-drawer>

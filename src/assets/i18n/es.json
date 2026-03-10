@@ -203,6 +203,7 @@
     }
   },
   "attendance": {
+    "check": "Registrar",
     "title": "Registro de Asistencia",
     "subtitle": "Registra tu entrada y salida",
     "register": "Iniciar Turno",
@@ -249,6 +250,9 @@
     "more": "Más",
     "done": "Listo",
     "restDay": "Día de descanso",
+    "workDisability": "Incapacidad laboral",
+    "absenceFromWork": "Permiso de ausencia",
+    "newEntry": "Nuevo ingreso",
     "faceRecognition": {
       "authenticationError": "Error de autenticación",
       "noEmployeeId": "No se encontró el ID del empleado. Por favor, inicia sesión nuevamente.",

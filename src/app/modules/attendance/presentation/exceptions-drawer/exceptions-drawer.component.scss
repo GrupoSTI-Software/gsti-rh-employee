@@ -6,13 +6,14 @@
 
 .exceptions-list {
   @include flex-column;
-  gap: $spacing-md;
+  gap: $spacing-sm;
   max-height: 60vh;
   overflow-y: auto;
   padding: $spacing-sm;
   scrollbar-width: none;
   -ms-overflow-style: none;
   &::-webkit-scrollbar { display: none; }
+  @include safe-area-bottom(2rem);
 }
 
 .no-exceptions {
@@ -28,13 +29,11 @@
 
 .exception-item {
   padding: $spacing-md;
-  background: var(--bg-secondary);
+  background: rgba(var(--info-rgb), 0.1);
   border-radius: $radius;
-  border-left: 3px solid var(--warning);
 }
 
 .exception-header {
-  @include flex-between;
   margin-bottom: $spacing-sm;
 }
 
@@ -42,22 +41,22 @@
   display: flex;
   align-items: center;
   gap: $spacing-sm;
-  i { color: var(--warning); }
+  i { color: var(--info); }
 }
 
 .exception-type-name {
   font-weight: $font-weight-semibold;
-  color: var(--text-primary);
+  color: var(--info);
 }
 
 .exception-date {
   font-size: $font-size-sm;
-  color: var(--text-secondary);
+  color: var(--info);
 }
 
 .exception-description {
   margin-bottom: $spacing-sm;
-  color: var(--text-secondary);
+  color: var(--info);
   font-size: $font-size-sm;
   line-height: 1.5;
 }
@@ -74,11 +73,11 @@
 }
 
 .time-label {
-  color: var(--text-secondary);
+  color: var(--info);
   font-weight: $font-weight-medium;
 }
 
 .exception-time .time-value {
-  color: var(--text-primary);
+  color: var(--info);
   font-weight: $font-weight-semibold;
 }
