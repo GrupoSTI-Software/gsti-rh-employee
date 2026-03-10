@@ -73,22 +73,33 @@ app.use((_req, res, next) => {
  * el navegador los fetcha directamente al servidor para comprobar actualizaciones,
  * sin que el SW instalado pueda interceptarlos.
  *
- * Esto resuelve el problema de migración cuando una app anterior (ej. "SAE")
- * tiene un SW cacheando el dominio: el navegador fetcha el nuevo ngsw-worker.js,
- * recibe Clear-Site-Data y limpia todos los cachés del origen antes de activar
- * el nuevo SW. A partir de ese momento, las navegaciones llegan al servidor.
+ * Cache-Control: no-cache (sin no-store) permite al navegador usar ETags para
+ * revalidación condicional, reduciendo el ancho de banda. El navegador siempre
+ * consulta al servidor pero obtiene 304 si el archivo no cambió.
  *
- * Cache-Control: no-cache asegura que el navegador siempre revalide el script
- * (en lugar de servirlo desde caché HTTP por el maxAge:'1y' del static general).
+ * Clear-Site-Data: TEMPORAL para migración desde app anterior en el mismo dominio.
+ * Se envía solo durante el período de migración definido por SW_MIGRATION_DEADLINE.
+ * Una vez vencida la fecha, eliminar esta constante y el bloque condicional.
+ * ⚠️  Extender la fecha si aún hay usuarios con la app anterior instalada.
  */
-app.get(['/ngsw-worker.js', '/offline-sw.js'], (req, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+// Fecha límite del período de migración. Después de esta fecha no se envía
+// Clear-Site-Data y el caché de la PWA funciona con normalidad.
+// TODO: Eliminar esta constante y el bloque condicional tras la migración completa.
+const SW_MIGRATION_DEADLINE = new Date('2026-05-15T00:00:00Z');
+
+app.get(['/ngsw-worker.js', '/offline-sw.js'], (_req, res, next) => {
+  // no-cache permite ETags (304 condicional); no-store los inhabilitaría.
+  res.setHeader('Cache-Control', 'no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
-  // Limpia el Cache Storage del origen en el navegador del cliente.
-  // Solo afecta cuando el archivo realmente cambió (respuesta 200).
-  // Cuando no hay cambio (304), el navegador no procesa este header.
-  res.setHeader('Clear-Site-Data', '"cache"');
+
+  // Solo limpiar cachés durante el período de migración.
+  // Fuera de ese período la PWA cachea con normalidad.
+  if (new Date() < SW_MIGRATION_DEADLINE) {
+    res.setHeader('Clear-Site-Data', '"cache"');
+  }
+
   next();
 });
 
