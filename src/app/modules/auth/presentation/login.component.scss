@@ -80,6 +80,18 @@
   font-size: $font-size-xs;
   color: var(--text-secondary);
   opacity: 0.5;
+  display: flex;
+  flex-direction: column;
+  gap: $gap-xs;
+
+  .version-label {
+    font-weight: 500;
+  }
+
+  .device-info {
+    font-size: 0.65rem;
+    opacity: 0.8;
+  }
 }
 
 .divider {

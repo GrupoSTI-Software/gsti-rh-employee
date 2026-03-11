@@ -15,6 +15,7 @@ import { PasswordlessWebAuthnAdapter } from '../infrastructure/passwordless-weba
 import packageJson from '../../../../../package.json';
 
 import { PushNotificationsService } from '@core/services/push-notifications.service';
+import { DeviceDetectionService } from '@core/services/device-detection.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -35,6 +36,7 @@ export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly passkeyDemoService = inject(PasskeyDemoService);
   private readonly passwordlessAdapter = inject(PasswordlessWebAuthnAdapter);
+  private readonly deviceDetectionService = inject(DeviceDetectionService);
 
   // Logo del branding o logo por defecto
   readonly logoUrl = computed(() => this.branding.getLogoUrl());
@@ -59,6 +61,7 @@ export class LoginComponent implements OnInit {
   readonly passkeySupported = signal(false);
   readonly hasPasskeys = signal(false);
   readonly emailValid = signal(false);
+  readonly deviceInfo = computed(() => this.deviceDetectionService.getDeviceDescription());
 
   // El botón aparece si:
   // 1. El navegador soporta Passkeys Y
