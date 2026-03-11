@@ -1,7 +1,10 @@
 <div appPullToRefresh class="app-container">
-  @if (shouldShowPwaRequired()) {
-    <app-pwa-required></app-pwa-required>
+  @if (shouldShowPwaRequired() && pwaRequiredMode() === 'full') {
+    <app-pwa-required [mode]="pwaRequiredMode()"></app-pwa-required>
   } @else {
+    @if (shouldShowPwaRequired() && pwaRequiredMode() === 'banner') {
+      <app-pwa-required [mode]="pwaRequiredMode()"></app-pwa-required>
+    }
     <router-outlet></router-outlet>
     <app-no-connection-overlay></app-no-connection-overlay>
     <app-pwa-update-overlay></app-pwa-update-overlay>
