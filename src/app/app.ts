@@ -99,14 +99,20 @@ export class App implements OnInit, AfterViewInit {
     const isPwa = await this.pwaDetection.isRunningAsPwaAsync();
     this.isPwaRunning.set(isPwa);
 
-    // Verificar si la PWA fue instalada alguna vez (aunque no esté corriendo ahora)
-    const hasPersistedState = this.secureStorage.getItem('pwa_standalone_confirmed') === 'true';
+    // Solo considerar que la PWA está instalada si:
+    // 1. Fue marcada explícitamente como instalada (evento appinstalled), O
+    // 2. Tiene estado persistido Y actualmente está corriendo en modo standalone
+    // Esto evita falsos positivos donde el localStorage tiene datos pero la PWA no está instalada
     const markedAsInstalled = this.secureStorage.getItem('pwa_installed') === 'true';
-    this.wasPwaInstalled.set(hasPersistedState || markedAsInstalled);
+    const hasPersistedState = this.secureStorage.getItem('pwa_standalone_confirmed') === 'true';
+
+    // Solo considerar instalada si fue marcada explícitamente O si tiene estado persistido Y está corriendo
+    const isInstalled = markedAsInstalled || (hasPersistedState && isPwa);
+    this.wasPwaInstalled.set(isInstalled);
 
     // Si está en producción, no está en modo PWA, pero la PWA está instalada,
     // el banner de "Abrir app" se mostrará automáticamente
-    if (environment.PRODUCTION && !isPwa && this.wasPwaInstalled()) {
+    if (environment.PRODUCTION && !isPwa && isInstalled) {
       this.attemptToOpenInstalledPwa();
     }
   }
