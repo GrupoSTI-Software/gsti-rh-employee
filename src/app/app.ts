@@ -7,11 +7,9 @@ import { SecureStorageService } from '@core/services/secure-storage.service';
 import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
 import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
 import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-required.component';
-import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
 import { PwaUpdateOverlayComponent } from '@shared/components/pwa-update-overlay/pwa-update-overlay.component';
 import { PwaUpdateService } from '@core/services/pwa-update.service';
 import { PwaDetectionService } from '@core/services/pwa-detection.service';
-import { LoggerService } from '@core/services/logger.service';
 import { environment } from '@env/environment';
 
 /**
@@ -47,9 +45,7 @@ export class App implements OnInit, AfterViewInit {
   private readonly theme = inject(ThemeService);
   private readonly branding = inject(BrandingService);
   private readonly secureStorage = inject(SecureStorageService);
-  private readonly pwaInstallPrompt = inject(PwaInstallPromptService);
   private readonly pwaDetection = inject(PwaDetectionService);
-  private readonly logger = inject(LoggerService);
   // Inicializa el servicio de actualizaciones al arrancar la app
   private readonly _pwaUpdate = inject(PwaUpdateService);
 
@@ -59,25 +55,14 @@ export class App implements OnInit, AfterViewInit {
   private readonly isPwaRunning = signal(false);
 
   /**
-   * Signal que indica si la PWA fue instalada alguna vez (aunque no esté corriendo ahora)
-   */
-  private readonly wasPwaInstalled = signal(false);
-
-  /**
    * Determina si debe mostrar el componente PWA Required.
-   * Se muestra en producción cuando no está corriendo en modo PWA.
+   * Se muestra en producción cuando NO está corriendo en modo PWA.
+   * El componente internamente maneja:
+   * - Desktop: Muestra mensaje de "no soportado en computadora"
+   * - Móvil/Tablet: Muestra instrucciones de instalación
    */
   protected readonly shouldShowPwaRequired = computed(() => {
     return environment.PRODUCTION && !this.isPwaRunning();
-  });
-
-  /**
-   * Determina el modo de visualización del componente PWA Required:
-   * - 'banner': Si la PWA está instalada pero se abre desde el navegador (mostrar banner para abrir)
-   * - 'full': Si la PWA no está instalada (mostrar instrucciones completas de instalación)
-   */
-  protected readonly pwaRequiredMode = computed<'full' | 'banner'>(() => {
-    return this.wasPwaInstalled() ? 'banner' : 'full';
   });
 
   constructor() {
@@ -93,47 +78,11 @@ export class App implements OnInit, AfterViewInit {
   }
 
   /**
-   * Inicializa el estado de la PWA y verifica si debe mostrar el prompt de apertura
+   * Inicializa el estado de la PWA
    */
   private async initializePwaState(): Promise<void> {
     const isPwa = await this.pwaDetection.isRunningAsPwaAsync();
     this.isPwaRunning.set(isPwa);
-
-    // Solo considerar que la PWA está instalada si:
-    // 1. Fue marcada explícitamente como instalada (evento appinstalled), O
-    // 2. Tiene estado persistido Y actualmente está corriendo en modo standalone
-    // Esto evita falsos positivos donde el localStorage tiene datos pero la PWA no está instalada
-    const markedAsInstalled = this.secureStorage.getItem('pwa_installed') === 'true';
-    const hasPersistedState = this.secureStorage.getItem('pwa_standalone_confirmed') === 'true';
-
-    // Solo considerar instalada si fue marcada explícitamente O si tiene estado persistido Y está corriendo
-    const isInstalled = markedAsInstalled || (hasPersistedState && isPwa);
-    this.wasPwaInstalled.set(isInstalled);
-
-    // Si está en producción, no está en modo PWA, pero la PWA está instalada,
-    // el banner de "Abrir app" se mostrará automáticamente
-    if (environment.PRODUCTION && !isPwa && isInstalled) {
-      this.attemptToOpenInstalledPwa();
-    }
-  }
-
-  /**
-   * Intenta abrir la PWA instalada cuando se detecta que el usuario
-   * está en el navegador pero tiene la PWA instalada
-   */
-  private attemptToOpenInstalledPwa(): void {
-    // En Android Chrome, mostrar mensaje para que el usuario abra desde el ícono
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    if (isAndroid) {
-      // Android: El navegador puede mostrar un banner automático para abrir en la app
-      // Si no aparece, el usuario verá el banner de "Abrir app" en la UI
-      this.logger.info('PWA instalada detectada en Android, mostrando banner de apertura');
-    } else if (isIOS) {
-      // iOS: No hay forma programática de abrir la PWA, mostrar banner
-      this.logger.info('PWA instalada detectada en iOS, mostrando banner de apertura');
-    }
   }
 
   ngOnInit(): void {
