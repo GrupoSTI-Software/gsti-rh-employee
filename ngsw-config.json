@@ -28,6 +28,28 @@
           "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
       }
+    },
+    {
+      "name": "face-api-models",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": [
+          "/assets/face-api-models/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api-attendance",
+      "urls": ["/api/attendance/**", "/api/assist/**"],
+      "cacheConfig": {
+        "maxSize": 10,
+        "maxAge": "1m",
+        "timeout": "10s",
+        "strategy": "freshness"
+      }
     }
   ]
 }

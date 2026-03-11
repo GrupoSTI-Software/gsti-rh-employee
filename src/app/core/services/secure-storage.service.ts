@@ -215,6 +215,53 @@ export class SecureStorageService {
   }
 
   /**
+   * Almacena datos cifrados en localStorage (persiste entre sesiones)
+   * @param key - Clave (se prefijará automáticamente)
+   * @param value - Valor a cifrar y almacenar
+   */
+  setEncryptedLocalItem(key: string, value: string): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const prefixedKey = this.getPrefixedKey(key);
+    const encrypted = this.encrypt(value);
+    localStorage.setItem(prefixedKey, encrypted);
+  }
+
+  /**
+   * Obtiene datos cifrados de localStorage (persiste entre sesiones)
+   * @param key - Clave (se prefijará automáticamente)
+   * @returns Valor descifrado o null
+   */
+  getEncryptedLocalItem(key: string): string | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return null;
+    }
+
+    const prefixedKey = this.getPrefixedKey(key);
+    const encrypted = localStorage.getItem(prefixedKey);
+    if (!encrypted) {
+      return null;
+    }
+
+    return this.decrypt(encrypted);
+  }
+
+  /**
+   * Elimina un item cifrado de localStorage
+   * @param key - Clave (se prefijará automáticamente)
+   */
+  removeEncryptedLocalItem(key: string): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const prefixedKey = this.getPrefixedKey(key);
+    localStorage.removeItem(prefixedKey);
+  }
+
+  /**
    * Almacena datos en localStorage
    * @param key - Clave (se prefijará automáticamente)
    * @param value - Valor a almacenar
