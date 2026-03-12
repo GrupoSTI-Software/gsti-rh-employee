@@ -94,10 +94,13 @@ export class PwaRequiredComponent {
   }
 
   /**
-   * Redirige al login cuando se confirma modo standalone
+   * Redirige a la raíz cuando se confirma modo standalone.
+   * La raíz deja que el auth guard decida: si hay sesión activa va al dashboard,
+   * si no hay sesión va al login. Evita forzar el login cuando el usuario ya
+   * tenía sesión activa al abrir la PWA instalada.
    */
   private redirectToApp(): void {
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/']);
   }
 
   /**
@@ -176,7 +179,7 @@ export class PwaRequiredComponent {
 
   checkAgain(): void {
     if (this.pwaService.isRunningAsPwa()) {
-      void this.router.navigate(['/login']);
+      void this.router.navigate(['/']);
     }
   }
 

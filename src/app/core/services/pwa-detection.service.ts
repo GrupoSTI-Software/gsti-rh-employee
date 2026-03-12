@@ -175,6 +175,24 @@ export class PwaDetectionService {
   }
 
   /**
+   * Verificación inicial para el primer render de la aplicación.
+   * Combina la detección en tiempo real con el estado persistido en localStorage
+   * para evitar que la app muestre brevemente el componente de instalación cuando
+   * el usuario ya tiene la PWA instalada (condición de carrera al abrir la app).
+   *
+   * A diferencia de isRunningAsPwa(), SÍ incluye el estado persistido, lo cual es
+   * seguro en contexto móvil ya que el estado se persiste solo al confirmar modo standalone.
+   *
+   * @returns true si está en modo PWA o si fue confirmado en una sesión anterior
+   */
+  isRunningAsPwaInitialGuess(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    return this.isRunningAsPwa() || this.getPersistedStandaloneState();
+  }
+
+  /**
    * Limpia el estado standalone persistido.
    * Llamar cuando se desinstala la PWA o se quiere forzar re-verificación.
    */

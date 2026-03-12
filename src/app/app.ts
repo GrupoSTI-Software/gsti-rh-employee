@@ -48,9 +48,13 @@ export class App implements OnInit, AfterViewInit {
   private readonly _pwaUpdate = inject(PwaUpdateService);
 
   /**
-   * Signal que indica si la PWA está corriendo en modo standalone
+   * Signal que indica si la PWA está corriendo en modo standalone.
+   * Se inicializa con el estado sincrónico + persistido para evitar la condición
+   * de carrera donde isPwaRunning=false hace que shouldShowPwaRequired sea true
+   * brevemente, mostrando PwaRequiredComponent que redirige al login aunque
+   * el usuario ya tuviera sesión activa.
    */
-  private readonly isPwaRunning = signal(false);
+  private readonly isPwaRunning = signal(this.pwaDetection.isRunningAsPwaInitialGuess());
 
   /**
    * Determina si debe mostrar el componente PWA Required.
