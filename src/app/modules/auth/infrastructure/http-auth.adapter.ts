@@ -482,7 +482,8 @@ export class HttpAuthAdapter implements IAuthPort {
     }
 
     const userData = JSON.stringify(safeUser);
-    this.secureStorage.setEncryptedItem(USER_DATA_KEY, userData);
+    // Usar localStorage para que los datos persistan entre sesiones de la PWA
+    this.secureStorage.setEncryptedLocalItem(USER_DATA_KEY, userData);
   }
 
   /**
@@ -493,7 +494,8 @@ export class HttpAuthAdapter implements IAuthPort {
       return null;
     }
 
-    const userData = this.secureStorage.getEncryptedItem(USER_DATA_KEY);
+    // Leer desde localStorage para recuperar datos al reabrir la PWA
+    const userData = this.secureStorage.getEncryptedLocalItem(USER_DATA_KEY);
     if (!userData) {
       return null;
     }
