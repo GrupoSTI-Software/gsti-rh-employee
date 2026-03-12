@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
 import { BrandingService } from '@core/services/branding.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
-import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
 import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
 import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-required.component';
 import { PwaUpdateOverlayComponent } from '@shared/components/pwa-update-overlay/pwa-update-overlay.component';
@@ -31,7 +30,6 @@ declare global {
   standalone: true,
   imports: [
     RouterOutlet,
-    PullToRefreshDirective,
     NoConnectionOverlayComponent,
     PwaRequiredComponent,
     PwaUpdateOverlayComponent,

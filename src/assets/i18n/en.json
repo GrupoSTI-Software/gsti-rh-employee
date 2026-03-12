@@ -352,6 +352,15 @@
       "title": "Language",
       "description": "Change the application language"
     },
+    "updateOption": {
+      "title": "Check for Updates",
+      "description": "Search for new versions of the application",
+      "button": "Check",
+      "upToDate": "Application is up to date",
+      "updateAvailable": "Update available, installing...",
+      "checkError": "Error checking for updates",
+      "notAvailable": "Updates not available in this environment"
+    },
     "passkeyOption": {
       "title": "Biometric Authentication",
       "description": "Set up fingerprint or Face ID for quick access"

@@ -54,6 +54,29 @@
           </div>
         </div>
 
+        <!-- Opción de Verificar Actualizaciones -->
+        <div class="option-card update-card">
+          <div class="option-left">
+            <div class="icon-container">
+              <i class="pi pi-sync"></i>
+            </div>
+            <div class="option-content">
+              <h3>{{ 'settings.updateOption.title' | translate }}</h3>
+              <p>{{ 'settings.updateOption.description' | translate }}</p>
+              @if (updateCheckMessage()) {
+                <p class="update-message">{{ updateCheckMessage() }}</p>
+              }
+            </div>
+          </div>
+          <p-button
+            [label]="'settings.updateOption.button' | translate"
+            icon="pi pi-refresh"
+            [loading]="isCheckingForUpdates()"
+            (onClick)="checkForUpdates()"
+            [disabled]="isCheckingForUpdates()"
+          />
+        </div>
+
         <!-- Opción de Passkeys / Biometría -->
         <!-- <button type="button" class="option-card" (click)="navigateToPasskeySetup()">
           <div class="option-left">
