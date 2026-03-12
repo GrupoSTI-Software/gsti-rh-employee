@@ -54,28 +54,19 @@
           </div>
         </div>
 
-        <!-- Opción de Verificar Actualizaciones -->
-        <div class="option-card update-card">
+        <!-- Opción de Perfil -->
+        <!-- <button type="button" class="option-card" (click)="navigateToProfile()">
           <div class="option-left">
             <div class="icon-container">
-              <i class="pi pi-sync"></i>
+              <i class="pi pi-user"></i>
             </div>
             <div class="option-content">
-              <h3>{{ 'settings.updateOption.title' | translate }}</h3>
-              <p>{{ 'settings.updateOption.description' | translate }}</p>
-              @if (updateCheckMessage()) {
-                <p class="update-message">{{ updateCheckMessage() }}</p>
-              }
+              <h3>{{ 'settings.profileOption.title' | translate }}</h3>
+              <p>{{ 'settings.profileOption.description' | translate }}</p>
             </div>
           </div>
-          <p-button
-            [label]="'settings.updateOption.button' | translate"
-            icon="pi pi-refresh"
-            [loading]="isCheckingForUpdates()"
-            (onClick)="checkForUpdates()"
-            [disabled]="isCheckingForUpdates()"
-          />
-        </div>
+          <i class="pi pi-chevron-right"></i>
+        </button> -->
 
         <!-- Opción de Passkeys / Biometría -->
         <!-- <button type="button" class="option-card" (click)="navigateToPasskeySetup()">
@@ -91,19 +82,29 @@
           <i class="pi pi-chevron-right"></i>
         </button> -->
 
-        <!-- Opción de Perfil -->
-        <!-- <button type="button" class="option-card" (click)="navigateToProfile()">
+        <!-- Opción de Verificar Actualizaciones -->
+        <div class="option-card update-card">
           <div class="option-left">
             <div class="icon-container">
-              <i class="pi pi-user"></i>
+              <i class="pi pi-sync"></i>
             </div>
             <div class="option-content">
-              <h3>{{ 'settings.profileOption.title' | translate }}</h3>
-              <p>{{ 'settings.profileOption.description' | translate }}</p>
+              <h3>{{ 'settings.updateOption.title' | translate }}</h3>
+              <p>{{ 'settings.updateOption.description' | translate }}</p>
+              @if (updateCheckMessage()) {
+                <p class="update-message">{{ updateCheckMessage() }}</p>
+              }
             </div>
           </div>
-          <i class="pi pi-chevron-right"></i>
-        </button> -->
+        </div>
+        <button
+          (click)="checkForUpdates()"
+          [disabled]="isCheckingForUpdates()"
+          class="btn btn-block"
+        >
+          <i class="pi pi-refresh"></i>
+          {{ isCheckingForUpdates() ? 'settings.updateOption.checking' : 'settings.updateOption.button' | translate }}
+        </button>
       </div>
     </div>
   </div>
