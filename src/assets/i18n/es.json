@@ -359,7 +359,8 @@
       "upToDate": "La aplicación está actualizada",
       "updateAvailable": "Actualización disponible, instalando...",
       "checkError": "Error al verificar actualizaciones",
-      "notAvailable": "Actualizaciones no disponibles en este entorno"
+      "notAvailable": "Actualizaciones no disponibles en este entorno",
+      "checking": "Verificando..."
     },
     "passkeyOption": {
       "title": "Autenticación Biométrica",

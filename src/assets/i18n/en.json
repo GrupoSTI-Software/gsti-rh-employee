@@ -359,7 +359,8 @@
       "upToDate": "Application is up to date",
       "updateAvailable": "Update available, installing...",
       "checkError": "Error checking for updates",
-      "notAvailable": "Updates not available in this environment"
+      "notAvailable": "Updates not available in this environment",
+      "checking": "Checking..."
     },
     "passkeyOption": {
       "title": "Biometric Authentication",
