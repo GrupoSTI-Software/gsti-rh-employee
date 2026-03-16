@@ -44,6 +44,8 @@ import { AUTHORIZE_ANY_ZONE_PORT } from '@modules/authorize-any-zone/domain/auth
 import { HttpAuthorizeAnyZoneAdapter } from '@modules/authorize-any-zone/infrastructure/http-authorize-any-zone.adapter';
 import { HttpZoneCoordinatesAdapter } from '@modules/zones-authorization/infrastructure/http-zone-coordinates.adapter';
 import { ZONE_COORDINATES_PORT } from '@modules/zones-authorization/domain/zone-coordinates.token';
+import { HttpProfileAdapter } from '@modules/profile/infrastructure/http-profile.adapter';
+import { PROFILE_PORT } from '@modules/profile/domain/profile.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -134,6 +136,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: ZONE_COORDINATES_PORT,
       useClass: HttpZoneCoordinatesAdapter,
+    },
+    {
+      provide: PROFILE_PORT,
+      useClass: HttpProfileAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({

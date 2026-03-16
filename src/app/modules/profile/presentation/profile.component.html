@@ -1,440 +1,820 @@
 <div class="profile-container">
+  <!-- Loading -->
   @if (loading()) {
-    <div class="loading-container" [@fadeInUp]>
+    <div class="profile-loading">
       <i class="pi pi-spin pi-spinner"></i>
-      <p>{{ 'profile.loading' | translate }}</p>
+      <span>{{ 'profile.loading' | translate }}</span>
     </div>
-  } @else if (error()) {
-    <div class="error-container" [@fadeInUp]>
-      <i class="pi pi-exclamation-triangle"></i>
-      <p>{{ error() }}</p>
-    </div>
-  } @else {
-    <div class="profile-wrapper" [@fadeInUp]>
+  }
 
-      <!-- Card superior con foto, nombre y código -->
-      <div class="profile-header-card" [@fadeInUp]>
-        <div class="profile-header-content">
-          <app-avatar size="xlarge" [showBorder]="true" />
-          <div class="profile-header-info">
-            <h2 class="employee-name">{{ fullName() }}</h2>
-            @if (user()?.person?.employee?.employeeCode) {
-              <p class="employee-code">{{ user()?.person?.employee?.employeeCode }}</p>
+  <!-- Error -->
+  @if (!loading() && error()) {
+    <div class="profile-error">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Contenido del perfil -->
+  @if (!loading() && !error()) {
+    <!-- Header con avatar e información principal -->
+    <div class="profile-header">
+      <app-avatar size="xlarge" [showBorder]="true" />
+      <div class="profile-header__info">
+        <h2 class="profile-header__name">{{ fullName() }}</h2>
+        <div class="profile-header__meta">
+          @if (employeeCode()) {
+            <span class="profile-header__badge">
+              <i class="pi pi-id-card"></i>
+              {{ 'profile.empId' | translate }}: {{ employeeCode() }}
+            </span>
+          }
+          @if (departmentName()) {
+            <span class="profile-header__badge">
+              <i class="pi pi-building"></i>
+              {{ 'profile.dep' | translate }} {{ departmentName() }}
+            </span>
+          }
+          @if (positionName()) {
+            <span class="profile-header__badge">
+              <i class="pi pi-briefcase"></i>
+              {{ 'profile.pos' | translate }} {{ positionName() }}
+            </span>
+          }
+        </div>
+        @if (seniority()) {
+          <span class="profile-header__seniority">
+            <i class="pi pi-clock"></i>
+            {{ seniority() }} {{ 'profile.seniorityLabel' | translate }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Tabs de navegación -->
+    <div class="profile-tabs">
+      @for (tab of tabs; track tab.key) {
+        <button
+          class="profile-tabs__btn"
+          [class.profile-tabs__btn--active]="activeTab() === tab.key"
+          (click)="selectTab(tab.key)"
+        >
+          <i [class]="tab.icon"></i>
+          {{ tab.labelKey | translate }}
+        </button>
+      }
+    </div>
+
+    <!-- Contenido de las secciones -->
+    <div class="profile-content">
+      @switch (activeTab()) {
+        @case ('work') {
+          <!-- Unidades -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-businessUnit">{{ 'profile.work.businessUnit' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'businessUnit'">
+                <input id="profile-businessUnit" type="text" [value]="profile()?.businessUnit?.businessUnitName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.businessUnit?.businessUnitName, 'businessUnit')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'businessUnit'" [class.pi-check]="copiedField() === 'businessUnit'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-payrollBusinessUnit">{{ 'profile.work.payrollBusinessUnit' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'payrollBusinessUnit'">
+                <input id="profile-payrollBusinessUnit" type="text" [value]="profile()?.payrollBusinessUnit?.businessUnitName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.payrollBusinessUnit?.businessUnitName, 'payrollBusinessUnit')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'payrollBusinessUnit'" [class.pi-check]="copiedField() === 'payrollBusinessUnit'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Identificación laboral -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-payrollCode">{{ 'profile.work.payrollCode' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'payrollCode'">
+                <input id="profile-payrollCode" type="text" [value]="profile()?.employeePayrollCode ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeePayrollCode, 'payrollCode')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'payrollCode'" [class.pi-check]="copiedField() === 'payrollCode'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-employeeType">{{ 'profile.work.employeeType' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'employeeType'">
+                <input id="profile-employeeType" type="text" [value]="profile()?.employeeType?.employeeTypeName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeType?.employeeTypeName, 'employeeType')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'employeeType'" [class.pi-check]="copiedField() === 'employeeType'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-contractType">{{ 'profile.work.contractType' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'contractType'">
+                <input id="profile-contractType" type="text" [value]="getContractTypeLabel(profile()?.employeeTypeOfContract)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getContractTypeLabel(profile()?.employeeTypeOfContract), 'contractType')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'contractType'" [class.pi-check]="copiedField() === 'contractType'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Datos personales del empleado -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-firstName">{{ 'profile.work.firstName' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'firstName'">
+                <input id="profile-firstName" type="text" [value]="profile()?.employeeFirstName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeFirstName, 'firstName')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'firstName'" [class.pi-check]="copiedField() === 'firstName'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-lastName">{{ 'profile.work.lastName' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'lastName'">
+                <input id="profile-lastName" type="text" [value]="profile()?.employeeLastName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeLastName, 'lastName')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'lastName'" [class.pi-check]="copiedField() === 'lastName'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-secondLastName">{{ 'profile.work.secondLastName' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'secondLastName'">
+                <input id="profile-secondLastName" type="text" [value]="profile()?.employeeSecondLastName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeSecondLastName, 'secondLastName')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'secondLastName'" [class.pi-check]="copiedField() === 'secondLastName'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-businessEmail">{{ 'profile.work.businessEmail' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'businessEmail'">
+                <input id="profile-businessEmail" type="text" [value]="profile()?.employeeBusinessEmail ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeBusinessEmail, 'businessEmail')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'businessEmail'" [class.pi-check]="copiedField() === 'businessEmail'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Puesto y cargo -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-department">{{ 'profile.work.department' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'department'">
+                <input id="profile-department" type="text" [value]="profile()?.department?.departmentName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.department?.departmentName, 'department')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'department'" [class.pi-check]="copiedField() === 'department'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-position">{{ 'profile.work.position' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'position'">
+                <input id="profile-position" type="text" [value]="profile()?.position?.positionName ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.position?.positionName, 'position')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'position'" [class.pi-check]="copiedField() === 'position'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-hireDate">{{ 'profile.work.hireDate' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'hireDate'">
+                <input id="profile-hireDate" type="text" [value]="formatDate(profile()?.employeeHireDate)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(formatDate(profile()?.employeeHireDate), 'hireDate')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'hireDate'" [class.pi-check]="copiedField() === 'hireDate'"></i>
+                </button>
+              </div>
+            </div>
+            @if (seniority()) {
+              <div class="seniority-badge">
+                <i class="pi pi-trophy"></i>
+                <span>{{ seniority() }} {{ 'profile.seniorityLabel' | translate }}</span>
+              </div>
+            }
+            <div class="field-group">
+              <label for="profile-dailySalary">{{ 'profile.work.dailySalary' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'dailySalary'">
+                <input id="profile-dailySalary" type="text" [value]="formatCurrency(profile()?.dailySalary)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(formatCurrency(profile()?.dailySalary), 'dailySalary')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'dailySalary'" [class.pi-check]="copiedField() === 'dailySalary'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Datos fiscales -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-curp">{{ 'profile.work.curp' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'curp'">
+                <input id="profile-curp" type="text" [value]="profile()?.person?.personCurp ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personCurp, 'curp')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'curp'" [class.pi-check]="copiedField() === 'curp'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-rfc">{{ 'profile.work.rfc' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'rfc'">
+                <input id="profile-rfc" type="text" [value]="profile()?.person?.personRfc ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personRfc, 'rfc')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'rfc'" [class.pi-check]="copiedField() === 'rfc'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-nss">{{ 'profile.work.nss' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'nss'">
+                <input id="profile-nss" type="text" [value]="profile()?.person?.personImssNss ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personImssNss, 'nss')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'nss'" [class.pi-check]="copiedField() === 'nss'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuración -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-workModality">{{ 'profile.work.workModality' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'workModality'">
+                <input id="profile-workModality" type="text" [value]="getWorkModalityLabel(profile()?.employeeWorkSchedule)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getWorkModalityLabel(profile()?.employeeWorkSchedule), 'workModality')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'workModality'" [class.pi-check]="copiedField() === 'workModality'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-assistDiscriminator">{{ 'profile.work.assistDiscriminator' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'assistDiscriminator'">
+                <input id="profile-assistDiscriminator" type="text" [value]="getAssistDiscriminatorLabel(profile()?.employeeAssistDiscriminator)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getAssistDiscriminatorLabel(profile()?.employeeAssistDiscriminator), 'assistDiscriminator')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'assistDiscriminator'" [class.pi-check]="copiedField() === 'assistDiscriminator'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-ignoreAbsences">{{ 'profile.work.ignoreConsecutiveAbsences' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'ignoreConsecutiveAbsences'">
+                <input id="profile-ignoreAbsences" type="text" [value]="getIgnoreConsecutiveAbsencesLabel(profile()?.employeeIgnoreConsecutiveAbsences)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getIgnoreConsecutiveAbsencesLabel(profile()?.employeeIgnoreConsecutiveAbsences), 'ignoreConsecutiveAbsences')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'ignoreConsecutiveAbsences'" [class.pi-check]="copiedField() === 'ignoreConsecutiveAbsences'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-authorizeZone">{{ 'profile.work.authorizeAnyZone' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'authorizeAnyZone'">
+                <input id="profile-authorizeZone" type="text" [value]="getAuthorizeAnyZoneLabel(profile()?.employeeAuthorizeAnyZones)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getAuthorizeAnyZoneLabel(profile()?.employeeAuthorizeAnyZones), 'authorizeAnyZone')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'authorizeAnyZone'" [class.pi-check]="copiedField() === 'authorizeAnyZone'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        @case ('personal') {
+          <!-- Contacto -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-phone">{{ 'profile.personal.phone' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'phone'">
+                <input id="profile-phone" type="text" [value]="profile()?.person?.personPhone ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPhone, 'phone')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'phone'" [class.pi-check]="copiedField() === 'phone'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-phoneSecondary">{{ 'profile.personal.phoneSecondary' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'phoneSecondary'">
+                <input id="profile-phoneSecondary" type="text" [value]="profile()?.person?.personPhoneSecondary ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPhoneSecondary, 'phoneSecondary')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'phoneSecondary'" [class.pi-check]="copiedField() === 'phoneSecondary'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-personalEmail">{{ 'profile.personal.personalEmail' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'personalEmail'">
+                <input id="profile-personalEmail" type="text" [value]="profile()?.person?.personEmail ?? '---'" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personEmail, 'personalEmail')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'personalEmail'" [class.pi-check]="copiedField() === 'personalEmail'"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Datos personales -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-gender">{{ 'profile.personal.gender' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'gender'">
+                <input id="profile-gender" type="text" [value]="getGenderLabel(profile()?.person?.personGender)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getGenderLabel(profile()?.person?.personGender), 'gender')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'gender'" [class.pi-check]="copiedField() === 'gender'"></i>
+                </button>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="profile-birthday">{{ 'profile.personal.birthday' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'birthday'">
+                <input id="profile-birthday" type="text" [value]="formatDate(profile()?.person?.personBirthday)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(formatDate(profile()?.person?.personBirthday), 'birthday')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'birthday'" [class.pi-check]="copiedField() === 'birthday'"></i>
+                </button>
+              </div>
+            </div>
+            @if (calculateAge(profile()?.person?.personBirthday); as age) {
+              <div class="seniority-badge">
+                <i class="pi pi-user"></i>
+                <span>{{ age }}</span>
+              </div>
+            }
+            <div class="grid-3">
+              <div class="field-group">
+                <label for="profile-birthCountry">{{ 'profile.personal.birthCountry' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'birthCountry'">
+                  <input id="profile-birthCountry" type="text" [value]="profile()?.person?.personPlaceOfBirthCountry ?? '---'" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPlaceOfBirthCountry, 'birthCountry')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'birthCountry'" [class.pi-check]="copiedField() === 'birthCountry'"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="profile-birthState">{{ 'profile.personal.birthState' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'birthState'">
+                  <input id="profile-birthState" type="text" [value]="profile()?.person?.personPlaceOfBirthState ?? '---'" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPlaceOfBirthState, 'birthState')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'birthState'" [class.pi-check]="copiedField() === 'birthState'"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="profile-birthCity">{{ 'profile.personal.birthCity' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'birthCity'">
+                  <input id="profile-birthCity" type="text" [value]="profile()?.person?.personPlaceOfBirthCity ?? '---'" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPlaceOfBirthCity, 'birthCity')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'birthCity'" [class.pi-check]="copiedField() === 'birthCity'"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Estado civil + Cónyuge -->
+          <div class="section-group">
+            <div class="field-group">
+              <label for="profile-maritalStatus">{{ 'profile.personal.maritalStatus' | translate }}</label>
+              <div class="field-input" [class.field-input--copied]="copiedField() === 'maritalStatus'">
+                <input id="profile-maritalStatus" type="text" [value]="getMaritalStatusLabel(profile()?.person?.personMaritalStatus)" readonly disabled />
+                <button class="copy-btn" (click)="copyToClipboard(getMaritalStatusLabel(profile()?.person?.personMaritalStatus), 'maritalStatus')">
+                  <i class="pi" [class.pi-copy]="copiedField() !== 'maritalStatus'" [class.pi-check]="copiedField() === 'maritalStatus'"></i>
+                </button>
+              </div>
+            </div>
+            @if (isMarriedOrUnion() && profile()?.spouse) {
+              <h3 class="section-title">{{ 'profile.personal.spouseTitle' | translate }}</h3>
+              <div class="grid-3">
+                <div class="field-group">
+                  <label for="profile-spouseFirstName">{{ 'profile.personal.spouseFirstName' | translate }}</label>
+                  <div class="field-input" [class.field-input--copied]="copiedField() === 'spouseFirstName'">
+                    <input id="profile-spouseFirstName" type="text" [value]="profile()?.spouse?.employeeSpouseFirstname ?? '---'" readonly disabled />
+                    <button class="copy-btn" (click)="copyToClipboard(profile()?.spouse?.employeeSpouseFirstname, 'spouseFirstName')">
+                      <i class="pi" [class.pi-copy]="copiedField() !== 'spouseFirstName'" [class.pi-check]="copiedField() === 'spouseFirstName'"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="profile-spouseLastName">{{ 'profile.personal.spouseLastName' | translate }}</label>
+                  <div class="field-input" [class.field-input--copied]="copiedField() === 'spouseLastName'">
+                    <input id="profile-spouseLastName" type="text" [value]="profile()?.spouse?.employeeSpouseLastname ?? '---'" readonly disabled />
+                    <button class="copy-btn" (click)="copyToClipboard(profile()?.spouse?.employeeSpouseLastname, 'spouseLastName')">
+                      <i class="pi" [class.pi-copy]="copiedField() !== 'spouseLastName'" [class.pi-check]="copiedField() === 'spouseLastName'"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="field-group">
+                  <label for="profile-spouseSecondLastName">{{ 'profile.personal.spouseSecondLastName' | translate }}</label>
+                  <div class="field-input" [class.field-input--copied]="copiedField() === 'spouseSecondLastName'">
+                    <input id="profile-spouseSecondLastName" type="text" [value]="profile()?.spouse?.employeeSpouseSecondLastname ?? '---'" readonly disabled />
+                    <button class="copy-btn" (click)="copyToClipboard(profile()?.spouse?.employeeSpouseSecondLastname, 'spouseSecondLastName')">
+                      <i class="pi" [class.pi-copy]="copiedField() !== 'spouseSecondLastName'" [class.pi-check]="copiedField() === 'spouseSecondLastName'"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="profile-spousePhone">{{ 'profile.personal.spousePhone' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'spousePhone'">
+                  <input id="profile-spousePhone" type="text" [value]="spousePhone() ?? '---'" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(spousePhone(), 'spousePhone')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'spousePhone'" [class.pi-check]="copiedField() === 'spousePhone'"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="profile-spouseOccupation">{{ 'profile.personal.spouseOccupation' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'spouseOccupation'">
+                  <input id="profile-spouseOccupation" type="text" [value]="profile()?.spouse?.employeeSpouseOcupation ?? '---'" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(profile()?.spouse?.employeeSpouseOcupation, 'spouseOccupation')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'spouseOccupation'" [class.pi-check]="copiedField() === 'spouseOccupation'"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="field-group">
+                <label for="profile-spouseBirthday">{{ 'profile.personal.spouseBirthday' | translate }}</label>
+                <div class="field-input" [class.field-input--copied]="copiedField() === 'spouseBirthday'">
+                  <input id="profile-spouseBirthday" type="text" [value]="formatDate(profile()?.spouse?.employeeSpouseBirthday)" readonly disabled />
+                  <button class="copy-btn" (click)="copyToClipboard(formatDate(profile()?.spouse?.employeeSpouseBirthday), 'spouseBirthday')">
+                    <i class="pi" [class.pi-copy]="copiedField() !== 'spouseBirthday'" [class.pi-check]="copiedField() === 'spouseBirthday'"></i>
+                  </button>
+                </div>
+              </div>
             }
           </div>
-        </div>
-      </div>
 
-      <!-- Card de Información Personal -->
-      <div class="info-card" [@fadeInUp]>
-        <h3 class="card-title">{{ 'profile.personalInfo' | translate }}</h3>
-        <div class="info-list">
-          @if (user()?.person?.personEmail) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.email' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'email'"
-                (click)="onClickCopy($event, user()!.person!.personEmail!, 'email')"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personEmail!, 'email')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.email' | translate"
-              >
-                {{ user()?.person?.personEmail || '---' }}
-                @if (copiedField() === 'email') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          @if (user()?.person?.personPhone) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.phone' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'phone'"
-                (click)="onClickCopy($event, user()!.person!.personPhone!, 'phone', true)"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personPhone!, 'phone', true)"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.phone' | translate"
-              >
-                {{ user()?.person?.personPhone || '---' }}
-                @if (copiedField() === 'phone') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          @if (user()?.person?.personGender) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.gender' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'gender'"
-                (click)="onClickCopy($event, user()!.person!.personGender!, 'gender')"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personGender!, 'gender')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.gender' | translate"
-              >
-                {{ user()?.person?.personGender || '---' }}
-                @if (copiedField() === 'gender') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          @if (user()?.person?.personBirthday) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.birthday' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'birthday'"
-                (click)="
-                  onClickCopy($event, formatDate(user()!.person!.personBirthday), 'birthday')
-                "
-                (keydown)="
-                  onKeyDownCopy($event, formatDate(user()!.person!.personBirthday), 'birthday')
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.birthday' | translate"
-              >
-                {{ formatDate(user()?.person?.personBirthday) }}
-                @if (copiedField() === 'birthday') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          @if (user()?.person?.personMaritalStatus) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.maritalStatus' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'maritalStatus'"
-                (click)="onClickCopy($event, user()!.person!.personMaritalStatus!, 'maritalStatus')"
-                (keydown)="
-                  onKeyDownCopy($event, user()!.person!.personMaritalStatus!, 'maritalStatus')
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.maritalStatus' | translate"
-              >
-                {{ user()?.person?.personMaritalStatus || '---' }}
-                @if (copiedField() === 'maritalStatus') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          @if (user()?.person?.personPlaceOfBirthCity || user()?.person?.personPlaceOfBirthState) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.placeOfBirth' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'placeOfBirth'"
-                (click)="onClickCopy($event, getPlaceOfBirth(), 'placeOfBirth')"
-                (keydown)="onKeyDownCopy($event, getPlaceOfBirth(), 'placeOfBirth')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.placeOfBirth' | translate"
-              >
-                @if (user()?.person?.personPlaceOfBirthCity) {
-                  {{ user()?.person?.personPlaceOfBirthCity }}
-                }
-                @if (user()?.person?.personPlaceOfBirthState) {
-                  @if (user()?.person?.personPlaceOfBirthCity) {
-                    ,
-                  }
-                  {{ user()?.person?.personPlaceOfBirthState }}
-                }
-                @if (copiedField() === 'placeOfBirth') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Card de Información Laboral -->
-      <div class="info-card" [@fadeInUp]>
-        <h3 class="card-title">{{ 'profile.professionalInfo' | translate }}</h3>
-        <div class="info-list">
-          @if (user()?.person?.employee?.employeeCode) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.employeeCode' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'employeeCode'"
-                (click)="
-                  onClickCopy($event, user()!.person!.employee!.employeeCode, 'employeeCode')
-                "
-                (keydown)="
-                  onKeyDownCopy($event, user()!.person!.employee!.employeeCode, 'employeeCode')
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.employeeCode' | translate"
-              >
-                {{ user()?.person?.employee?.employeeCode || '---' }}
-                @if (copiedField() === 'employeeCode') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-
-          <div class="info-row">
-            <span class="info-label">{{ 'profile.payrollNumber' | translate }}</span>
-            <span
-              class="info-value copyable"
-              [class.copied]="copiedField() === 'payrollCode'"
-              (click)="
-                onClickCopy(
-                  $event,
-                  user()!.person!.employee!.employeePayrollCode || '',
-                  'payrollCode'
-                )
-              "
-              (keydown)="
-                onKeyDownCopy(
-                  $event,
-                  user()!.person!.employee!.employeePayrollCode || '',
-                  'payrollCode'
-                )
-              "
-              tabindex="0"
-              role="button"
-              [attr.aria-label]="'profile.payrollNumber' | translate"
-            >
-              {{ user()?.person?.employee?.employeePayrollCode || '---' }}
-              @if (
-                copiedField() === 'payrollCode' && user()?.person?.employee?.employeePayrollCode
-              ) {
-                <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                <i class="pi pi-check copied-icon"></i>
+          <!-- Hijos -->
+          <div class="section-group section-group--vertical">
+            <h3 class="section-title">{{ 'profile.personal.childrenTitle' | translate }}</h3>
+            @if (profile()?.children?.length) {
+              @for (child of profile()!.children!; track child.employeeChildrenId) {
+                <div class="info-card">
+                  <div class="grid-3">
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.childName' | translate }}</span>
+                      <span class="info-card__value">{{ child.employeeChildrenFirstname }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.childLastName' | translate }}</span>
+                      <span class="info-card__value">{{ child.employeeChildrenLastname }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.childSecondLastName' | translate }}</span>
+                      <span class="info-card__value">{{ child.employeeChildrenSecondLastname ?? '---' }}</span>
+                    </div>
+                  </div>
+                  <div class="grid-2">
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.childGender' | translate }}</span>
+                      <span class="info-card__value">{{ getGenderLabel(child.employeeChildrenGender) }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.childBirthday' | translate }}</span>
+                      <span class="info-card__value">{{ formatDate(child.employeeChildrenBirthday) }}</span>
+                    </div>
+                  </div>
+                </div>
               }
-            </span>
+            } @else {
+              <div class="empty-list">
+                <i class="pi pi-inbox"></i>
+                <span>{{ 'profile.personal.noChildren' | translate }}</span>
+              </div>
+            }
           </div>
 
-          @if (user()?.person?.employee?.employeeHireDate) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.hireDate' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'hireDate'"
-                (click)="
-                  onClickCopy(
-                    $event,
-                    formatDate(user()!.person!.employee!.employeeHireDate),
-                    'hireDate'
-                  )
-                "
-                (keydown)="
-                  onKeyDownCopy(
-                    $event,
-                    formatDate(user()!.person!.employee!.employeeHireDate),
-                    'hireDate'
-                  )
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.hireDate' | translate"
-              >
-                {{ formatDate(user()?.person?.employee?.employeeHireDate) }}
-                @if (copiedField() === 'hireDate') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
+          <!-- Contactos de emergencia -->
+          <div class="section-group section-group--vertical">
+            <h3 class="section-title">{{ 'profile.personal.emergencyTitle' | translate }}</h3>
+            @if (profile()?.emergencyContacts?.length) {
+              @for (contact of profile()!.emergencyContacts!; track contact.employeeEmergencyContactId) {
+                <div class="info-card">
+                  <div class="grid-3">
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.emergencyName' | translate }}</span>
+                      <span class="info-card__value">{{ contact.employeeEmergencyContactFirstname }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.emergencyLastName' | translate }}</span>
+                      <span class="info-card__value">{{ contact.employeeEmergencyContactLastname }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.emergencySecondLastName' | translate }}</span>
+                      <span class="info-card__value">{{ contact.employeeEmergencyContactSecondLastname ?? '---' }}</span>
+                    </div>
+                  </div>
+                  <div class="grid-2">
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.emergencyRelationship' | translate }}</span>
+                      <span class="info-card__value">{{ contact.employeeEmergencyContactRelationship ?? '---' }}</span>
+                    </div>
+                    <div class="field-group">
+                      <span class="field-label">{{ 'profile.personal.emergencyPhone' | translate }}</span>
+                      <span class="info-card__value">{{ contact.employeeEmergencyContactPhone ?? '---' }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="empty-list">
+                <i class="pi pi-inbox"></i>
+                <span>{{ 'profile.personal.noEmergencyContacts' | translate }}</span>
+              </div>
+            }
+          </div>
+        }
+        @case ('health') {
+          <div class="section-group section-group--vertical">
+            <h3 class="section-title">{{ 'profile.health.title' | translate }}</h3>
+            @if (profile()?.medicalConditions?.length) {
+              @for (condition of profile()!.medicalConditions!; track condition.employeeMedicalConditionId) {
+                <div class="info-card medical-card">
+                  <h4 class="medical-card__title">
+                    {{ condition.medicalConditionType?.medicalConditionTypeName ?? '---' }}
+                  </h4>
+                  <p class="medical-card__diagnosis">
+                    <i class="pi pi-caret-right"></i>
+                    {{ condition.employeeMedicalConditionDiagnosis ?? '---' }}
+                  </p>
+                </div>
+              }
+            } @else {
+              <div class="empty-list">
+                <i class="pi pi-heart"></i>
+                <span>{{ 'profile.health.noConditions' | translate }}</span>
+              </div>
+            }
+          </div>
+        }
+        @case ('records') {
+          @if (recordCategoryList().length) {
+            @for (category of recordCategoryList(); track category.categoryName) {
+              <div class="section-group section-group--vertical">
+                <h3 class="section-title">{{ category.categoryName }}</h3>
+                @for (property of category.properties; track property.employeeRecordPropertyId) {
+                  @if (property.values.length > 0) {
+                    @if (category.properties.length > 1) {
+                      <span class="record-property-name">{{ property.name }}</span>
+                    }
+                    @for (value of property.values; track value.employeeRecordId) {
+                      <div class="record-value-row">
+                        <span>{{ value.employeeRecordValue }}</span>
+                      </div>
+                    }
+                  }
                 }
-              </span>
+              </div>
+            }
+          } @else {
+            <div class="empty-list">
+              <i class="pi pi-list"></i>
+              <span>{{ 'profile.records.noRecords' | translate }}</span>
             </div>
           }
+        }
+        @case ('address') {
+          @if (profile()?.address?.length) {
+            @for (empAddr of profile()!.address!; track empAddr.employeeAddressId) {
+              <div class="section-group">
+                <!-- País, Estado, Ciudad -->
+                <div class="grid-3">
+                  <div class="field-group">
+                    <label [for]="'profile-addr-country-' + empAddr.employeeAddressId">{{ 'profile.address.country' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrCountry-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-country-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressCountry ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressCountry, 'addrCountry-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrCountry-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrCountry-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-state-' + empAddr.employeeAddressId">{{ 'profile.address.state' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrState-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-state-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressState ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressState, 'addrState-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrState-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrState-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-city-' + empAddr.employeeAddressId">{{ 'profile.address.city' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrCity-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-city-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressCity ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressCity, 'addrCity-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrCity-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrCity-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          @if (user()?.person?.employee?.employeeTypeOfContract) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.contractType' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'contractType'"
-                (click)="
-                  onClickCopy(
-                    $event,
-                    user()!.person!.employee!.employeeTypeOfContract!,
-                    'contractType'
-                  )
-                "
-                (keydown)="
-                  onKeyDownCopy(
-                    $event,
-                    user()!.person!.employee!.employeeTypeOfContract!,
-                    'contractType'
-                  )
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.contractType' | translate"
-              >
-                {{ user()?.person?.employee?.employeeTypeOfContract || '---' }}
-                @if (copiedField() === 'contractType') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
+                <!-- Código postal, Municipio -->
+                <div class="grid-2">
+                  <div class="field-group">
+                    <label [for]="'profile-addr-zipcode-' + empAddr.employeeAddressId">{{ 'profile.address.zipcode' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrZipcode-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-zipcode-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressZipcode ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressZipcode, 'addrZipcode-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrZipcode-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrZipcode-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-township-' + empAddr.employeeAddressId">{{ 'profile.address.township' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrTownship-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-township-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressTownship ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressTownship, 'addrTownship-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrTownship-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrTownship-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          @if (user()?.person?.employee?.employeeWorkSchedule) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.workSchedule' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'workSchedule'"
-                (click)="
-                  onClickCopy(
-                    $event,
-                    user()!.person!.employee!.employeeWorkSchedule!,
-                    'workSchedule'
-                  )
-                "
-                (keydown)="
-                  onKeyDownCopy(
-                    $event,
-                    user()!.person!.employee!.employeeWorkSchedule!,
-                    'workSchedule'
-                  )
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.workSchedule' | translate"
-              >
-                {{ user()?.person?.employee?.employeeWorkSchedule || '---' }}
-                @if (copiedField() === 'workSchedule') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
+                <!-- Colonia, Tipo de asentamiento -->
+                <div class="grid-2">
+                  <div class="field-group">
+                    <label [for]="'profile-addr-settlement-' + empAddr.employeeAddressId">{{ 'profile.address.settlement' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrSettlement-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-settlement-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressSettlement ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressSettlement, 'addrSettlement-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrSettlement-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrSettlement-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-settlementType-' + empAddr.employeeAddressId">{{ 'profile.address.settlementType' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrSettlementType-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-settlementType-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressSettlementType ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressSettlementType, 'addrSettlementType-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrSettlementType-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrSettlementType-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          @if (user()?.person?.employee?.employeeBusinessEmail) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.businessEmail' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'businessEmail'"
-                (click)="
-                  onClickCopy(
-                    $event,
-                    user()!.person!.employee!.employeeBusinessEmail!,
-                    'businessEmail'
-                  )
-                "
-                (keydown)="
-                  onKeyDownCopy(
-                    $event,
-                    user()!.person!.employee!.employeeBusinessEmail!,
-                    'businessEmail'
-                  )
-                "
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.businessEmail' | translate"
-              >
-                {{ user()?.person?.employee?.employeeBusinessEmail || '---' }}
-                @if (copiedField() === 'businessEmail') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
-        </div>
-      </div>
+                <!-- Calle -->
+                <div class="field-group">
+                  <label [for]="'profile-addr-street-' + empAddr.employeeAddressId">{{ 'profile.address.street' | translate }}</label>
+                  <div class="field-input" [class.field-input--copied]="copiedField() === 'addrStreet-' + empAddr.employeeAddressId">
+                    <input [id]="'profile-addr-street-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressStreet ?? '---'" readonly disabled />
+                    <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressStreet, 'addrStreet-' + empAddr.employeeAddressId)">
+                      <i class="pi" [class.pi-copy]="copiedField() !== 'addrStreet-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrStreet-' + empAddr.employeeAddressId"></i>
+                    </button>
+                  </div>
+                </div>
 
-      <!-- Card de Información Legal -->
-      <div class="info-card" [@fadeInUp]>
-        <h3 class="card-title">{{ 'profile.legalInfo' | translate }}</h3>
-        <div class="info-list">
-          @if (user()?.person?.personCurp) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.curp' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'curp'"
-                (click)="onClickCopy($event, user()!.person!.personCurp!, 'curp')"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personCurp!, 'curp')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.curp' | translate"
-              >
-                {{ user()?.person?.personCurp || '---' }}
-                @if (copiedField() === 'curp') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
-            </div>
-          }
+                <!-- Número exterior, Número interior -->
+                <div class="grid-2">
+                  <div class="field-group">
+                    <label [for]="'profile-addr-extNum-' + empAddr.employeeAddressId">{{ 'profile.address.externalNumber' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrExtNum-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-extNum-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressExternalNumber ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressExternalNumber, 'addrExtNum-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrExtNum-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrExtNum-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-intNum-' + empAddr.employeeAddressId">{{ 'profile.address.internalNumber' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrIntNum-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-intNum-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressInternalNumber ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressInternalNumber, 'addrIntNum-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrIntNum-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrIntNum-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-          @if (user()?.person?.personRfc) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.rfc' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'rfc'"
-                (click)="onClickCopy($event, user()!.person!.personRfc!, 'rfc')"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personRfc!, 'rfc')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.rfc' | translate"
-              >
-                {{ user()?.person?.personRfc || '---' }}
-                @if (copiedField() === 'rfc') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
+                <!-- Entre calle 1, Entre calle 2 -->
+                <div class="grid-2">
+                  <div class="field-group">
+                    <label [for]="'profile-addr-between1-' + empAddr.employeeAddressId">{{ 'profile.address.betweenStreet1' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrBetween1-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-between1-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressBetweenStreet1 ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressBetweenStreet1, 'addrBetween1-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrBetween1-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrBetween1-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="field-group">
+                    <label [for]="'profile-addr-between2-' + empAddr.employeeAddressId">{{ 'profile.address.betweenStreet2' | translate }}</label>
+                    <div class="field-input" [class.field-input--copied]="copiedField() === 'addrBetween2-' + empAddr.employeeAddressId">
+                      <input [id]="'profile-addr-between2-' + empAddr.employeeAddressId" type="text" [value]="empAddr.address?.addressBetweenStreet2 ?? '---'" readonly disabled />
+                      <button class="copy-btn" (click)="copyToClipboard(empAddr.address?.addressBetweenStreet2, 'addrBetween2-' + empAddr.employeeAddressId)">
+                        <i class="pi" [class.pi-copy]="copiedField() !== 'addrBetween2-' + empAddr.employeeAddressId" [class.pi-check]="copiedField() === 'addrBetween2-' + empAddr.employeeAddressId"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="empty-list">
+              <i class="pi pi-map-marker"></i>
+              <span>{{ 'profile.address.noAddress' | translate }}</span>
             </div>
           }
+        }
+        @case ('responsibles') {
+          @if (profile()?.responsibles?.length) {
+            <div class="responsible-grid">
+              @for (resp of profile()!.responsibles!; track resp.userResponsibleEmployeeId) {
+                <div class="responsible-card">
+                  <div class="responsible-card__header">
+                    @if (resp.employeePhoto) {
+                      <img
+                        class="responsible-card__avatar-img"
+                        [src]="resp.employeePhoto"
+                        [alt]="resp.fullName ?? ''"
+                      />
+                    } @else {
+                      <span class="responsible-card__avatar">
+                        {{ resp.fullName?.charAt(0)?.toUpperCase() ?? '?' }}
+                      </span>
+                    }
+                    <div class="responsible-card__info">
+                      <span class="responsible-card__name">{{ resp.fullName ?? '—' }}</span>
+                      <span class="responsible-card__email">{{ resp.userEmail ?? '—' }}</span>
+                      <span class="responsible-card__role">{{ resp.roleName ?? '—' }}</span>
+                    </div>
+                  </div>
 
-          @if (user()?.person?.personImssNss) {
-            <div class="info-row">
-              <span class="info-label">{{ 'profile.nss' | translate }}</span>
-              <span
-                class="info-value copyable"
-                [class.copied]="copiedField() === 'nss'"
-                (click)="onClickCopy($event, user()!.person!.personImssNss!, 'nss')"
-                (keydown)="onKeyDownCopy($event, user()!.person!.personImssNss!, 'nss')"
-                tabindex="0"
-                role="button"
-                [attr.aria-label]="'profile.nss' | translate"
-              >
-                {{ user()?.person?.personImssNss || '---' }}
-                @if (copiedField() === 'nss') {
-                  <span class="tooltip">{{ 'profile.copiedSuccess' | translate }}</span>
-                  <i class="pi pi-check copied-icon"></i>
-                }
-              </span>
+                  <div class="responsible-card__status">
+                    <span
+                      class="responsible-card__indicator"
+                      [class.responsible-card__indicator--active]="resp.userActive === 1"
+                    >
+                      <i class="pi pi-circle-fill"></i>
+                      @if (resp.userActive === 1) {
+                        {{ 'profile.responsibles.activeUserAccess' | translate }}
+                      } @else {
+                        {{ 'profile.responsibles.notActiveUserAccess' | translate }}
+                      }
+                    </span>
+                    <span
+                      class="responsible-card__indicator"
+                      [class.responsible-card__indicator--active]="
+                        resp.userResponsibleEmployeeReadonly === 1
+                      "
+                    >
+                      <i class="pi pi-circle-fill"></i>
+                      @if (resp.userResponsibleEmployeeReadonly === 1) {
+                        {{ 'profile.responsibles.readOnly' | translate }}
+                      } @else {
+                        {{ 'profile.responsibles.notReadOnly' | translate }}
+                      }
+                    </span>
+                    <span
+                      class="responsible-card__indicator"
+                      [class.responsible-card__indicator--active]="
+                        resp.userResponsibleEmployeeDirectBoss === 1
+                      "
+                    >
+                      <i class="pi pi-circle-fill"></i>
+                      @if (resp.userResponsibleEmployeeDirectBoss === 1) {
+                        {{ 'profile.responsibles.directBoss' | translate }}
+                      } @else {
+                        {{ 'profile.responsibles.notDirectBoss' | translate }}
+                      }
+                    </span>
+                  </div>
+
+                  <div class="responsible-card__footer">
+                    <div class="responsible-card__detail">
+                      <span class="responsible-card__detail-label">{{
+                        'profile.responsibles.employeeId' | translate
+                      }}</span>
+                      <span class="responsible-card__detail-value">{{
+                        resp.employeeCode ||
+                          ('profile.responsibles.employeeIdNotSpecified' | translate)
+                      }}</span>
+                    </div>
+                    <div class="responsible-card__detail">
+                      <span class="responsible-card__detail-label">{{
+                        'profile.work.department' | translate
+                      }}</span>
+                      <span class="responsible-card__detail-value">{{
+                        resp.departmentName ||
+                          ('profile.responsibles.departmentNotSpecified' | translate)
+                      }}</span>
+                    </div>
+                    <div class="responsible-card__detail">
+                      <span class="responsible-card__detail-label">{{
+                        'profile.work.position' | translate
+                      }}</span>
+                      <span class="responsible-card__detail-value">{{
+                        resp.positionName ||
+                          ('profile.responsibles.positionNotSpecified' | translate)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-list">
+              <i class="pi pi-users"></i>
+              <span>{{ 'profile.responsibles.noResponsibles' | translate }}</span>
             </div>
           }
-        </div>
-      </div>
+        }
+      }
     </div>
   }
 </div>
