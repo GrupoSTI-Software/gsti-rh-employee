@@ -40,6 +40,10 @@ import { HttpPincodePasswordAdapter } from '@modules/pincode-password/infrastruc
 import { PINCODE_PASSWORD_PORT } from '@modules/pincode-password/domain/pincode-password.token';
 import { VERIFICATION_ATTENDANCE_LOCK_PORT } from '@modules/verification-attendance-lock/domain/verification-attendance-lock.token';
 import { HttpVerificationAttendanceLockAdapter } from '@modules/verification-attendance-lock/infrastructure/http-verification-attendance-lock.adapter';
+import { AUTHORIZE_ANY_ZONE_PORT } from '@modules/authorize-any-zone/domain/authorize-any-zone.token';
+import { HttpAuthorizeAnyZoneAdapter } from '@modules/authorize-any-zone/infrastructure/http-authorize-any-zone.adapter';
+import { HttpZoneCoordinatesAdapter } from '@modules/zones-authorization/infrastructure/http-zone-coordinates.adapter';
+import { ZONE_COORDINATES_PORT } from '@modules/zones-authorization/domain/zone-coordinates.token';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -122,6 +126,14 @@ export const appConfig: ApplicationConfig = {
     {
       provide: VERIFICATION_ATTENDANCE_LOCK_PORT,
       useClass: HttpVerificationAttendanceLockAdapter,
+    },
+    {
+      provide: AUTHORIZE_ANY_ZONE_PORT,
+      useClass: HttpAuthorizeAnyZoneAdapter,
+    },
+    {
+      provide: ZONE_COORDINATES_PORT,
+      useClass: HttpZoneCoordinatesAdapter,
     },
     provideTranslateService({
       loader: provideTranslateHttpLoader({

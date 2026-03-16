@@ -4,10 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
 import { BrandingService } from '@core/services/branding.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
-import { PullToRefreshDirective } from '@shared/directives/pull-to-refresh.directive';
 import { NoConnectionOverlayComponent } from '@shared/components/no-connection-overlay/no-connection-overlay.component';
 import { PwaRequiredComponent } from '@shared/components/pwa-required/pwa-required.component';
-import { PwaInstallPromptService } from '@core/services/pwa-install-prompt.service';
 import { PwaUpdateOverlayComponent } from '@shared/components/pwa-update-overlay/pwa-update-overlay.component';
 import { PwaUpdateService } from '@core/services/pwa-update.service';
 import { PwaDetectionService } from '@core/services/pwa-detection.service';
@@ -32,7 +30,6 @@ declare global {
   standalone: true,
   imports: [
     RouterOutlet,
-    PullToRefreshDirective,
     NoConnectionOverlayComponent,
     PwaRequiredComponent,
     PwaUpdateOverlayComponent,
@@ -46,22 +43,28 @@ export class App implements OnInit, AfterViewInit {
   private readonly theme = inject(ThemeService);
   private readonly branding = inject(BrandingService);
   private readonly secureStorage = inject(SecureStorageService);
-  private readonly pwaInstallPrompt = inject(PwaInstallPromptService);
   private readonly pwaDetection = inject(PwaDetectionService);
   // Inicializa el servicio de actualizaciones al arrancar la app
   private readonly _pwaUpdate = inject(PwaUpdateService);
 
   /**
-   * Signal que indica si la PWA está instalada
+   * Signal que indica si la PWA está corriendo en modo standalone.
+   * Se inicializa con el estado sincrónico + persistido para evitar la condición
+   * de carrera donde isPwaRunning=false hace que shouldShowPwaRequired sea true
+   * brevemente, mostrando PwaRequiredComponent que redirige al login aunque
+   * el usuario ya tuviera sesión activa.
    */
-  private readonly isPwaInstalled = signal(false);
+  private readonly isPwaRunning = signal(this.pwaDetection.isRunningAsPwaInitialGuess());
 
   /**
    * Determina si debe mostrar el componente PWA Required.
-   * Solo se muestra cuando PRODUCTION es true Y la PWA no está instalada.
+   * Se muestra en producción cuando NO está corriendo en modo PWA.
+   * El componente internamente maneja:
+   * - Desktop: Muestra mensaje de "no soportado en computadora"
+   * - Móvil/Tablet: Muestra instrucciones de instalación
    */
   protected readonly shouldShowPwaRequired = computed(() => {
-    return environment.PRODUCTION && !this.isPwaInstalled();
+    return environment.PRODUCTION && !this.isPwaRunning();
   });
 
   constructor() {
@@ -72,8 +75,16 @@ export class App implements OnInit, AfterViewInit {
     // Esto asegura que el favicon y manifest se actualicen antes de que el usuario instale la PWA
     void this.branding.loadBranding();
 
-    // Inicializar estado de PWA
-    this.isPwaInstalled.set(this.pwaDetection.isRunningAsPwa());
+    // Inicializar estado de PWA y verificar si debe mostrar prompt de apertura
+    void this.initializePwaState();
+  }
+
+  /**
+   * Inicializa el estado de la PWA
+   */
+  private async initializePwaState(): Promise<void> {
+    const isPwa = await this.pwaDetection.isRunningAsPwaAsync();
+    this.isPwaRunning.set(isPwa);
   }
 
   ngOnInit(): void {

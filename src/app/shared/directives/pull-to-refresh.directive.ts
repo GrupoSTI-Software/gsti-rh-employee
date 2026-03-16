@@ -8,10 +8,12 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { SwUpdate } from '@angular/service-worker';
 
 /**
  * Directiva para implementar el gesto de pull-to-refresh (arrastrar hacia abajo para recargar)
- * Similar al comportamiento de los navegadores móviles
+ * Verifica actualizaciones del Service Worker en lugar de recargar la página directamente
+ * para evitar pérdida de sesión en producción
  */
 @Directive({
   selector: '[appPullToRefresh]',
@@ -21,6 +23,7 @@ export class PullToRefreshDirective implements OnInit, OnDestroy {
   private readonly el = inject(ElementRef);
   private readonly renderer = inject(Renderer2);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly swUpdate = inject(SwUpdate);
 
   private startY = 0;
   private currentY = 0;
@@ -176,11 +179,44 @@ export class PullToRefreshDirective implements OnInit, OnDestroy {
       this.renderer.setStyle(this.refreshIndicator, 'opacity', '1');
     }
 
-    // Simular un pequeño delay para mejor UX antes de recargar
+    // Verificar si hay actualizaciones del Service Worker
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate
+        .checkForUpdate()
+        .then((hasUpdate) => {
+          if (hasUpdate) {
+            // Si hay actualizaciones, activarlas y recargar
+            this.swUpdate
+              .activateUpdate()
+              .then(() => {
+                window.location.reload();
+              })
+              .catch(() => {
+                // Si falla la activación, simplemente resetear el indicador
+                this.completeRefresh();
+              });
+          } else {
+            // Si no hay actualizaciones, solo mostrar feedback visual
+            this.completeRefresh();
+          }
+        })
+        .catch(() => {
+          // Si falla la verificación, solo mostrar feedback visual
+          this.completeRefresh();
+        });
+    } else {
+      // Si el SW no está habilitado (desarrollo), solo mostrar feedback visual
+      this.completeRefresh();
+    }
+  }
+
+  /**
+   * Completa la animación de refresh sin recargar la página
+   */
+  private completeRefresh(): void {
     setTimeout(() => {
-      if (isPlatformBrowser(this.platformId)) {
-        window.location.reload();
-      }
-    }, 300);
+      this.resetIndicator();
+      this.isRefreshing = false;
+    }, 800);
   }
 }

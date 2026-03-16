@@ -101,8 +101,9 @@ export class PwaDetectionService {
 
   /**
    * Verifica si la aplicación está corriendo en modo PWA (standalone).
-   * Combina detección en tiempo real con el estado persistido en localStorage
-   * para resolver el problema de timing en Android al lanzar la app instalada.
+   * Solo usa detección en tiempo real (display-mode, navigator.standalone, TWA).
+   * El estado persistido en localStorage NO se usa aquí para evitar falsos positivos
+   * en desktop cuando el mismo navegador tuvo datos de una sesión móvil anterior.
    * @returns true si está en modo PWA instalada, false en caso contrario
    */
   isRunningAsPwa(): boolean {
@@ -110,11 +111,7 @@ export class PwaDetectionService {
       return false;
     }
 
-    return (
-      // this.checkDisplayModeStandalone() ||
-      this.checkIOSStandalone() || this.checkNativeApp()
-      // this.getPersistedStandaloneState()
-    );
+    return this.checkDisplayModeStandalone() || this.checkIOSStandalone() || this.checkNativeApp();
   }
 
   /**
@@ -157,8 +154,8 @@ export class PwaDetectionService {
 
       const timeout = setTimeout(() => {
         mql.removeEventListener('change', handler);
-        // Último intento de detección tras el timeout
-        resolve(this.isRunningAsPwa());
+        // Último intento: detección en tiempo real + estado persistido solo para Android
+        resolve(this.isRunningAsPwa() || this.getPersistedStandaloneState());
       }, DISPLAY_MODE_WAIT_MS);
 
       mql.addEventListener('change', handler);
@@ -175,6 +172,24 @@ export class PwaDetectionService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Verificación inicial para el primer render de la aplicación.
+   * Combina la detección en tiempo real con el estado persistido en localStorage
+   * para evitar que la app muestre brevemente el componente de instalación cuando
+   * el usuario ya tiene la PWA instalada (condición de carrera al abrir la app).
+   *
+   * A diferencia de isRunningAsPwa(), SÍ incluye el estado persistido, lo cual es
+   * seguro en contexto móvil ya que el estado se persiste solo al confirmar modo standalone.
+   *
+   * @returns true si está en modo PWA o si fue confirmado en una sesión anterior
+   */
+  isRunningAsPwaInitialGuess(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
+    return this.isRunningAsPwa() || this.getPersistedStandaloneState();
   }
 
   /**

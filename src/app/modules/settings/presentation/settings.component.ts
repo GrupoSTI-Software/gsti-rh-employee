@@ -7,11 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService, Theme } from '@core/services/theme.service';
 import { LoggerService } from '@core/services/logger.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
+import { PwaUpdateService } from '@core/services/pwa-update.service';
 import { Select } from 'primeng/select';
+import { Button } from 'primeng/button';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { SwUpdate } from '@angular/service-worker';
 
 type Language = 'es' | 'en';
 
@@ -33,7 +36,7 @@ interface ILanguageOption {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, Select],
+  imports: [CommonModule, FormsModule, TranslatePipe, Select, Button],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
   animations: [
@@ -52,7 +55,13 @@ export class SettingsComponent implements OnInit, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly logger = inject(LoggerService);
   private readonly secureStorage = inject(SecureStorageService);
+  private readonly pwaUpdateService = inject(PwaUpdateService);
+  private readonly swUpdate = inject(SwUpdate);
   private langChangeSubscription?: Subscription;
+
+  // Signal para controlar el estado del botón de actualización
+  readonly isCheckingForUpdates = signal(false);
+  readonly updateCheckMessage = signal<string | null>(null);
 
   // Signal para el idioma actual que se actualiza cuando cambia
   readonly currentLanguage = signal<Language>(
@@ -136,5 +145,50 @@ export class SettingsComponent implements OnInit, OnDestroy {
 
   navigateToPasskeySetup(): void {
     void this.router.navigate(['/register-passkey']);
+  }
+
+  /**
+   * Verifica si hay actualizaciones disponibles de la PWA
+   */
+  checkForUpdates(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.swUpdate.isEnabled) {
+      this.updateCheckMessage.set(
+        this.translateService.instant('settings.updateOption.notAvailable'),
+      );
+      setTimeout(() => this.updateCheckMessage.set(null), 3000);
+      return;
+    }
+
+    this.isCheckingForUpdates.set(true);
+    this.updateCheckMessage.set(null);
+
+    this.swUpdate
+      .checkForUpdate()
+      .then((hasUpdate) => {
+        if (hasUpdate) {
+          this.updateCheckMessage.set(
+            this.translateService.instant('settings.updateOption.updateAvailable'),
+          );
+          // Activar la actualización automáticamente
+          setTimeout(() => {
+            this.pwaUpdateService.applyUpdate();
+          }, 1000);
+        } else {
+          this.updateCheckMessage.set(
+            this.translateService.instant('settings.updateOption.upToDate'),
+          );
+          setTimeout(() => this.updateCheckMessage.set(null), 3000);
+        }
+      })
+      .catch((error) => {
+        this.logger.error('Error al verificar actualizaciones:', error);
+        this.updateCheckMessage.set(
+          this.translateService.instant('settings.updateOption.checkError'),
+        );
+        setTimeout(() => this.updateCheckMessage.set(null), 3000);
+      })
+      .finally(() => {
+        this.isCheckingForUpdates.set(false);
+      });
   }
 }

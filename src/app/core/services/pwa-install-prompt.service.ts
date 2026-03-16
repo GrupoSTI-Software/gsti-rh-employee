@@ -31,15 +31,16 @@ export class PwaInstallPromptService {
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.setupInstallPrompt();
-      this.checkAndShowBanners();
+      void this.checkAndShowBanners();
     }
   }
 
   /**
    * Verifica qué banner mostrar: instalación o abrir app
    */
-  private checkAndShowBanners(): void {
-    if (this.pwaDetectionService.isRunningAsPwa()) {
+  private async checkAndShowBanners(): Promise<void> {
+    const isPwa = await this.pwaDetectionService.isRunningAsPwaAsync();
+    if (isPwa) {
       return;
     }
 
@@ -51,10 +52,14 @@ export class PwaInstallPromptService {
   }
 
   /**
-   * Verifica si la PWA fue instalada previamente
+   * Verifica si la PWA fue instalada previamente.
+   * Combina la verificación del localStorage con la detección del estado persistido
+   * del servicio de detección de PWA.
    */
   private isPwaInstalled(): boolean {
-    return this.storage.getItem(this.PWA_INSTALLED_KEY) === 'true';
+    const markedAsInstalled = this.storage.getItem(this.PWA_INSTALLED_KEY) === 'true';
+    const hasPersistedState = this.storage.getItem('pwa_standalone_confirmed') === 'true';
+    return markedAsInstalled || hasPersistedState;
   }
 
   /**
@@ -210,28 +215,46 @@ export class PwaInstallPromptService {
   }
 
   /**
-   * Intenta abrir la PWA instalada
-   * Nota: No hay una API estándar para abrir la PWA desde el navegador.
-   * Esta función muestra un mensaje instructivo al usuario sobre cómo abrir la app.
-   * En Android con Chrome, el navegador puede mostrar automáticamente un banner
-   * para abrir en la app instalada gracias a launch_handler en el manifest.
+   * Intenta abrir la PWA instalada.
+   * En Android con Chrome, intenta usar el intent de la app.
+   * En iOS, muestra instrucciones para abrir desde el ícono de inicio.
+   * Como fallback, muestra un mensaje instructivo al usuario.
    */
   openInstalledApp(): void {
     this.showOpenAppBanner.set(false);
 
-    if (isPlatformBrowser(this.platformId)) {
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isChrome = /Chrome/i.test(navigator.userAgent);
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
 
-      if (isAndroid && isChrome) {
-        alert(
-          'Por favor, busca el banner en la parte superior de la pantalla que dice "Abrir en la app" o busca el ícono de la app en tu pantalla de inicio.',
-        );
-      } else {
-        alert(
-          'Por favor, busca el ícono de la aplicación en tu pantalla de inicio o en el menú de aplicaciones para abrirla.',
-        );
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const currentUrl = window.location.href;
+
+    if (isAndroid) {
+      // En Android, intentar abrir usando el intent de la app
+      // Chrome mostrará automáticamente un banner si la PWA está instalada
+      const appUrl = currentUrl.replace(/^https?:\/\//, '');
+      const intentUrl = `intent://${appUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+
+      try {
+        window.location.href = intentUrl;
+        // Si no funciona después de 1 segundo, mostrar mensaje
+        setTimeout(() => {
+          alert(
+            'Por favor, busca el ícono de la aplicación en tu pantalla de inicio para abrirla.',
+          );
+        }, 1000);
+      } catch (error) {
+        this.logger.error('Error al intentar abrir la PWA:', error);
+        alert('Por favor, busca el ícono de la aplicación en tu pantalla de inicio para abrirla.');
       }
+    } else if (isIOS) {
+      alert('Por favor, busca el ícono de la aplicación en tu pantalla de inicio para abrirla.');
+    } else {
+      alert(
+        'Por favor, busca el ícono de la aplicación en tu pantalla de inicio o en el menú de aplicaciones para abrirla.',
+      );
     }
   }
 

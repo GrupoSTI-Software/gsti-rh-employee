@@ -217,6 +217,12 @@
     "checkInSuccess": "Check-in registrado exitosamente",
     "checkOutSuccess": "Check-out registrado exitosamente",
     "locationError": "Error al obtener la ubicación",
+    "locationMessages": {
+      "errorTitle": "Error de ubicación",
+      "noZonesAssigned": "No tienes zonas de acceso asignadas. Contacta a tu administrador.",
+      "outsideZoneTitle": "Fuera de zona permitida",
+      "outsideZoneMessage": "No estás dentro de ninguna zona autorizada. Estás a {{distance}} de la zona más cercana."
+    },
     "registerError": "Error al registrar la asistencia",
     "exceptions": "Permisos",
     "records": "Registro de Asistencia",
@@ -345,6 +351,16 @@
     "languageOption": {
       "title": "Idioma",
       "description": "Cambiar el idioma de la aplicación"
+    },
+    "updateOption": {
+      "title": "Verificar Actualizaciones",
+      "description": "Busca nuevas versiones de la aplicación",
+      "button": "Verificar",
+      "upToDate": "La aplicación está actualizada",
+      "updateAvailable": "Actualización disponible, instalando...",
+      "checkError": "Error al verificar actualizaciones",
+      "notAvailable": "Actualizaciones no disponibles en este entorno",
+      "checking": "Verificando..."
     },
     "passkeyOption": {
       "title": "Autenticación Biométrica",

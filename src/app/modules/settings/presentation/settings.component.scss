@@ -129,6 +129,25 @@
   }
 }
 
+.update-card {
+  cursor: default;
+
+  &:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-hover);
+  }
+
+  .option-content {
+    .update-message {
+      margin-top: $spacing-xs;
+      font-size: $font-size-sm;
+      color: var(--primary);
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
 // Estilos específicos del componente para los selects de PrimeNG
 // Los estilos globales están en styles/_primeng.scss
 :host ::ng-deep {
