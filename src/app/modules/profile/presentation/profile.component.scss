@@ -53,6 +53,10 @@
   padding: $spacing-xl;
   border-radius: $radius-md;
   box-shadow: var(--shadow-sm);
+  // background-image: url('https://wallsneedlove.com/cdn/shop/products/w0263_1s_Nautical-Waves-Wallpaper-for-Walls-Waves-of-Chic_Repeating-Pattern-Sample-1.jpg?v=1753805386');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 .profile-header__info {
@@ -421,7 +425,7 @@
 
 .responsible-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: $spacing-md;
 
   @media (max-width: $breakpoint-sm) {
@@ -448,9 +452,10 @@
   &__avatar-img {
     width: 3.5rem;
     height: 3.5rem;
-    border-radius: 50%;
+    border-radius: $radius-sm;
     flex-shrink: 0;
     object-fit: cover;
+    border: 1px solid var(--border-color);
   }
 
   &__avatar {

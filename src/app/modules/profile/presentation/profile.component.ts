@@ -78,7 +78,7 @@ export class ProfileComponent implements OnInit {
 
   readonly isMarriedOrUnion = computed(() => {
     const status = this.profile()?.person?.personMaritalStatus;
-    return status === 'Married' || status === 'Free Union';
+    return status === 'casado' || status === 'union_libre';
   });
 
   /**
@@ -255,11 +255,11 @@ export class ProfileComponent implements OnInit {
     if (!value) return '---';
     const lang = this.translateService.currentLang ?? 'es';
     const map: Record<string, { es: string; en: string }> = {
-      Single: { es: 'Soltero(a)', en: 'Single' },
-      Married: { es: 'Casado(a)', en: 'Married' },
-      Divorced: { es: 'Divorciado(a)', en: 'Divorced' },
-      Widowed: { es: 'Viudo(a)', en: 'Widowed' },
-      'Free Union': { es: 'Unión libre', en: 'Free Union' },
+      Single: { es: 'Soltero(a)', en: 'soltero' },
+      casado: { es: 'Casado(a)', en: 'casado' },
+      divorciado: { es: 'Divorciado(a)', en: 'divorciado' },
+      viudo: { es: 'Viudo(a)', en: 'viudo' },
+      union_libre: { es: 'Unión libre', en: 'union_libre' },
     };
     return map[value]?.[lang as 'es' | 'en'] ?? value;
   }

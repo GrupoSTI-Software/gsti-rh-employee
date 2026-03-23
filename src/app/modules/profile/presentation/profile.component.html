@@ -20,35 +20,7 @@
     <!-- Header con avatar e información principal -->
     <div class="profile-header">
       <app-avatar size="xlarge" [showBorder]="true" />
-      <div class="profile-header__info">
-        <h2 class="profile-header__name">{{ fullName() }}</h2>
-        <div class="profile-header__meta">
-          @if (employeeCode()) {
-            <span class="profile-header__badge">
-              <i class="pi pi-id-card"></i>
-              {{ 'profile.empId' | translate }}: {{ employeeCode() }}
-            </span>
-          }
-          @if (departmentName()) {
-            <span class="profile-header__badge">
-              <i class="pi pi-building"></i>
-              {{ 'profile.dep' | translate }} {{ departmentName() }}
-            </span>
-          }
-          @if (positionName()) {
-            <span class="profile-header__badge">
-              <i class="pi pi-briefcase"></i>
-              {{ 'profile.pos' | translate }} {{ positionName() }}
-            </span>
-          }
-        </div>
-        @if (seniority()) {
-          <span class="profile-header__seniority">
-            <i class="pi pi-clock"></i>
-            {{ seniority() }} {{ 'profile.seniorityLabel' | translate }}
-          </span>
-        }
-      </div>
+      <div class="profile-header__info"></div>
     </div>
 
     <!-- Tabs de navegación -->
@@ -73,15 +45,6 @@
           <div class="section-group">
             <div class="field-group">
               <label for="profile-businessUnit">{{ 'profile.work.businessUnit' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'businessUnit'">
-                <input id="profile-businessUnit" type="text" [value]="profile()?.businessUnit?.businessUnitName ?? '---'" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(profile()?.businessUnit?.businessUnitName, 'businessUnit')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'businessUnit'" [class.pi-check]="copiedField() === 'businessUnit'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-payrollBusinessUnit">{{ 'profile.work.payrollBusinessUnit' | translate }}</label>
               <div class="field-input" [class.field-input--copied]="copiedField() === 'payrollBusinessUnit'">
                 <input id="profile-payrollBusinessUnit" type="text" [value]="profile()?.payrollBusinessUnit?.businessUnitName ?? '---'" readonly disabled />
                 <button class="copy-btn" (click)="copyToClipboard(profile()?.payrollBusinessUnit?.businessUnitName, 'payrollBusinessUnit')">
@@ -99,15 +62,6 @@
                 <input id="profile-payrollCode" type="text" [value]="profile()?.employeePayrollCode ?? '---'" readonly disabled />
                 <button class="copy-btn" (click)="copyToClipboard(profile()?.employeePayrollCode, 'payrollCode')">
                   <i class="pi" [class.pi-copy]="copiedField() !== 'payrollCode'" [class.pi-check]="copiedField() === 'payrollCode'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-employeeType">{{ 'profile.work.employeeType' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'employeeType'">
-                <input id="profile-employeeType" type="text" [value]="profile()?.employeeType?.employeeTypeName ?? '---'" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(profile()?.employeeType?.employeeTypeName, 'employeeType')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'employeeType'" [class.pi-check]="copiedField() === 'employeeType'"></i>
                 </button>
               </div>
             </div>
@@ -197,15 +151,6 @@
                 <span>{{ seniority() }} {{ 'profile.seniorityLabel' | translate }}</span>
               </div>
             }
-            <div class="field-group">
-              <label for="profile-dailySalary">{{ 'profile.work.dailySalary' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'dailySalary'">
-                <input id="profile-dailySalary" type="text" [value]="formatCurrency(profile()?.dailySalary)" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(formatCurrency(profile()?.dailySalary), 'dailySalary')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'dailySalary'" [class.pi-check]="copiedField() === 'dailySalary'"></i>
-                </button>
-              </div>
-            </div>
           </div>
 
           <!-- Datos fiscales -->
@@ -238,46 +183,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Configuración -->
-          <div class="section-group">
-            <div class="field-group">
-              <label for="profile-workModality">{{ 'profile.work.workModality' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'workModality'">
-                <input id="profile-workModality" type="text" [value]="getWorkModalityLabel(profile()?.employeeWorkSchedule)" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(getWorkModalityLabel(profile()?.employeeWorkSchedule), 'workModality')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'workModality'" [class.pi-check]="copiedField() === 'workModality'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-assistDiscriminator">{{ 'profile.work.assistDiscriminator' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'assistDiscriminator'">
-                <input id="profile-assistDiscriminator" type="text" [value]="getAssistDiscriminatorLabel(profile()?.employeeAssistDiscriminator)" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(getAssistDiscriminatorLabel(profile()?.employeeAssistDiscriminator), 'assistDiscriminator')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'assistDiscriminator'" [class.pi-check]="copiedField() === 'assistDiscriminator'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-ignoreAbsences">{{ 'profile.work.ignoreConsecutiveAbsences' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'ignoreConsecutiveAbsences'">
-                <input id="profile-ignoreAbsences" type="text" [value]="getIgnoreConsecutiveAbsencesLabel(profile()?.employeeIgnoreConsecutiveAbsences)" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(getIgnoreConsecutiveAbsencesLabel(profile()?.employeeIgnoreConsecutiveAbsences), 'ignoreConsecutiveAbsences')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'ignoreConsecutiveAbsences'" [class.pi-check]="copiedField() === 'ignoreConsecutiveAbsences'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-authorizeZone">{{ 'profile.work.authorizeAnyZone' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'authorizeAnyZone'">
-                <input id="profile-authorizeZone" type="text" [value]="getAuthorizeAnyZoneLabel(profile()?.employeeAuthorizeAnyZones)" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(getAuthorizeAnyZoneLabel(profile()?.employeeAuthorizeAnyZones), 'authorizeAnyZone')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'authorizeAnyZone'" [class.pi-check]="copiedField() === 'authorizeAnyZone'"></i>
-                </button>
-              </div>
-            </div>
-          </div>
         }
         @case ('personal') {
           <!-- Contacto -->
@@ -288,15 +193,6 @@
                 <input id="profile-phone" type="text" [value]="profile()?.person?.personPhone ?? '---'" readonly disabled />
                 <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPhone, 'phone')">
                   <i class="pi" [class.pi-copy]="copiedField() !== 'phone'" [class.pi-check]="copiedField() === 'phone'"></i>
-                </button>
-              </div>
-            </div>
-            <div class="field-group">
-              <label for="profile-phoneSecondary">{{ 'profile.personal.phoneSecondary' | translate }}</label>
-              <div class="field-input" [class.field-input--copied]="copiedField() === 'phoneSecondary'">
-                <input id="profile-phoneSecondary" type="text" [value]="profile()?.person?.personPhoneSecondary ?? '---'" readonly disabled />
-                <button class="copy-btn" (click)="copyToClipboard(profile()?.person?.personPhoneSecondary, 'phoneSecondary')">
-                  <i class="pi" [class.pi-copy]="copiedField() !== 'phoneSecondary'" [class.pi-check]="copiedField() === 'phoneSecondary'"></i>
                 </button>
               </div>
             </div>
@@ -731,35 +627,10 @@
                     <div class="responsible-card__info">
                       <span class="responsible-card__name">{{ resp.fullName ?? '—' }}</span>
                       <span class="responsible-card__email">{{ resp.userEmail ?? '—' }}</span>
-                      <span class="responsible-card__role">{{ resp.roleName ?? '—' }}</span>
                     </div>
                   </div>
 
                   <div class="responsible-card__status">
-                    <span
-                      class="responsible-card__indicator"
-                      [class.responsible-card__indicator--active]="resp.userActive === 1"
-                    >
-                      <i class="pi pi-circle-fill"></i>
-                      @if (resp.userActive === 1) {
-                        {{ 'profile.responsibles.activeUserAccess' | translate }}
-                      } @else {
-                        {{ 'profile.responsibles.notActiveUserAccess' | translate }}
-                      }
-                    </span>
-                    <span
-                      class="responsible-card__indicator"
-                      [class.responsible-card__indicator--active]="
-                        resp.userResponsibleEmployeeReadonly === 1
-                      "
-                    >
-                      <i class="pi pi-circle-fill"></i>
-                      @if (resp.userResponsibleEmployeeReadonly === 1) {
-                        {{ 'profile.responsibles.readOnly' | translate }}
-                      } @else {
-                        {{ 'profile.responsibles.notReadOnly' | translate }}
-                      }
-                    </span>
                     <span
                       class="responsible-card__indicator"
                       [class.responsible-card__indicator--active]="
@@ -777,27 +648,12 @@
 
                   <div class="responsible-card__footer">
                     <div class="responsible-card__detail">
-                      <span class="responsible-card__detail-label">{{
-                        'profile.responsibles.employeeId' | translate
-                      }}</span>
-                      <span class="responsible-card__detail-value">{{
-                        resp.employeeCode ||
-                          ('profile.responsibles.employeeIdNotSpecified' | translate)
-                      }}</span>
-                    </div>
-                    <div class="responsible-card__detail">
-                      <span class="responsible-card__detail-label">{{
-                        'profile.work.department' | translate
-                      }}</span>
                       <span class="responsible-card__detail-value">{{
                         resp.departmentName ||
                           ('profile.responsibles.departmentNotSpecified' | translate)
                       }}</span>
                     </div>
                     <div class="responsible-card__detail">
-                      <span class="responsible-card__detail-label">{{
-                        'profile.work.position' | translate
-                      }}</span>
                       <span class="responsible-card__detail-value">{{
                         resp.positionName ||
                           ('profile.responsibles.positionNotSpecified' | translate)

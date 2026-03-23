@@ -31,14 +31,14 @@
   &.with-border {
     .avatar-image,
     .avatar-initials {
-      border: 1px solid var(--primary);
+      border: 2px solid var(--primary);
     }
   }
 
   &.avatar-xlarge.with-border {
     .avatar-image,
     .avatar-initials {
-      border-width: 1px;
+      border-width: 2px;
     }
   }
 }
