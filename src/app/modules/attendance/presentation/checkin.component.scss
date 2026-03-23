@@ -222,6 +222,108 @@
   }
 }
 
+// Alerta de permisos faltantes
+.permission-alert {
+  width: 100%;
+  background: var(--warning-light, rgba(255, 193, 7, 0.1));
+  border: 2px solid var(--warning);
+  border-radius: $radius;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  animation: slideInDown 0.3s ease-out;
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+.permission-alert-content {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+}
+
+.permission-alert-icon {
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.permission-alert-text {
+  flex: 1;
+}
+
+.permission-alert-title {
+  font-weight: $font-weight-bold;
+  color: var(--text-primary);
+  font-size: $font-size-sm;
+  margin-bottom: 4px;
+}
+
+.permission-alert-description {
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+}
+
+.permission-request-button {
+  @include button-base;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  background: var(--warning);
+  color: white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-sm;
+  border: none;
+  transition: all $transition-fast;
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--warning-dark, #e6ac00);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
 // Columna derecha: botones apilados verticalmente
 .action-column {
   flex: 1;

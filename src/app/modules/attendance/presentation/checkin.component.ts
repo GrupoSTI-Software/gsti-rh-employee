@@ -137,9 +137,12 @@ export class CheckinComponent implements OnInit, OnDestroy {
   private faceApiModelsLoaded = false;
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
   private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
-  private readonly FACE_MATCH_THRESHOLD = 0.51; // Umbral de similitud (0-1, mayor = más estricto) - Más permisivo para reconocimiento rápido
-  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.015; // Umbral mínimo de movimiento entre frames (0-1) - Más permisivo
-  private readonly LIVENESS_FRAMES_TO_CHECK = 2; // Número de frames a analizar para detectar movimiento - Reducido para mayor velocidad
+  // Umbral de similitud facial (0-1). Valor más bajo = más permisivo. Ajustado para Android PWA.
+  private readonly FACE_MATCH_THRESHOLD = 0.45;
+  // Umbral de confianza del detector de rostros. Valor más bajo = detecta rostros menos centrados/alejados.
+  private readonly FACE_SCORE_THRESHOLD = 0.3;
+  private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.015;
+  private readonly LIVENESS_FRAMES_TO_CHECK = 2;
   // Anti-spoofing: EAR mínimo para considerar ojo abierto (valores < umbral = parpadeo detectado)
   private readonly EAR_BLINK_THRESHOLD = 0.21;
   // Anti-spoofing: varianza de gradiente mínima para considerar textura de piel real vs foto/pantalla
@@ -177,6 +180,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly errorModalType = signal<ErrorModalType>('error');
   readonly errorModalTitle = signal('');
   readonly errorModalMessage = signal('');
+
+  // Estado de permisos
+  readonly cameraPermissionGranted = signal<boolean | null>(null);
+  readonly locationPermissionGranted = signal<boolean | null>(null);
+  readonly requestingPermissions = signal(false);
 
   @ViewChild(DatePickerDrawerComponent) datePickerDrawer?: DatePickerDrawerComponent;
 
@@ -455,6 +463,23 @@ export class CheckinComponent implements OnInit, OnDestroy {
     return specialDay.type === 'new-entry';
   });
 
+  /**
+   * Indica si hay permisos faltantes (cámara o ubicación denegados)
+   */
+  readonly hasPermissionIssues = computed((): boolean => {
+    return this.cameraPermissionGranted() === false || this.locationPermissionGranted() === false;
+  });
+
+  /**
+   * Mensaje descriptivo de los permisos faltantes
+   */
+  readonly permissionIssuesMessage = computed((): string => {
+    const missing: string[] = [];
+    if (this.cameraPermissionGranted() === false) missing.push('Cámara');
+    if (this.locationPermissionGranted() === false) missing.push('Ubicación');
+    return missing.length > 0 ? `Permisos requeridos: ${missing.join(' y ')}` : '';
+  });
+
   ngOnInit(): void {
     // Inicializar la hora inmediatamente
     this.updateCurrentTime();
@@ -476,86 +501,217 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Solicita los permisos necesarios para el checkin (cámara y ubicación)
-   * Nota: En localhost HTTP, algunos navegadores pueden requerir interacción del usuario
+   * Solicita los permisos de cámara y ubicación al entrar a la pantalla.
+   * Si alguno está denegado, muestra un modal con instrucciones específicas para Android PWA.
+   * Se ejecuta en cada visita a la pantalla para detectar permisos revocados.
    */
   private async requestPermissions(): Promise<void> {
-    // Solicitar permiso de ubicación (solo en HTTPS o producción)
+    let cameraDenied = false;
+    let locationDenied = false;
+
+    // ── Verificar y solicitar permiso de cámara ────────────────────────────
+    try {
+      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
+        // Intentar abrir la cámara para forzar el diálogo de permisos si aún no se ha dado
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' },
+        });
+        stream.getTracks().forEach((track) => track.stop());
+        this.cameraPermissionGranted.set(true);
+      }
+    } catch (error: unknown) {
+      const err = error as { name?: string };
+      if (err.name === 'NotAllowedError') {
+        cameraDenied = true;
+        this.cameraPermissionGranted.set(false);
+        this.logger.warn('Permiso de cámara denegado al entrar a la pantalla');
+      } else if (err.name === 'NotFoundError') {
+        this.cameraPermissionGranted.set(false);
+        this.logger.warn('Cámara no encontrada en el dispositivo');
+      } else {
+        this.cameraPermissionGranted.set(null);
+        this.logger.warn('Error al solicitar permiso de cámara:', error);
+      }
+    }
+
+    // ── Verificar y solicitar permiso de ubicación ────────────────────────
     try {
       if (typeof navigator.geolocation !== 'undefined') {
-        // Verificar si el permiso ya está concedido o denegado
         if (typeof navigator.permissions?.query !== 'undefined') {
           try {
             const geoPermission = await navigator.permissions.query({
               name: 'geolocation' as PermissionName,
             });
 
-            if (geoPermission.state === 'prompt' || geoPermission.state === 'granted') {
-              // Intentar obtener ubicación para activar el prompt o verificar que funciona
+            if (geoPermission.state === 'denied') {
+              locationDenied = true;
+              this.locationPermissionGranted.set(false);
+              this.logger.warn('Permiso de ubicación denegado al entrar a la pantalla');
+            } else if (geoPermission.state === 'prompt' || geoPermission.state === 'granted') {
               await new Promise<void>((resolve) => {
                 navigator.geolocation.getCurrentPosition(
                   () => {
+                    this.locationPermissionGranted.set(true);
                     resolve();
                   },
-                  (error) => {
-                    if (error.code === error.PERMISSION_DENIED) {
-                      this.logger.warn(
-                        'Permiso de ubicación denegado. Se solicitará cuando hagas clic.',
-                      );
+                  (geoError) => {
+                    if (geoError.code === geoError.PERMISSION_DENIED) {
+                      locationDenied = true;
+                      this.locationPermissionGranted.set(false);
+                      this.logger.warn('Permiso de ubicación denegado en la solicitud directa');
                     } else {
-                      this.logger.warn('Error al obtener ubicación:', error);
+                      this.locationPermissionGranted.set(null);
                     }
-                    // No rechazamos aquí, solo registramos el error
                     resolve();
                   },
                   { timeout: 5000, enableHighAccuracy: false },
                 );
               });
-            } else if (geoPermission.state === 'denied') {
-              this.logger.warn(
-                'Permiso de ubicación previamente denegado. Ve a la configuración del navegador para permitirlo.',
-              );
             }
           } catch (_permError) {
-            // Si la API de permisos no está disponible, intentar directamente
-            await this.requestGeolocationPermission().catch(() => {
-              // Ignorar errores aquí, se solicitará cuando el usuario interactúe
-            });
+            try {
+              await this.requestGeolocationPermission();
+            } catch {
+              // Permiso no disponible aún; se solicitará al intentar registrar asistencia
+            }
           }
         } else {
-          // Si no está disponible permissions API, intentar directamente
-          await this.requestGeolocationPermission().catch(() => {
-            // Ignorar errores aquí, se solicitará cuando el usuario interactúe
-          });
+          try {
+            await this.requestGeolocationPermission();
+          } catch {
+            // Permiso no disponible aún; se solicitará al intentar registrar asistencia
+          }
         }
       }
     } catch (error) {
-      this.logger.warn('Error al solicitar permiso de ubicación:', error);
+      this.logger.warn('Error al verificar permiso de ubicación:', error);
     }
 
-    // Solicitar permiso de cámara (solo en HTTPS o producción)
+    // ── Mostrar modal de guía si hay permisos denegados ───────────────────
+    // Se muestra al entrar a la pantalla para que el usuario corrija el problema
+    // antes de intentar registrar asistencia, con instrucciones específicas para Android.
+    if (cameraDenied || locationDenied) {
+      const permisosFaltantes = [
+        ...(cameraDenied ? ['Cámara'] : []),
+        ...(locationDenied ? ['Ubicación'] : []),
+      ].join(' y ');
+
+      const instrucciones = this.buildPermissionInstructions(cameraDenied, locationDenied);
+
+      this.showErrorModalWithMessage(
+        'warning',
+        `Permisos requeridos: ${permisosFaltantes}`,
+        instrucciones,
+      );
+    }
+  }
+
+  /**
+   * Genera las instrucciones para otorgar permisos en Android PWA instalada.
+   *
+   * @param camera - true si el permiso de cámara está denegado
+   * @param location - true si el permiso de ubicación está denegado
+   * @returns Texto con instrucciones paso a paso para el usuario
+   */
+  private buildPermissionInstructions(camera: boolean, location: boolean): string {
+    const permisos = [...(camera ? ['cámara'] : []), ...(location ? ['ubicación'] : [])].join(
+      ' y ',
+    );
+
+    return (
+      `Para registrar tu asistencia necesitas permitir el acceso a ${permisos}.\n\n` +
+      `¿Cómo habilitarlo en Android?\n` +
+      `1. Ve a Ajustes de tu teléfono\n` +
+      `2. Busca "Aplicaciones" o "Apps"\n` +
+      `3. Encuentra esta aplicación en la lista\n` +
+      `4. Toca en "Permisos"\n` +
+      `5. Activa los permisos de ${permisos}\n` +
+      `6. Regresa a la app y vuelve a intentarlo`
+    );
+  }
+
+  /**
+   * Solicita permisos de cámara y ubicación manualmente cuando el usuario toca el botón.
+   * Actualiza los signals de estado de permisos y muestra feedback visual.
+   * Si los permisos están denegados, muestra instrucciones para habilitarlos desde Ajustes.
+   */
+  async requestPermissionsManually(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    this.requestingPermissions.set(true);
+    let cameraSuccess = false;
+    let locationSuccess = false;
+
+    // ── Solicitar permiso de cámara ────────────────────────────────────────
     try {
       if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-          },
+          video: { facingMode: 'user' },
         });
-        // Cerrar el stream inmediatamente, solo necesitamos el permiso
         stream.getTracks().forEach((track) => track.stop());
+        this.cameraPermissionGranted.set(true);
+        cameraSuccess = true;
       }
     } catch (error: unknown) {
       const err = error as { name?: string };
       if (err.name === 'NotAllowedError') {
-        this.logger.warn(
-          'Permiso de cámara denegado o requiere interacción del usuario. Se solicitará cuando hagas clic.',
-        );
+        this.cameraPermissionGranted.set(false);
+        this.logger.warn('Permiso de cámara denegado por el usuario');
       } else if (err.name === 'NotFoundError') {
+        this.cameraPermissionGranted.set(false);
         this.logger.warn('Cámara no encontrada');
       } else {
+        this.cameraPermissionGranted.set(null);
         this.logger.warn('Error al solicitar permiso de cámara:', error);
       }
-      // En localhost HTTP, esto es normal, los permisos se solicitarán al hacer clic
+    }
+
+    // ── Solicitar permiso de ubicación ─────────────────────────────────────
+    try {
+      await new Promise<void>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          () => {
+            this.locationPermissionGranted.set(true);
+            locationSuccess = true;
+            resolve();
+          },
+          (error) => {
+            if (error.code === error.PERMISSION_DENIED) {
+              this.locationPermissionGranted.set(false);
+              this.logger.warn('Permiso de ubicación denegado por el usuario');
+            } else {
+              this.locationPermissionGranted.set(null);
+              this.logger.warn('Error al obtener ubicación:', error);
+            }
+            reject(error);
+          },
+          { timeout: 5000, enableHighAccuracy: false },
+        );
+      });
+    } catch {
+      // Error ya registrado en el callback
+    }
+
+    this.requestingPermissions.set(false);
+
+    // ── Mostrar feedback al usuario ────────────────────────────────────────
+    if (cameraSuccess && locationSuccess) {
+      this.showErrorModalWithMessage(
+        'success',
+        'Permisos otorgados',
+        'Los permisos de cámara y ubicación se han otorgado correctamente. Ya puedes registrar tu asistencia.',
+      );
+    } else if (!cameraSuccess && !locationSuccess) {
+      const instrucciones = this.buildPermissionInstructions(true, true);
+      this.showErrorModalWithMessage('warning', 'Permisos denegados', instrucciones);
+    } else if (!cameraSuccess) {
+      const instrucciones = this.buildPermissionInstructions(true, false);
+      this.showErrorModalWithMessage('warning', 'Permiso de cámara denegado', instrucciones);
+    } else if (!locationSuccess) {
+      const instrucciones = this.buildPermissionInstructions(false, true);
+      this.showErrorModalWithMessage('warning', 'Permiso de ubicación denegado', instrucciones);
     }
   }
 
@@ -1038,7 +1194,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
         if (isLocalhost) {
           message += ' Por favor, permite el acceso a la cámara cuando se solicite.';
         } else {
-          message += ' Ve a la configuración del navegador para permitirlo.';
+          message +=
+            '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
+            'esta app → Permisos → activa Cámara.';
         }
         throw new Error(message);
       } else if (err.name === 'NotFoundError') {
@@ -1059,11 +1217,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
               let message = 'Se necesita permiso de ubicación para registrar asistencia.';
               if (geoPermissionDenied) {
                 message +=
-                  ' El permiso está denegado. Ve a la configuración del navegador (ícono de candado en la barra de direcciones) para permitirlo.';
+                  '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
+                  'esta app → Permisos → activa Ubicación.';
               } else if (isLocalhost) {
                 message += ' Por favor, permite el acceso a la ubicación cuando se solicite.';
               } else {
-                message += ' Ve a la configuración del navegador para permitirlo.';
+                message +=
+                  '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
+                  'esta app → Permisos → activa Ubicación.';
               }
               reject(new Error(message));
             } else if (error.code === error.POSITION_UNAVAILABLE) {
@@ -1126,12 +1287,14 @@ export class CheckinComponent implements OnInit, OnDestroy {
         );
       }
 
-      // Obtener acceso a la cámara frontal con flash si está disponible.
-      // El flash mejora la calidad de captura en ambientes con poca luz,
-      // aumentando la precisión del reconocimiento facial.
+      // Obtener acceso a la cámara frontal con resolución explícita para Android.
+      // Se especifica ideal de 720p para asegurar buena calidad sin sobrecargar el procesamiento.
+      // El flash mejora la captura en ambientes con poca luz.
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
           // @ts-ignore - torch es una propiedad experimental pero soportada en muchos navegadores
           advanced: [{ torch: true }],
         },
@@ -2286,8 +2449,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
         .detectSingleFace(
           img,
           new faceapi.TinyFaceDetectorOptions({
-            inputSize: 224,
-            scoreThreshold: 0.4,
+            // inputSize 320 detecta rostros más alejados o menos centrados (mejor para Android)
+            inputSize: 320,
+            scoreThreshold: this.FACE_SCORE_THRESHOLD,
           }),
         )
         .withFaceLandmarks()
@@ -2488,8 +2652,9 @@ export class CheckinComponent implements OnInit, OnDestroy {
               .detectSingleFace(
                 img,
                 new faceapi.TinyFaceDetectorOptions({
+                  // inputSize 160 es suficiente para liveness y mantiene buen rendimiento en Android
                   inputSize: 160,
-                  scoreThreshold: 0.4,
+                  scoreThreshold: this.FACE_SCORE_THRESHOLD,
                 }),
               )
               .withFaceLandmarks(),
@@ -2730,22 +2895,27 @@ export class CheckinComponent implements OnInit, OnDestroy {
       const hasRealTexture = textureVariance >= this.TEXTURE_GRADIENT_THRESHOLD;
 
       // ── Evaluación final de liveness ──────────────────────────────────────────
-      // Combinación de múltiples criterios para decisión robusta:
+      // Umbrales ajustados para mayor permisividad en Android PWA donde los movimientos
+      // naturales son más sutiles debido a variaciones de estabilización de cámara.
 
       // 1. Movimiento de landmarks debe ser natural pero no excesivo
-      const hasNaturalLandmarkVariation = landmarkVariation > 0.002 && landmarkVariation < 0.2;
+      // Umbral mínimo reducido de 0.002 a 0.001 para capturar micro-movimientos en Android
+      const hasNaturalLandmarkVariation = landmarkVariation > 0.001 && landmarkVariation < 0.2;
 
       // 2. Movimiento del rostro debe estar en rango razonable
-      const hasReasonableMovement = averageMovement > 0.005 && averageMovement < 0.18;
+      // Umbral mínimo reducido de 0.005 a 0.003 para detectar menor movimiento en Android
+      const hasReasonableMovement = averageMovement > 0.003 && averageMovement < 0.18;
 
       // 3. Variación de tamaño no debe ser excesiva (evita movimientos bruscos)
       const hasReasonableSizeVariation = averageSizeVariation < 0.25;
 
-      // 4. Movimiento debe ser flexible, no rígido (rigidityScore > 0.2)
-      const hasFlexibleMovement = rigidityScore > 0.2;
+      // 4. Movimiento debe ser flexible, no rígido
+      // Umbral reducido de 0.2 a 0.1 para tolerar menor variación de micro-expresiones en Android
+      const hasFlexibleMovement = rigidityScore > 0.1;
 
       // 5. EAR: debe haber variación natural O parpadeo detectado
-      const hasNaturalEAR = earVariation > 0.03 || blinkDetected;
+      // Umbral reducido de 0.03 a 0.02 para detectar variaciones menores de ojo en Android
+      const hasNaturalEAR = earVariation > 0.02 || blinkDetected;
 
       // Criterios combinados
       const hasSignificantMovement = hasReasonableMovement && hasReasonableSizeVariation;
