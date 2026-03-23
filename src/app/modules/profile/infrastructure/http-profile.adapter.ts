@@ -88,7 +88,7 @@ interface IResponsiblesApiResponse {
   type: string;
   data: {
     data: {
-      data: Array<{
+      data: {
         userResponsibleEmployeeId: number;
         userResponsibleEmployeeReadonly: number;
         userResponsibleEmployeeDirectBoss: number;
@@ -104,7 +104,7 @@ interface IResponsiblesApiResponse {
           };
           role: { roleName: string };
         };
-      }>;
+      }[];
     };
   };
 }

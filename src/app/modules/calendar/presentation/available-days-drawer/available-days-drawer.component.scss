@@ -1,0 +1,79 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.drawer-body {
+  @include flex-column;
+  gap: $spacing-lg;
+  padding: 0 $spacing-sm;
+}
+
+.loading-state {
+  @include flex-center;
+  gap: $spacing-md;
+  padding: $spacing-2xl;
+  color: var(--text-secondary);
+
+  i {
+    font-size: $font-size-xl;
+    color: var(--primary);
+  }
+
+  span {
+    font-size: $font-size-base;
+  }
+}
+
+.empty-message {
+  font-size: $font-size-base;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.period-cards {
+  @include flex-column;
+  gap: $spacing-lg;
+}
+
+.period-card {
+  @include card;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  text-align: left;
+  width: 100%;
+  @include flex-column;
+  gap: $spacing-md;
+}
+
+.period-dates {
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary);
+}
+
+.period-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: $spacing-xs $spacing-sm;
+  background: var(--bg-secondary);
+  border-radius: $radius;
+  min-width: 4rem;
+}
+
+.badge-label {
+  font-size: $font-size-xs;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.badge-value {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+}

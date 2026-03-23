@@ -88,8 +88,8 @@
           }
         </div>
 
-        <!-- Descripción (si es requerida) -->
-        @if (needsReason()) {
+        <!-- Descripción (si es requerida; no se muestra para tipo vacaciones en calendario) -->
+        @if (needsReason() && !isVacationType()) {
           <div class="form-group">
             <label for="exceptionRequestDescription" class="form-label">
               {{ 'exceptionRequest.description' | translate }}

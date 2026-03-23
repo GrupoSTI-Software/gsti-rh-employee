@@ -115,6 +115,43 @@
         }
       </div>
 
+      <!-- Alerta de permisos faltantes -->
+      @if (hasPermissionIssues()) {
+        <div class="permission-alert" [@fadeInUp]>
+          <div class="permission-alert-content">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="permission-alert-icon"
+            >
+              <path d="M12 9v4" />
+              <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+              <path d="M12 16h.01" />
+            </svg>
+            <div class="permission-alert-text">
+              <div class="permission-alert-title">{{ permissionIssuesMessage() }}</div>
+              <div class="permission-alert-description">Toca el botón para intentar otorgarlos</div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="permission-request-button"
+            (click)="requestPermissionsManually()"
+            [disabled]="requestingPermissions()"
+            [attr.aria-label]="'Solicitar permisos'"
+          >
+            <span>{{ requestingPermissions() ? 'Solicitando...' : 'Solicitar permisos' }}</span>
+          </button>
+        </div>
+      }
+
       <div class="main-layout" [class.main-layout--timer-only]="!isSelectedDateToday()">
         <div class="time-info-section" [@fadeInUp]>
             <div class="time-display">{{ currentTime() }}</div>
@@ -129,7 +166,7 @@
             }
         </div>
 
-        @if (isSelectedDateToday() && canShowCheckButtons()) {
+        @if (isSelectedDateToday() && canShowCheckButtons() && !hasPermissionIssues()) {
           <div class="action-column" [@fadeInUp]>
             <button
               type="button"

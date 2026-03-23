@@ -129,6 +129,20 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     return type?.exceptionTypeNeedReason === 1;
   });
 
+  /** True si el tipo de excepción seleccionado es vacaciones (no se muestra descripción en calendario) */
+  readonly isVacationType = computed(() => {
+    const type = this.selectedExceptionType();
+    if (!type) return false;
+    const slug = (type.exceptionTypeSlug ?? '').toLowerCase();
+    const name = (type.exceptionTypeTypeName ?? '').toLowerCase();
+    return (
+      slug.includes('vacation') ||
+      slug.includes('vacaciones') ||
+      name.includes('vacation') ||
+      name.includes('vacaciones')
+    );
+  });
+
   readonly needsEnjoymentOfSalary = computed(() => {
     const typeId = this.selectedExceptionTypeId();
     if (!typeId) return false;
@@ -332,8 +346,8 @@ export class ExceptionRequestDrawerComponent implements OnInit, OnChanges {
     checkOutTimeControl?.clearValidators();
     hoursToApplyControl?.clearValidators();
 
-    // Aplicar validadores según el tipo de excepción
-    if (this.needsReason()) {
+    // Aplicar validadores según el tipo de excepción (vacaciones en calendario no requieren descripción)
+    if (this.needsReason() && !this.isVacationType()) {
       descriptionControl?.setValidators([Validators.required, Validators.maxLength(255)]);
     } else {
       descriptionControl?.setValidators([Validators.maxLength(255)]);

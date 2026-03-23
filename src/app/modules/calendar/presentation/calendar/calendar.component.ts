@@ -20,12 +20,14 @@ import { SignVacationUseCase } from '../../application/sign-vacation.use-case';
 import { GetHolidaysUseCase } from '../../application/get-holidays.use-case';
 import { IYearWorked, IVacationUsed, IHoliday } from '../../domain/vacation.port';
 import { IVacationSetting } from '../../domain/entities/vacation-setting.interface';
+import { IPeriodSummary } from '../../domain/entities/period-summary.interface';
 import { AUTH_PORT } from '@modules/auth/domain/auth.token';
 import { IAuthPort } from '@modules/auth/domain/auth.port';
 import { LoggerService } from '@core/services/logger.service';
 import { VacationDetailDrawerComponent } from '../vacation-detail-drawer/vacation-detail-drawer.component';
 import { VacationSignatureComponent } from '../vacation-signature/vacation-signature.component';
 import { ExceptionRequestDrawerComponent } from '../exception-request-drawer/exception-request-drawer.component';
+import { AvailableDaysDrawerComponent } from '../available-days-drawer/available-days-drawer.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -79,7 +81,7 @@ interface ICalendarDay {
  * Componente reutilizable que muestra un calendario con días de vacaciones marcados
  */
 @Component({
-  selector: 'app-vacation-calendar',
+  selector: 'app-calendar',
   standalone: true,
   imports: [
     CommonModule,
@@ -90,12 +92,13 @@ interface ICalendarDay {
     VacationDetailDrawerComponent,
     VacationSignatureComponent,
     ExceptionRequestDrawerComponent,
+    AvailableDaysDrawerComponent,
   ],
-  templateUrl: './vacation-calendar.component.html',
-  styleUrl: './vacation-calendar.component.scss',
+  templateUrl: './calendar.component.html',
+  styleUrl: './calendar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VacationCalendarComponent implements OnInit {
+export class CalendarComponent implements OnInit {
   private readonly getYearsWorkedUseCase = inject(GetYearsWorkedUseCase);
   private readonly signVacationUseCase = inject(SignVacationUseCase);
   private readonly getHolidaysUseCase = inject(GetHolidaysUseCase);
@@ -191,6 +194,49 @@ export class VacationCalendarComponent implements OnInit {
   readonly selectedDaysForException = signal<Date[]>([]);
   // Fechas con excepciones (cualquier estado) - formato: YYYY-MM-DD
   readonly exceptionDatesSet = signal<Set<string>>(new Set());
+
+  // Drawer de días disponibles (vacaciones por periodo)
+  readonly showAvailableDaysDrawer = signal(false);
+  readonly allYearsWorkedForDrawer = signal<IYearWorked[]>([]);
+  readonly availableDaysDrawerLoading = signal(false);
+
+  /** Resúmenes por periodo para el sidebar de días disponibles */
+  readonly periodSummaries = computed((): IPeriodSummary[] => {
+    const list = this.allYearsWorkedForDrawer();
+    const summaries: IPeriodSummary[] = [];
+    let previousDaysAvailable: number | null = null;
+
+    for (const y of list) {
+      if (!y.vacationSetting) continue;
+
+      const periodStart = new Date(y.year, 8, 15);
+      const periodEnd = new Date(y.year + 1, 8, 14);
+      const daysCorresponding = y.vacationSetting.vacationSettingVacationDays;
+      const daysUsed = y.vacationsUsedList?.length ?? 0;
+      const daysAvailable = Math.max(0, daysCorresponding - daysUsed);
+
+      summaries.push({
+        year: y.year,
+        yearsPassed: y.yearsPassed,
+        periodStart,
+        periodEnd,
+        periodLabel: this.formatPeriodRange(periodStart, periodEnd),
+        daysCorresponding,
+        daysUsed,
+        daysAvailable,
+        previousPeriodDaysAvailable: previousDaysAvailable,
+      });
+
+      previousDaysAvailable = daysAvailable;
+    }
+
+    return summaries;
+  });
+
+  /** Total de días disponibles (suma de todos los periodos) */
+  readonly totalDaysAvailable = computed(() => {
+    return this.periodSummaries().reduce((sum, p) => sum + p.daysAvailable, 0);
+  });
 
   // Meses disponibles para el selector (traducidos)
   readonly months = computed(() => {
@@ -583,6 +629,8 @@ export class VacationCalendarComponent implements OnInit {
       const yearToLoad = year ?? this.selectedYear();
       const data = await this.getYearsWorkedUseCase.execute(targetEmployeeId, yearToLoad);
       this.yearsWorked.set(data);
+      // Sincronizar datos para el sidebar de días disponibles (mismo origen para total y tarjetas)
+      this.allYearsWorkedForDrawer.set(data ?? []);
 
       // Construir el Set de días de vacaciones
       const vacationDays = new Set<string>();
@@ -613,6 +661,18 @@ export class VacationCalendarComponent implements OnInit {
     const [year, month, day] = dateOnly.split('-').map(Number);
     // Crear fecha en UTC para evitar problemas de zona horaria
     return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  /**
+   * Formatea el rango de fechas del periodo (ej. "15 de septiembre de 2026 - 14 de septiembre de 2027")
+   */
+  formatPeriodRange(start: Date, end: Date): string {
+    const opts: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+    return `${start.toLocaleDateString('es-MX', opts)} - ${end.toLocaleDateString('es-MX', opts)}`;
   }
 
   /**
@@ -1449,6 +1509,38 @@ export class VacationCalendarComponent implements OnInit {
   cancelSelectionMode(): void {
     this.selectionMode.set(false);
     this.selectedDaysForException.set([]);
+  }
+
+  /**
+   * Abre el drawer de días disponibles (vacaciones por periodo).
+   * Usa los datos ya cargados en allYearsWorkedForDrawer; recarga por si han cambiado.
+   */
+  openAvailableDaysDrawer(): void {
+    this.showAvailableDaysDrawer.set(true);
+    const user = this.authPort.getCurrentUser();
+    const targetEmployeeId = this.employeeId ?? user?.employeeId;
+    if (typeof targetEmployeeId !== 'number') {
+      return;
+    }
+    this.availableDaysDrawerLoading.set(true);
+    this.getYearsWorkedUseCase
+      .execute(targetEmployeeId)
+      .then((data) => {
+        this.allYearsWorkedForDrawer.set(data ?? []);
+        this.availableDaysDrawerLoading.set(false);
+      })
+      .catch(() => {
+        this.allYearsWorkedForDrawer.set([]);
+        this.availableDaysDrawerLoading.set(false);
+      });
+  }
+
+  /**
+   * Maneja el cambio de visibilidad del drawer de días disponibles.
+   * No se vacía allYearsWorkedForDrawer al cerrar para que el total "Días disponibles" siga mostrando el valor correcto.
+   */
+  onAvailableDaysDrawerVisibleChange(visible: boolean): void {
+    this.showAvailableDaysDrawer.set(visible);
   }
 
   /**

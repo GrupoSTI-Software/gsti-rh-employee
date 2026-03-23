@@ -9,7 +9,6 @@ import { LoggerService } from '@core/services/logger.service';
 import { SecureStorageService } from '@core/services/secure-storage.service';
 import { PwaUpdateService } from '@core/services/pwa-update.service';
 import { Select } from 'primeng/select';
-import { Button } from 'primeng/button';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -36,7 +35,7 @@ interface ILanguageOption {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, Select, Button],
+  imports: [CommonModule, FormsModule, TranslatePipe, Select],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
   animations: [
