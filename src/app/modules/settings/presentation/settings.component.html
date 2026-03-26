@@ -82,6 +82,19 @@
           <i class="pi pi-chevron-right"></i>
         </button> -->
 
+        <!-- Opción de Versión -->
+        <div class="option-card">
+          <div class="option-left">
+            <div class="icon-container">
+              <i class="pi pi-info-circle"></i>
+            </div>
+            <div class="option-content">
+              <h3>{{ 'settings.versionOption.title' | translate }}</h3>
+              <p>{{ appVersion() }}</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Opción de Verificar Actualizaciones -->
         <div class="option-card update-card">
           <div class="option-left">
@@ -90,7 +103,7 @@
             </div>
             <div class="option-content">
               <h3>{{ 'settings.updateOption.title' | translate }}</h3>
-              <p>{{ 'settings.updateOption.description' | translate }}</p>
+              <!-- <p>{{ 'settings.updateOption.description' | translate }}</p> -->
               @if (updateCheckMessage()) {
                 <p class="update-message">{{ updateCheckMessage() }}</p>
               }

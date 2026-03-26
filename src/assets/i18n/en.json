@@ -360,14 +360,18 @@
       "description": "Change the application language"
     },
     "updateOption": {
-      "title": "Check for Updates",
+      "title": "Update",
       "description": "Search for new versions of the application",
-      "button": "Check",
+      "button": "Update",
       "upToDate": "Application is up to date",
       "updateAvailable": "Update available, installing...",
       "checkError": "Error checking for updates",
       "notAvailable": "Updates not available in this environment",
       "checking": "Checking..."
+    },
+    "versionOption": {
+      "title": "Version",
+      "label": "Application version"
     },
     "passkeyOption": {
       "title": "Biometric Authentication",
