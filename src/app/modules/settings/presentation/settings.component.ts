@@ -14,6 +14,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { SwUpdate } from '@angular/service-worker';
+import packageJson from '../../../../../package.json';
 
 type Language = 'es' | 'en';
 
@@ -61,6 +62,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
   // Signal para controlar el estado del botón de actualización
   readonly isCheckingForUpdates = signal(false);
   readonly updateCheckMessage = signal<string | null>(null);
+
+  // Versión de la aplicación desde package.json
+  readonly appVersion = signal<string>(packageJson.version);
 
   // Signal para el idioma actual que se actualiza cuando cambia
   readonly currentLanguage = signal<Language>(
@@ -150,44 +154,45 @@ export class SettingsComponent implements OnInit, OnDestroy {
    * Verifica si hay actualizaciones disponibles de la PWA
    */
   checkForUpdates(): void {
-    if (!isPlatformBrowser(this.platformId) || !this.swUpdate.isEnabled) {
-      this.updateCheckMessage.set(
-        this.translateService.instant('settings.updateOption.notAvailable'),
-      );
-      setTimeout(() => this.updateCheckMessage.set(null), 3000);
-      return;
-    }
+    window.location.reload();
+    // if (!isPlatformBrowser(this.platformId) || !this.swUpdate.isEnabled) {
+    //   this.updateCheckMessage.set(
+    //     this.translateService.instant('settings.updateOption.notAvailable'),
+    //   );
+    //   setTimeout(() => this.updateCheckMessage.set(null), 3000);
+    //   return;
+    // }
 
-    this.isCheckingForUpdates.set(true);
-    this.updateCheckMessage.set(null);
+    // this.isCheckingForUpdates.set(true);
+    // this.updateCheckMessage.set(null);
 
-    this.swUpdate
-      .checkForUpdate()
-      .then((hasUpdate) => {
-        if (hasUpdate) {
-          this.updateCheckMessage.set(
-            this.translateService.instant('settings.updateOption.updateAvailable'),
-          );
-          // Activar la actualización automáticamente
-          setTimeout(() => {
-            this.pwaUpdateService.applyUpdate();
-          }, 1000);
-        } else {
-          this.updateCheckMessage.set(
-            this.translateService.instant('settings.updateOption.upToDate'),
-          );
-          setTimeout(() => this.updateCheckMessage.set(null), 3000);
-        }
-      })
-      .catch((error) => {
-        this.logger.error('Error al verificar actualizaciones:', error);
-        this.updateCheckMessage.set(
-          this.translateService.instant('settings.updateOption.checkError'),
-        );
-        setTimeout(() => this.updateCheckMessage.set(null), 3000);
-      })
-      .finally(() => {
-        this.isCheckingForUpdates.set(false);
-      });
+    // this.swUpdate
+    //   .checkForUpdate()
+    //   .then((hasUpdate) => {
+    //     if (hasUpdate) {
+    //       this.updateCheckMessage.set(
+    //         this.translateService.instant('settings.updateOption.updateAvailable'),
+    //       );
+    //       // Activar la actualización automáticamente
+    //       setTimeout(() => {
+    //         this.pwaUpdateService.applyUpdate();
+    //       }, 1000);
+    //     } else {
+    //       this.updateCheckMessage.set(
+    //         this.translateService.instant('settings.updateOption.upToDate'),
+    //       );
+    //       setTimeout(() => this.updateCheckMessage.set(null), 3000);
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     this.logger.error('Error al verificar actualizaciones:', error);
+    //     this.updateCheckMessage.set(
+    //       this.translateService.instant('settings.updateOption.checkError'),
+    //     );
+    //     setTimeout(() => this.updateCheckMessage.set(null), 3000);
+    //   })
+    //   .finally(() => {
+    //     this.isCheckingForUpdates.set(false);
+    //   });
   }
 }

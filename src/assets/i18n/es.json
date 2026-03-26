@@ -297,7 +297,15 @@
       "locationUnknownError": "Error desconocido al obtener la ubicación",
       "verifyingSimilarity": "Verificando similitud...",
       "faceNotMatch": "El rostro no coincide con el registrado",
+      "faceNotMatchMessage": "La imagen capturada no coincide con el rostro del empleado registrado. Por favor, asegúrate de que tu rostro esté bien iluminado y visible, y vuelve a intentarlo.",
       "faceInstructions": "Acércate, enfoca tu rostro y di que sí con la cabeza"
+    },
+    "camera": {
+      "selectCamera": "Seleccionar cámara",
+      "camera": "Cámara",
+      "toggleFlash": "Activar/desactivar flash",
+      "restartCamera": "Reiniciar cámara",
+      "manualCapture": "Capturar manualmente"
     }
   },
   "profile": {
@@ -431,14 +439,18 @@
       "description": "Cambiar el idioma de la aplicación"
     },
     "updateOption": {
-      "title": "Verificar Actualizaciones",
+      "title": "Actualizar",
       "description": "Busca nuevas versiones de la aplicación",
-      "button": "Verificar",
+      "button": "Actualizar",
       "upToDate": "La aplicación está actualizada",
       "updateAvailable": "Actualización disponible, instalando...",
       "checkError": "Error al verificar actualizaciones",
       "notAvailable": "Actualizaciones no disponibles en este entorno",
       "checking": "Verificando..."
+    },
+    "versionOption": {
+      "title": "Versión",
+      "label": "Versión de la aplicación"
     },
     "passkeyOption": {
       "title": "Autenticación Biométrica",

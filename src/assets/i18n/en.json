@@ -297,7 +297,15 @@
       "locationUnknownError": "Unknown error while getting location",
       "verifyingSimilarity": "Verifying similarity...",
       "faceNotMatch": "Face does not match the registered one",
+      "faceNotMatchMessage": "The captured image does not match the registered employee's face. Please make sure your face is well lit and visible, and try again.",
       "faceInstructions": "Get closer, focus your face and nod your head"
+    },
+    "camera": {
+      "selectCamera": "Select camera",
+      "camera": "Camera",
+      "toggleFlash": "Toggle flash",
+      "restartCamera": "Restart camera",
+      "manualCapture": "Capture manually"
     }
   },
   "profile": {
@@ -431,14 +439,18 @@
       "description": "Change the application language"
     },
     "updateOption": {
-      "title": "Check for Updates",
+      "title": "Update",
       "description": "Search for new versions of the application",
-      "button": "Check",
+      "button": "Update",
       "upToDate": "Application is up to date",
       "updateAvailable": "Update available, installing...",
       "checkError": "Error checking for updates",
       "notAvailable": "Updates not available in this environment",
       "checking": "Checking..."
+    },
+    "versionOption": {
+      "title": "Version",
+      "label": "Application version"
     },
     "passkeyOption": {
       "title": "Biometric Authentication",
