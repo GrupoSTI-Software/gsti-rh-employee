@@ -138,7 +138,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
   // En desarrollo: modelos desde GitHub, en producción: modelos locales
   private readonly FACE_API_MODELS_URL = environment.FACE_API_MODELS_URL;
   // Umbral de similitud facial (0-1). Valor más bajo = más permisivo. Ajustado para Android PWA.
-  private readonly FACE_MATCH_THRESHOLD = 0.45;
+  private readonly FACE_MATCH_THRESHOLD = 0.51;
   // Umbral de confianza del detector de rostros. Valor más bajo = detecta rostros menos centrados/alejados.
   private readonly FACE_SCORE_THRESHOLD = 0.3;
   private readonly LIVENESS_MOVEMENT_THRESHOLD = 0.015;
@@ -146,7 +146,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
   // Anti-spoofing: EAR mínimo para considerar ojo abierto (valores < umbral = parpadeo detectado)
   private readonly EAR_BLINK_THRESHOLD = 0.21;
   // Anti-spoofing: varianza de gradiente mínima para considerar textura de piel real vs foto/pantalla
-  private readonly TEXTURE_GRADIENT_THRESHOLD = 180;
+  // Valor aumentado a 260 para rechazar fotos de pantallas de alta resolución
+  private readonly TEXTURE_GRADIENT_THRESHOLD = 260;
 
   readonly attendance = signal<IAttendance | null>(null);
   readonly loading = signal(false);
@@ -1003,9 +1004,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
       } catch (livenessError) {
         const livenessErrorMessage =
           livenessError instanceof Error ? livenessError.message : 'Error desconocido';
-        this.logger.error('Error en verificación de liveness:', livenessError);
 
         this.loading.set(false);
+
+        // La captura manual ya mostró su propio modal y cerró la cámara; no duplicar
+        if (livenessErrorMessage === 'MANUAL_CAPTURE_FAILED') {
+          return;
+        }
+
+        this.logger.error('Error en verificación de liveness:', livenessError);
 
         // Si el error es de liveness (movimiento insuficiente), mostrar mensaje específico
         if (
@@ -2029,28 +2036,18 @@ export class CheckinComponent implements OnInit, OnDestroy {
               instructionMessage.style.border = '2px dashed rgba(40, 167, 69, 1)';
               setTimeout(captureFinalPhoto, 300);
             } else {
-              updateFaceFrameColor('failed');
-              instructionMessage.textContent = this.translateService.instant(
-                'attendance.faceRecognition.faceNotMatch',
+              // Cerrar la cámara inmediatamente al obtener el resultado de la verificación
+              this.closeLivenessFromOutside();
+
+              // Mostrar modal de alerta para que el usuario acepte antes de reintentar
+              this.showErrorModalWithMessage(
+                'warning',
+                this.translateService.instant('attendance.faceRecognition.verificationFailed'),
+                this.translateService.instant('attendance.faceRecognition.faceNotMatchMessage'),
               );
-              instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
-              instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
 
-              manualCaptureButton.disabled = false;
-              manualCaptureButton.style.opacity = '1';
-              manualCaptureButton.style.cursor = 'pointer';
-
-              // Restaurar mensaje de instrucción después de 2 segundos
-              setTimeout(() => {
-                if (!isCapturing) {
-                  instructionMessage.textContent = this.translateService.instant(
-                    'attendance.faceRecognition.faceInstructions',
-                  );
-                  instructionMessage.style.backgroundColor = 'rgba(255, 152, 0, 0.8)';
-                  instructionMessage.style.border = '2px dashed rgba(255, 152, 0, 1)';
-                  updateFaceFrameColor('checking');
-                }
-              }, 2000);
+              // Rechazar con marcador especial para evitar un segundo modal en el catch externo
+              reject(new Error('MANUAL_CAPTURE_FAILED'));
             }
           } catch (error) {
             this.logger.error('Error en captura manual:', error);

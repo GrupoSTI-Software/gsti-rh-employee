@@ -297,6 +297,7 @@
       "locationUnknownError": "Unknown error while getting location",
       "verifyingSimilarity": "Verifying similarity...",
       "faceNotMatch": "Face does not match the registered one",
+      "faceNotMatchMessage": "The captured image does not match the registered employee's face. Please make sure your face is well lit and visible, and try again.",
       "faceInstructions": "Get closer, focus your face and nod your head"
     },
     "camera": {
