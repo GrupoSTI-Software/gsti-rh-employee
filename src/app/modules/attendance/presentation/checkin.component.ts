@@ -170,6 +170,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
   );
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
 
+  // Control de cámara y flash
+  private availableCameras: MediaDeviceInfo[] = [];
+  private currentCameraDeviceId: string | null = null;
+  private flashEnabled = false;
+
   // Drawers visibility
   showDatePicker = false;
   showExceptionsDrawer = false;
@@ -1253,6 +1258,129 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Enumera todas las cámaras disponibles en el dispositivo.
+   *
+   * @returns Array de dispositivos de video disponibles
+   */
+  private async enumerateCameras(): Promise<MediaDeviceInfo[]> {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      return devices.filter((device) => device.kind === 'videoinput');
+    } catch (error) {
+      this.logger.error('Error al enumerar cámaras:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Cambia a una cámara específica y actualiza el stream de video.
+   *
+   * @param deviceId - ID del dispositivo de cámara a usar
+   * @param video - Elemento de video donde se mostrará el stream
+   * @param currentStream - Stream actual que será reemplazado
+   * @returns Nuevo stream de video
+   */
+  private async switchCamera(
+    deviceId: string,
+    video: HTMLVideoElement,
+    currentStream: MediaStream,
+  ): Promise<MediaStream> {
+    try {
+      currentStream.getTracks().forEach((track) => track.stop());
+
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: deviceId },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+      video.srcObject = newStream;
+      this.currentCameraDeviceId = deviceId;
+      this.livenessStream = newStream;
+
+      if (this.flashEnabled) {
+        await this.applyFlash(newStream, true);
+      }
+
+      return newStream;
+    } catch (error) {
+      this.logger.error('Error al cambiar de cámara:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Aplica o desactiva el flash en el stream de video.
+   *
+   * @param stream - Stream de video donde se aplicará el flash
+   * @param enable - true para activar, false para desactivar
+   */
+  private async applyFlash(stream: MediaStream, enable: boolean): Promise<void> {
+    const videoTrack = stream.getVideoTracks()[0];
+    if (videoTrack) {
+      try {
+        const capabilities = videoTrack.getCapabilities();
+        // @ts-ignore - torch es una propiedad experimental
+        if (capabilities.torch) {
+          await videoTrack.applyConstraints({
+            // @ts-ignore - torch es una propiedad experimental
+            advanced: [{ torch: enable }],
+          });
+          this.flashEnabled = enable;
+          this.logger.info(`Flash ${enable ? 'activado' : 'desactivado'} correctamente`);
+        }
+      } catch (error) {
+        this.logger.warn('No se pudo cambiar el estado del flash:', error);
+      }
+    }
+  }
+
+  /**
+   * Reinicia el stream de la cámara manteniendo la misma configuración.
+   *
+   * @param video - Elemento de video donde se mostrará el stream
+   * @param currentStream - Stream actual que será reiniciado
+   * @returns Nuevo stream de video
+   */
+  private async restartCamera(
+    video: HTMLVideoElement,
+    currentStream: MediaStream,
+  ): Promise<MediaStream> {
+    try {
+      currentStream.getTracks().forEach((track) => track.stop());
+
+      const constraints: MediaStreamConstraints = {
+        video: this.currentCameraDeviceId
+          ? {
+              deviceId: { exact: this.currentCameraDeviceId },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            }
+          : {
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+      };
+
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = newStream;
+      this.livenessStream = newStream;
+
+      if (this.flashEnabled) {
+        await this.applyFlash(newStream, true);
+      }
+
+      return newStream;
+    } catch (error) {
+      this.logger.error('Error al reiniciar la cámara:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Captura una foto con verificación continua de liveness (anti-spoofing).
    *
    * Proceso de verificación en tiempo real:
@@ -1287,36 +1415,34 @@ export class CheckinComponent implements OnInit, OnDestroy {
         );
       }
 
+      // Enumerar cámaras disponibles
+      this.availableCameras = await this.enumerateCameras();
+
       // Obtener acceso a la cámara frontal con resolución explícita para Android.
       // Se especifica ideal de 720p para asegurar buena calidad sin sobrecargar el procesamiento.
-      // El flash mejora la captura en ambientes con poca luz.
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          // @ts-ignore - torch es una propiedad experimental pero soportada en muchos navegadores
-          advanced: [{ torch: true }],
-        },
-      });
-
-      // Intentar activar el flash si el dispositivo lo soporta
-      const videoTrack = stream.getVideoTracks()[0];
-      if (videoTrack) {
-        try {
-          const capabilities = videoTrack.getCapabilities();
-          // @ts-ignore - torch es una propiedad experimental
-          if (capabilities.torch) {
-            await videoTrack.applyConstraints({
-              // @ts-ignore - torch es una propiedad experimental
-              advanced: [{ torch: true }],
-            });
-            this.logger.info('Flash activado correctamente');
+      const constraints: MediaStreamConstraints = this.currentCameraDeviceId
+        ? {
+            video: {
+              deviceId: { exact: this.currentCameraDeviceId },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
           }
-        } catch (error) {
-          this.logger.warn('No se pudo activar el flash (puede que no esté disponible):', error);
-        }
+        : {
+            video: {
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          };
+
+      let stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      if (!this.currentCameraDeviceId && stream.getVideoTracks()[0]) {
+        this.currentCameraDeviceId = stream.getVideoTracks()[0].getSettings().deviceId ?? null;
       }
+
+      this.flashEnabled = false;
 
       // Crear contenedor principal con fondo blanco y safe areas
       const cameraContainer = document.createElement('div');
@@ -1465,20 +1591,180 @@ export class CheckinComponent implements OnInit, OnDestroy {
       cancelButton.style.position = 'absolute';
       cancelButton.style.top = 'calc(env(safe-area-inset-top, 0px) + 20px)';
       cancelButton.style.right = 'calc(env(safe-area-inset-right, 0px) + 20px)';
-      cancelButton.style.width = '44px';
-      cancelButton.style.height = '44px';
+      cancelButton.style.width = '3rem';
+      cancelButton.style.height = '3rem';
       cancelButton.style.padding = '0';
       cancelButton.style.backgroundColor = 'rgba(0, 0, 0, 0.1)';
       cancelButton.style.color = 'var(--text-tertiary)';
       cancelButton.style.border = 'none';
-      cancelButton.style.borderRadius = '50%';
-      cancelButton.style.fontSize = '20px';
+      cancelButton.style.borderRadius = '0.5rem';
+      cancelButton.style.fontSize = '1rem';
       cancelButton.style.fontWeight = 'bold';
       cancelButton.style.cursor = 'pointer';
       cancelButton.style.pointerEvents = 'auto';
       cancelButton.style.boxShadow = 'none';
       cancelButton.style.transition = 'all 0.2s ease';
       uiContainer.appendChild(cancelButton);
+
+      // ── Controles de cámara (selector, flash, reiniciar) ──────────────────────
+      const controlsContainer = document.createElement('div');
+      controlsContainer.style.position = 'absolute';
+      controlsContainer.style.top = 'calc(env(safe-area-inset-top, 0px) + 20px)';
+      controlsContainer.style.left = 'calc(env(safe-area-inset-left, 0px) + 20px)';
+      controlsContainer.style.display = 'flex';
+      controlsContainer.style.flexDirection = 'column';
+      controlsContainer.style.gap = '0.5rem';
+      controlsContainer.style.pointerEvents = 'auto';
+      controlsContainer.style.width = '75%';
+      uiContainer.appendChild(controlsContainer);
+
+      // Selector de cámara
+      if (this.availableCameras.length > 1) {
+        const cameraSelect = document.createElement('select');
+        cameraSelect.style.padding = '10px 12px';
+        cameraSelect.style.backgroundColor = 'var(--bg-tertiary)';
+        cameraSelect.style.color = 'var(--text-tertiary)';
+        cameraSelect.style.border = 'none';
+        cameraSelect.style.borderRadius = '0.5rem';
+        cameraSelect.style.fontSize = '0.8rem';
+        cameraSelect.style.fontWeight = 'normal';
+        cameraSelect.style.cursor = 'pointer';
+        cameraSelect.style.outline = 'none';
+        cameraSelect.style.height = '3rem';
+        cameraSelect.title = this.translateService.instant('attendance.camera.selectCamera');
+
+        this.availableCameras.forEach((camera, index) => {
+          const option = document.createElement('option');
+          option.value = camera.deviceId;
+          option.textContent =
+            camera.label ||
+            `${this.translateService.instant('attendance.camera.camera')} ${index + 1}`;
+          if (camera.deviceId === this.currentCameraDeviceId) {
+            option.selected = true;
+          }
+          cameraSelect.appendChild(option);
+        });
+
+        cameraSelect.onchange = async (): Promise<void> => {
+          try {
+            stream = await this.switchCamera(cameraSelect.value, video, stream);
+          } catch (error) {
+            this.logger.error('Error al cambiar de cámara:', error);
+          }
+        };
+
+        controlsContainer.appendChild(cameraSelect);
+      }
+
+      // Botón de flash
+      const flashButton = document.createElement('button');
+      flashButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8l10-12h-9l1-8z"/>
+        </svg>
+      `;
+      flashButton.style.width = '3rem';
+      flashButton.style.height = '3rem';
+      flashButton.style.padding = '0';
+      flashButton.style.backgroundColor = 'var(--bg-tertiary)';
+      flashButton.style.color = 'var(--text-tertiary)';
+      flashButton.style.border = 'none';
+      flashButton.style.borderRadius = '0.5rem';
+      flashButton.style.cursor = 'pointer';
+      flashButton.style.display = 'flex';
+      flashButton.style.alignItems = 'center';
+      flashButton.style.justifyContent = 'center';
+      flashButton.style.transition = 'all 0.2s ease';
+      flashButton.title = this.translateService.instant('attendance.camera.toggleFlash');
+
+      const updateFlashButtonState = (): void => {
+        const svg = flashButton.querySelector('svg');
+        if (this.flashEnabled) {
+          flashButton.style.backgroundColor = 'var(--warning)';
+          flashButton.style.color = '#fff';
+          flashButton.style.borderColor = 'var(--warning)';
+          if (svg) {
+            svg.setAttribute('stroke', '#fff');
+          }
+        } else {
+          flashButton.style.backgroundColor = 'var(--bg-tertiary)';
+          flashButton.style.color = '#fff';
+          flashButton.style.borderColor = 'var(--border-color)';
+          if (svg) {
+            svg.setAttribute('stroke', 'currentColor');
+          }
+        }
+      };
+
+      flashButton.onclick = async (): Promise<void> => {
+        try {
+          this.flashEnabled = !this.flashEnabled;
+          await this.applyFlash(stream, this.flashEnabled);
+          updateFlashButtonState();
+        } catch (error) {
+          this.logger.error('Error al cambiar el estado del flash:', error);
+        }
+      };
+
+      // Botón de captura manual
+      const manualCaptureButton = document.createElement('button');
+      manualCaptureButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 4h-5l-3 3H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2.5z"/>
+          <circle cx="12" cy="13" r="3"/>
+        </svg>
+      `;
+      manualCaptureButton.style.width = '3rem';
+      manualCaptureButton.style.height = '3rem';
+      manualCaptureButton.style.padding = '0';
+      manualCaptureButton.style.backgroundColor = 'var(--bg-tertiary)';
+      manualCaptureButton.style.color = 'var(--text-tertiary)';
+      manualCaptureButton.style.border = 'none';
+      manualCaptureButton.style.borderRadius = '0.5rem';
+      manualCaptureButton.style.cursor = 'pointer';
+      manualCaptureButton.style.display = 'flex';
+      manualCaptureButton.style.alignItems = 'center';
+      manualCaptureButton.style.justifyContent = 'center';
+      manualCaptureButton.style.transition = 'all 0.2s ease';
+      manualCaptureButton.title = this.translateService.instant('attendance.camera.manualCapture');
+
+      controlsContainer.appendChild(manualCaptureButton);
+
+      controlsContainer.appendChild(flashButton);
+
+      // Botón de reiniciar cámara
+      const restartButton = document.createElement('button');
+      restartButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="1rem" height="1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2v6h-6"/>
+          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+          <path d="M3 22v-6h6"/>
+          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+        </svg>
+      `;
+      restartButton.style.width = '3rem';
+      restartButton.style.height = '3rem';
+      restartButton.style.padding = '0';
+      restartButton.style.backgroundColor = 'var(--bg-tertiary)';
+      restartButton.style.color = 'var(--text-tertiary)';
+      restartButton.style.border = 'none';
+      restartButton.style.borderRadius = '0.5rem';
+      restartButton.style.cursor = 'pointer';
+      restartButton.style.display = 'flex';
+      restartButton.style.alignItems = 'center';
+      restartButton.style.justifyContent = 'center';
+      restartButton.style.transition = 'all 0.2s ease';
+      restartButton.title = this.translateService.instant('attendance.camera.restartCamera');
+
+      restartButton.onclick = async (): Promise<void> => {
+        try {
+          stream = await this.restartCamera(video, stream);
+        } catch (error) {
+          this.logger.error('Error al reiniciar la cámara:', error);
+        }
+      };
+
+      controlsContainer.appendChild(restartButton);
 
       // ── Sistema de verificación continua de liveness ──────────────────────────
       // Mantiene un buffer circular de frames para análisis en tiempo real.
@@ -1700,6 +1986,78 @@ export class CheckinComponent implements OnInit, OnDestroy {
               this.translateService.instant('attendance.faceRecognition.captureCancelledError'),
             ),
           );
+        };
+
+        // Handler de captura manual: compara el frame actual con la foto de referencia
+        // sin requerir que liveness haya pasado primero, pero manteniendo los mismos
+        // parámetros de comparación facial (umbral, descriptor, etc.)
+        manualCaptureButton.onclick = async (): Promise<void> => {
+          if (isCapturing || frameBuffer.length === 0) return;
+
+          manualCaptureButton.disabled = true;
+          manualCaptureButton.style.opacity = '0.5';
+          manualCaptureButton.style.cursor = 'not-allowed';
+
+          instructionMessage.textContent = this.translateService.instant(
+            'attendance.faceRecognition.verifyingSimilarity',
+          );
+          instructionMessage.style.backgroundColor = 'rgba(255, 193, 7, 0.8)';
+          instructionMessage.style.border = '2px dashed rgba(255, 193, 7, 1)';
+
+          try {
+            const storedPhotoBase64 = this.getStoredPhotoBase64();
+            if (!storedPhotoBase64) {
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.noStoredPhoto',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+              updateFaceFrameColor('failed');
+              return;
+            }
+
+            // Usar el último frame disponible del buffer para la comparación
+            const currentFrame = frameBuffer[frameBuffer.length - 1];
+            const isMatch = await this.compareFaces(storedPhotoBase64, currentFrame);
+
+            if (isMatch) {
+              updateFaceFrameColor('verified');
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.detected',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(40, 167, 69, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(40, 167, 69, 1)';
+              setTimeout(captureFinalPhoto, 300);
+            } else {
+              updateFaceFrameColor('failed');
+              instructionMessage.textContent = this.translateService.instant(
+                'attendance.faceRecognition.faceNotMatch',
+              );
+              instructionMessage.style.backgroundColor = 'rgba(220, 53, 69, 0.8)';
+              instructionMessage.style.border = '2px dashed rgba(220, 53, 69, 1)';
+
+              manualCaptureButton.disabled = false;
+              manualCaptureButton.style.opacity = '1';
+              manualCaptureButton.style.cursor = 'pointer';
+
+              // Restaurar mensaje de instrucción después de 2 segundos
+              setTimeout(() => {
+                if (!isCapturing) {
+                  instructionMessage.textContent = this.translateService.instant(
+                    'attendance.faceRecognition.faceInstructions',
+                  );
+                  instructionMessage.style.backgroundColor = 'rgba(255, 152, 0, 0.8)';
+                  instructionMessage.style.border = '2px dashed rgba(255, 152, 0, 1)';
+                  updateFaceFrameColor('checking');
+                }
+              }, 2000);
+            }
+          } catch (error) {
+            this.logger.error('Error en captura manual:', error);
+            manualCaptureButton.disabled = false;
+            manualCaptureButton.style.opacity = '1';
+            manualCaptureButton.style.cursor = 'pointer';
+          }
         };
       });
     } catch (error: unknown) {

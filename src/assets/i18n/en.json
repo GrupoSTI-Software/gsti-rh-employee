@@ -298,6 +298,13 @@
       "verifyingSimilarity": "Verifying similarity...",
       "faceNotMatch": "Face does not match the registered one",
       "faceInstructions": "Get closer, focus your face and nod your head"
+    },
+    "camera": {
+      "selectCamera": "Select camera",
+      "camera": "Camera",
+      "toggleFlash": "Toggle flash",
+      "restartCamera": "Restart camera",
+      "manualCapture": "Capture manually"
     }
   },
   "profile": {

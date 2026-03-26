@@ -298,6 +298,13 @@
       "verifyingSimilarity": "Verificando similitud...",
       "faceNotMatch": "El rostro no coincide con el registrado",
       "faceInstructions": "Acércate, enfoca tu rostro y di que sí con la cabeza"
+    },
+    "camera": {
+      "selectCamera": "Seleccionar cámara",
+      "camera": "Cámara",
+      "toggleFlash": "Activar/desactivar flash",
+      "restartCamera": "Reiniciar cámara",
+      "manualCapture": "Capturar manualmente"
     }
   },
   "profile": {
