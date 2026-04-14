@@ -186,11 +186,21 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly errorModalType = signal<ErrorModalType>('error');
   readonly errorModalTitle = signal('');
   readonly errorModalMessage = signal('');
+  readonly errorModalMessageHtml = signal<SafeHtml | null>(null);
 
   // Estado de permisos
   readonly cameraPermissionGranted = signal<boolean | null>(null);
   readonly locationPermissionGranted = signal<boolean | null>(null);
   readonly requestingPermissions = signal(false);
+
+  /**
+   * URL de instalación de la PWA que se muestra al usuario cuando hay problemas de permisos.
+   * Permite abrir el sitio en Safari o Chrome para desinstalar y reinstalar la app.
+   */
+  readonly appInstallUrl = computed((): string => {
+    if (!isPlatformBrowser(this.platformId)) return '';
+    return window.location.origin + '/';
+  });
 
   @ViewChild(DatePickerDrawerComponent) datePickerDrawer?: DatePickerDrawerComponent;
 
@@ -486,9 +496,33 @@ export class CheckinComponent implements OnInit, OnDestroy {
     return missing.length > 0 ? `Permisos requeridos: ${missing.join(' y ')}` : '';
   });
 
+  /**
+   * Estado visual del indicador de permisos en el botón de la cabecera.
+   * Retorna 'granted' si ambos permisos están concedidos,
+   * 'denied' si alguno está denegado, o 'unknown' en cualquier otro caso.
+   */
+  readonly permissionStatusClass = computed((): 'granted' | 'denied' | 'unknown' => {
+    const camera = this.cameraPermissionGranted();
+    const location = this.locationPermissionGranted();
+    if (camera === true && location === true) return 'granted';
+    if (camera === false || location === false) return 'denied';
+    return 'unknown';
+  });
+
+  /**
+   * Plataforma seleccionada en el selector de instrucciones de permisos.
+   * Se inicializa automáticamente en ngOnInit() según el dispositivo detectado.
+   */
+  readonly selectedPermissionPlatform = signal<'ios' | 'android'>('android');
+
   ngOnInit(): void {
     // Inicializar la hora inmediatamente
     this.updateCurrentTime();
+
+    // Preseleccionar la plataforma correcta en las instrucciones de permisos
+    if (isPlatformBrowser(this.platformId) && this.isIosPlatform()) {
+      this.selectedPermissionPlatform.set('ios');
+    }
 
     // Actualizar hora cada segundo
     this.timeInterval = setInterval(() => {
@@ -603,17 +637,33 @@ export class CheckinComponent implements OnInit, OnDestroy {
       ].join(' y ');
 
       const instrucciones = this.buildPermissionInstructions(cameraDenied, locationDenied);
+      const instruccionesHtml = this.buildPermissionInstructionsHtml(cameraDenied, locationDenied);
 
       this.showErrorModalWithMessage(
         'warning',
         `Permisos requeridos: ${permisosFaltantes}`,
         instrucciones,
+        instruccionesHtml,
       );
     }
   }
 
   /**
-   * Genera las instrucciones para otorgar permisos en Android PWA instalada.
+   * Detecta si el dispositivo es iOS (iPhone, iPad, iPod Touch).
+   * Necesario para mostrar instrucciones específicas de plataforma en los modales de permisos.
+   */
+  private isIosPlatform(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+    return (
+      /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && navigator.maxTouchPoints > 1)
+    );
+  }
+
+  /**
+   * Genera las instrucciones para otorgar permisos según la plataforma del dispositivo.
+   * En iOS los permisos denegados no se pueden re-solicitar por código; la única solución
+   * es eliminar la app de la pantalla de inicio y volver a añadirla desde Safari.
    *
    * @param camera - true si el permiso de cámara está denegado
    * @param location - true si el permiso de ubicación está denegado
@@ -623,6 +673,24 @@ export class CheckinComponent implements OnInit, OnDestroy {
     const permisos = [...(camera ? ['cámara'] : []), ...(location ? ['ubicación'] : [])].join(
       ' y ',
     );
+
+    if (this.isIosPlatform()) {
+      return (
+        `Para registrar tu asistencia necesitas permitir el acceso a ${permisos}.\n\n` +
+        `⚠️ En iOS, los permisos denegados no se pueden restablecer desde la app.\n\n` +
+        `Opción 1 – Eliminar y volver a añadir la app (recomendada):\n` +
+        `1. Mantén presionado el ícono de esta app en tu pantalla de inicio\n` +
+        `2. Toca "Eliminar App" y confirma\n` +
+        `3. Abre Safari y regresa a esta página\n` +
+        `4. Toca "Compartir" → "Añadir a pantalla de inicio"\n` +
+        `5. Abre la app e ingresa de nuevo\n\n` +
+        `Opción 2 – Desde Ajustes del iPhone:\n` +
+        `1. Ve a Ajustes → Privacidad y seguridad\n` +
+        `2. Toca "Cámara" o "Localización"\n` +
+        `3. Busca Safari o esta app y activa el permiso\n` +
+        `4. Regresa a la app y vuelve a intentarlo`
+      );
+    }
 
     return (
       `Para registrar tu asistencia necesitas permitir el acceso a ${permisos}.\n\n` +
@@ -711,14 +779,87 @@ export class CheckinComponent implements OnInit, OnDestroy {
       );
     } else if (!cameraSuccess && !locationSuccess) {
       const instrucciones = this.buildPermissionInstructions(true, true);
-      this.showErrorModalWithMessage('warning', 'Permisos denegados', instrucciones);
+      this.showErrorModalWithMessage(
+        'warning',
+        'Permisos denegados',
+        instrucciones,
+        this.buildPermissionInstructionsHtml(true, true),
+      );
     } else if (!cameraSuccess) {
       const instrucciones = this.buildPermissionInstructions(true, false);
-      this.showErrorModalWithMessage('warning', 'Permiso de cámara denegado', instrucciones);
+      this.showErrorModalWithMessage(
+        'warning',
+        'Permiso de cámara denegado',
+        instrucciones,
+        this.buildPermissionInstructionsHtml(true, false),
+      );
     } else if (!locationSuccess) {
       const instrucciones = this.buildPermissionInstructions(false, true);
-      this.showErrorModalWithMessage('warning', 'Permiso de ubicación denegado', instrucciones);
+      this.showErrorModalWithMessage(
+        'warning',
+        'Permiso de ubicación denegado',
+        instrucciones,
+        this.buildPermissionInstructionsHtml(false, true),
+      );
     }
+  }
+
+  /**
+   * Reinicia el estado cacheado de los permisos y los solicita nuevamente al navegador.
+   * Permite volver a disparar los diálogos del sistema independientemente del estado previo.
+   *
+   * En iOS, si los permisos siguen denegados tras el intento, limpia automáticamente
+   * la caché biométrica local ya que no es posible re-solicitar permisos por código.
+   * La única solución real en iOS es eliminar la app y volver a añadirla desde Safari.
+   */
+  async resetAndRequestPermissions(): Promise<void> {
+    this.cameraPermissionGranted.set(null);
+    this.locationPermissionGranted.set(null);
+    await this.requestPermissionsManually();
+
+    // En iOS los permisos denegados no se pueden re-solicitar por código.
+    // Limpiar la caché biométrica garantiza que no queden datos huérfanos
+    // y fuerza una re-descarga limpia cuando el usuario restaure los permisos.
+    if (this.isIosPlatform() && this.hasPermissionIssues()) {
+      this.removeStoredPhoto();
+    }
+  }
+
+  /**
+   * Recarga la página completa para que el navegador re-evalúe los permisos
+   * configurados externamente (ej. desde Safari o Chrome).
+   */
+  reloadPage(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      window.location.reload();
+    }
+  }
+
+  /**
+   * Limpia los datos en caché del sitio (foto biométrica y cachés del Service Worker)
+   * y recarga la página para forzar un estado limpio.
+   *
+   * ⚠️ IMPORTANTE: Este proceso NO reinicia los permisos del sistema operativo.
+   * En iOS, para restaurar permisos denegados en una PWA instalada, es necesario
+   * eliminar la app de la pantalla de inicio y volver a añadirla desde Safari.
+   */
+  async clearSiteDataAndReload(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Eliminar caché biométrica local (foto facial + marca de versión)
+    this.removeStoredPhoto();
+
+    // Limpiar todos los cachés del Service Worker (assets, API responses, etc.)
+    if ('caches' in window) {
+      try {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      } catch (error) {
+        this.logger.warn('Error al limpiar cachés del Service Worker:', error);
+      }
+    }
+
+    window.location.reload();
   }
 
   /**
@@ -962,6 +1103,11 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
     this.loading.set(true);
     this.error.set(null);
+
+    // Reiniciar el estado de permisos para forzar una nueva solicitud en cada intento,
+    // independientemente de si los permisos fueron aceptados o rechazados previamente.
+    this.cameraPermissionGranted.set(null);
+    this.locationPermissionGranted.set(null);
 
     try {
       // Verificar y solicitar permisos antes de continuar
@@ -3311,12 +3457,72 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * @param type - Tipo de modal que determina el icono y color
    * @param title - Título del modal
    * @param message - Mensaje descriptivo a mostrar
+   * @param messageHtml - Contenido HTML enriquecido opcional; reemplaza el mensaje de texto plano
    */
-  private showErrorModalWithMessage(type: ErrorModalType, title: string, message: string): void {
+  private showErrorModalWithMessage(
+    type: ErrorModalType,
+    title: string,
+    message: string,
+    messageHtml: SafeHtml | null = null,
+  ): void {
     this.errorModalType.set(type);
     this.errorModalTitle.set(title);
     this.errorModalMessage.set(message);
+    this.errorModalMessageHtml.set(messageHtml);
     this.showErrorModal.set(true);
+  }
+
+  /**
+   * Genera el contenido HTML estructurado para el modal de permisos denegados.
+   * Muestra pasos con el enlace del sitio para que el usuario pueda activar
+   * los permisos directamente desde Safari (iOS) o Chrome (Android).
+   *
+   * @param camera - true si el permiso de cámara está denegado
+   * @param location - true si el permiso de ubicación está denegado
+   * @returns SafeHtml con la estructura visual de instrucciones
+   */
+  private buildPermissionInstructionsHtml(camera: boolean, location: boolean): SafeHtml {
+    const permisos = [
+      ...(camera ? ['<strong>cámara</strong>'] : []),
+      ...(location ? ['<strong>ubicación</strong>'] : []),
+    ].join(' y ');
+
+    const appUrl = isPlatformBrowser(this.platformId) ? window.location.origin + '/' : '';
+
+    const linkBlock = appUrl
+      ? `<div class="pm-link-block">
+          <span class="pm-link-label">Abrir en el navegador</span>
+          <a class="pm-link-url" href="${appUrl}" target="_blank" rel="noopener noreferrer">${appUrl}</a>
+        </div>`
+      : '';
+
+    if (this.isIosPlatform()) {
+      const html = `
+        <div>
+          <p class="pm-intro">Activa los permisos de ${permisos} abriendo el sitio en <strong>Safari</strong>:</p>
+          ${linkBlock}
+          <ol class="pm-steps">
+            <li data-n="1">Toca <strong>"AA"</strong> en la barra de direcciones de Safari</li>
+            <li data-n="2">Selecciona <strong>"Configuración del sitio web"</strong></li>
+            <li data-n="3">Cambia Cámara y Localización a <strong>"Permitir"</strong></li>
+            <li data-n="4">Regresa y toca <strong>"Volver a solicitar permisos"</strong></li>
+          </ol>
+        </div>`;
+      return this.sanitizer.bypassSecurityTrustHtml(html);
+    }
+
+    const html = `
+      <div>
+        <p class="pm-intro">Activa los permisos de ${permisos} abriendo el sitio en <strong>Chrome</strong>:</p>
+        ${linkBlock}
+        <ol class="pm-steps">
+          <li data-n="1">Toca el <strong>candado</strong> en la barra de Chrome</li>
+          <li data-n="2">Selecciona <strong>"Permisos"</strong></li>
+          <li data-n="3">Cambia Cámara y Ubicación a <strong>"Permitir"</strong></li>
+          <li data-n="4">Regresa y toca <strong>"Volver a solicitar permisos"</strong></li>
+        </ol>
+      </div>`;
+    return this.sanitizer.bypassSecurityTrustHtml(html);
   }
 
   /**

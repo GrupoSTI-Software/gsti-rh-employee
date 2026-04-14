@@ -16,6 +16,25 @@
           <button
             type="button"
             class="action-icon-button bg-class"
+            (click)="reloadPage()"
+            [attr.aria-label]="'Recargar página'"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#88a4bf"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 9 -9a9.75 9.75 0 0 0 -6.74 2.74l-3.26 3.26" />
+              <path d="M3 3v4h4" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="action-icon-button bg-class"
             (click)="openExceptionsDrawer()"
             [attr.aria-label]="'attendance.exceptions' | translate"
           >
@@ -118,37 +137,318 @@
       <!-- Alerta de permisos faltantes -->
       @if (hasPermissionIssues()) {
         <div class="permission-alert" [@fadeInUp]>
-          <div class="permission-alert-content">
+
+          <!-- Cabecera de la alerta -->
+          <div class="permission-alert-header">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
-              class="permission-alert-icon"
+              class="permission-alert-header-icon"
             >
-              <path d="M12 9v4" />
-              <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
-              <path d="M12 16h.01" />
+              <path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z" />
+              <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
+              <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
             </svg>
-            <div class="permission-alert-text">
-              <div class="permission-alert-title">{{ permissionIssuesMessage() }}</div>
-              <div class="permission-alert-description">Toca el botón para intentar otorgarlos</div>
+            <div class="permission-alert-header-text">
+              <span class="permission-alert-title">Permisos necesarios</span>
+              <span class="permission-alert-subtitle">Sin estos permisos no puedes registrar tu asistencia</span>
             </div>
           </div>
+
+          <!-- Chips de estado por permiso -->
+          <div class="permission-chips">
+            <div
+              class="permission-chip"
+              [class.permission-chip--denied]="cameraPermissionGranted() === false"
+              [class.permission-chip--ok]="cameraPermissionGranted() === true"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 10l4.553 -2.069a1 1 0 0 1 1.447 .894v6.35a1 1 0 0 1 -1.447 .894l-4.553 -2.069v-4z" />
+                <path d="M3 6m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z" />
+              </svg>
+              <span>Cámara</span>
+              @if (cameraPermissionGranted() === false) {
+                <svg class="chip-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
+                </svg>
+              } @else if (cameraPermissionGranted() === true) {
+                <svg class="chip-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>
+              }
+            </div>
+            <div
+              class="permission-chip"
+              [class.permission-chip--denied]="locationPermissionGranted() === false"
+              [class.permission-chip--ok]="locationPermissionGranted() === true"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 11m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+              </svg>
+              <span>Ubicación</span>
+              @if (locationPermissionGranted() === false) {
+                <svg class="chip-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 6l-12 12" /><path d="M6 6l12 12" />
+                </svg>
+              } @else if (locationPermissionGranted() === true) {
+                <svg class="chip-status-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12l5 5l10 -10" />
+                </svg>
+              }
+            </div>
+          </div>
+
+          <!-- Instrucciones Android -->
+          @if (selectedPermissionPlatform() === 'android') {
+            <div class="permission-ios-options">
+
+              <!-- Opción recomendada: configurar permisos desde Chrome -->
+              <div class="permission-ios-option permission-ios-option--recommended">
+                <div class="permission-ios-option-badge">Recomendado · Chrome</div>
+                <p class="permission-ios-option-title">Activa los permisos desde Chrome</p>
+
+                <ol class="permission-steps">
+                  <li class="permission-step">
+                    <span class="permission-step-number">1</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Abre el sitio en Chrome</span>
+                      <span class="permission-step-desc">Toca el enlace de abajo para abrirlo directamente</span>
+                    </div>
+                  </li>
+                </ol>
+
+                <div class="permission-install-link">
+                  <div class="permission-install-link-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+                      <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+                    </svg>
+                    <span>Abrir en Chrome</span>
+                  </div>
+                  <a
+                    [href]="appInstallUrl()"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="permission-install-link-url"
+                  >{{ appInstallUrl() }}</a>
+                </div>
+
+                <ol class="permission-steps" style="margin-top: 0.5rem;">
+                  <li class="permission-step">
+                    <span class="permission-step-number">2</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Toca el ícono de candado en la barra de direcciones</span>
+                      <span class="permission-step-desc">Está junto a la URL, a la izquierda</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">3</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Selecciona "Permisos"</span>
+                      <span class="permission-step-desc">Verás las opciones de Cámara y Ubicación</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">4</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Cambia ambos permisos a "Permitir"</span>
+                      <span class="permission-step-desc">Activa Cámara y Ubicación</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">5</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Regresa a la app y toca "Volver a solicitar"</span>
+                      <span class="permission-step-desc">Usa el botón de abajo para recargar los permisos</span>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+
+              <div class="permission-ios-divider">
+                <span>o desde Ajustes del sistema</span>
+              </div>
+
+              <!-- Opción alternativa: Ajustes del sistema Android -->
+              <div class="permission-ios-option">
+                <ol class="permission-steps">
+                  <li class="permission-step">
+                    <span class="permission-step-number">1</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Abre Ajustes del teléfono</span>
+                      <span class="permission-step-desc">Ve a "Aplicaciones" o "Apps"</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">2</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Busca y selecciona Chrome</span>
+                      <span class="permission-step-desc">O el navegador donde está instalada la app</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">3</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Toca "Permisos"</span>
+                      <span class="permission-step-desc">Activa Cámara y Ubicación en "Permitir"</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">4</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Regresa e inténtalo</span>
+                      <span class="permission-step-desc">Vuelve a la app y toca el botón de abajo</span>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          }
+
+          <!-- Instrucciones iOS -->
+          @if (selectedPermissionPlatform() === 'ios') {
+            <div class="permission-ios-options">
+
+              <!-- Opción recomendada: configurar permisos desde Safari -->
+              <div class="permission-ios-option permission-ios-option--recommended">
+                <div class="permission-ios-option-badge">Recomendado · Safari</div>
+                <p class="permission-ios-option-title">Activa los permisos desde Safari</p>
+
+                <ol class="permission-steps">
+                  <li class="permission-step">
+                    <span class="permission-step-number">1</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Abre el sitio en Safari</span>
+                      <span class="permission-step-desc">Toca el enlace de abajo para abrirlo directamente</span>
+                    </div>
+                  </li>
+                </ol>
+
+                <div class="permission-install-link">
+                  <div class="permission-install-link-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+                      <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+                    </svg>
+                    <span>Abrir en Safari</span>
+                  </div>
+                  <a
+                    [href]="appInstallUrl()"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="permission-install-link-url"
+                  >{{ appInstallUrl() }}</a>
+                </div>
+
+                <ol class="permission-steps" style="margin-top: 0.5rem;">
+                  <li class="permission-step">
+                    <span class="permission-step-number">2</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Toca "<span class="text-icon">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#88a4bf"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M4 5m0 1a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1z" />
+                          <path d="M14 7l6 0" />
+                          <path d="M14 11l6 0" />
+                          <path d="M4 15l16 0" />
+                          <path d="M4 19l16 0" />
+                        </svg>
+                      </span>" en la barra de direcciones</span>
+                      <span class="permission-step-desc">Está a la izquierda de la URL en Safari</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">3</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Selecciona "Configuración del sitio web (...)"</span>
+                      <span class="permission-step-desc">Verás las opciones de Cámara y Micrófono y Localización</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">4</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Cambia ambos permisos a "Permitir"</span>
+                      <span class="permission-step-desc">Activa Cámara y Localización</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">5</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Regresa a la app y toca "Volver a solicitar"</span>
+                      <span class="permission-step-desc">Usa el botón de abajo para recargar los permisos</span>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+
+              <div class="permission-ios-divider">
+                <span>o desde Ajustes del sistema</span>
+              </div>
+
+              <!-- Opción alternativa: Ajustes del sistema iOS -->
+              <div class="permission-ios-option">
+                <ol class="permission-steps">
+                  <li class="permission-step">
+                    <span class="permission-step-number">1</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Ajustes → Privacidad y seguridad</span>
+                      <span class="permission-step-desc">En tu iPhone o iPad</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">2</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Toca "Cámara" o "Localización"</span>
+                      <span class="permission-step-desc">Según el permiso que necesites activar</span>
+                    </div>
+                  </li>
+                  <li class="permission-step">
+                    <span class="permission-step-number">3</span>
+                    <div class="permission-step-content">
+                      <span class="permission-step-title">Busca Safari o esta app</span>
+                      <span class="permission-step-desc">Activa el permiso con el interruptor</span>
+                    </div>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          }
+
+          <!-- Botón de acción -->
           <button
             type="button"
             class="permission-request-button"
-            (click)="requestPermissionsManually()"
+            (click)="resetAndRequestPermissions()"
             [disabled]="requestingPermissions()"
             [attr.aria-label]="'Solicitar permisos'"
           >
-            <span>{{ requestingPermissions() ? 'Solicitando...' : 'Solicitar permisos' }}</span>
+            @if (requestingPermissions()) {
+              <i class="pi pi-spin pi-spinner"></i>
+              <span>Verificando...</span>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+              </svg>
+              <span>Volver a verificar permisos</span>
+            }
           </button>
+
         </div>
       }
 
@@ -553,5 +853,6 @@
   [type]="errorModalType()"
   [title]="errorModalTitle()"
   [message]="errorModalMessage()"
+  [messageHtml]="errorModalMessageHtml()"
   closeButtonText="Entendido"
 ></app-error-modal>

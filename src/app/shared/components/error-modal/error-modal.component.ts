@@ -43,6 +43,8 @@ export class ErrorModalComponent {
   @Input() type: ErrorModalType = 'error';
   @Input() title = '';
   @Input() message = '';
+  /** Contenido HTML enriquecido; si se provee, reemplaza el mensaje de texto plano. */
+  @Input() messageHtml: SafeHtml | null = null;
   @Input() closeOnOverlayClick = true;
   @Input() showCloseButton = true;
   @Input() closeButtonText = 'Cerrar';

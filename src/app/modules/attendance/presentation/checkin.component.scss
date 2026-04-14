@@ -223,58 +223,261 @@
 }
 
 // Alerta de permisos faltantes
+// ── Alerta de permisos ─────────────────────────────────────────────────────
 .permission-alert {
   width: 100%;
-  background: var(--warning-light, rgba(255, 193, 7, 0.1));
-  border: 2px solid var(--warning);
+  background: var(--bg-primary);
+  border: 1.5px solid rgba(var(--warning-rgb), 0.4);
   border-radius: $radius;
   padding: $spacing-md;
   margin-bottom: $spacing-md;
   display: flex;
   flex-direction: column;
-  gap: $spacing-sm;
-  animation: slideInDown 0.3s ease-out;
+  gap: $spacing-md;
+  box-shadow: 0 2px 12px rgba(var(--warning-rgb), 0.08);
 
   @keyframes slideInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}
+
+// Cabecera
+.permission-alert-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid var(--bg-secondary);
+
+  .permission-alert-header-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+    color: var(--warning);
+  }
+
+  .permission-alert-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .permission-alert-title {
+    font-weight: $font-weight-bold;
+    color: var(--text-primary);
+    font-size: $font-size-sm;
+    line-height: 1.2;
+  }
+
+  .permission-alert-subtitle {
+    font-size: $font-size-xs;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+}
+
+// Chips de estado
+.permission-chips {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.permission-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--bg-tertiary, var(--bg-secondary));
+  transition: background $transition-fast, color $transition-fast;
+
+  svg {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .chip-status-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &--denied {
+    background: rgba(var(--error-rgb), 0.1);
+    color: var(--error);
+    border-color: rgba(var(--error-rgb), 0.3);
+  }
+
+  &--ok {
+    background: rgba(var(--success-rgb), 0.1);
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), 0.3);
+  }
+}
+
+// Lista de pasos
+.permission-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.permission-step {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+
+  .permission-step-number {
+    flex-shrink: 0;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 50%;
+    background: rgba(var(--warning-rgb), 0.15);
+    color: var(--warning);
+    font-size: 0.65rem;
+    font-weight: $font-weight-bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+
+  .permission-step-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .permission-step-title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .permission-step-desc {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+}
+
+// Sección de opciones iOS
+.permission-ios-options {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.permission-ios-option {
+  position: relative;
+  background: var(--bg-secondary);
+  border-radius: $radius-sm;
+  padding: $spacing-sm;
+
+  &--recommended {
+    background: rgba(var(--info-rgb), 0.06);
+    border: 1px solid rgba(var(--info-rgb), 0.2);
+  }
+
+  .permission-ios-option-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: $spacing-xs;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(var(--info-rgb), 0.15);
+    color: var(--info);
+    font-size: 0.65rem;
+    font-weight: $font-weight-bold;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .permission-ios-option-title {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary);
+    margin: 0 0 $spacing-sm 0;
+  }
+}
+
+// Bloque de enlace de instalación / reinstalación
+.permission-install-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: $spacing-sm 0;
+  padding: $spacing-sm;
+  background: rgba(var(--info-rgb), 0.08);
+  border: 1px dashed rgba(var(--info-rgb), 0.35);
+  border-radius: $radius-sm;
+
+  .permission-install-link-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--info);
+    font-size: 0.65rem;
+    font-weight: $font-weight-semibold;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    svg {
+      width: 0.85rem;
+      height: 0.85rem;
+      flex-shrink: 0;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+  }
+
+  .permission-install-link-url {
+    display: block;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: var(--info);
+    word-break: break-all;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 0.2rem 0;
+    transition: opacity $transition-fast;
+
+    &:active {
+      opacity: 0.7;
     }
   }
 }
 
-.permission-alert-content {
+.permission-ios-divider {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: $spacing-sm;
-}
-
-.permission-alert-icon {
-  color: var(--warning);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.permission-alert-text {
-  flex: 1;
-}
-
-.permission-alert-title {
-  font-weight: $font-weight-bold;
-  color: var(--text-primary);
-  font-size: $font-size-sm;
-  margin-bottom: 4px;
-}
-
-.permission-alert-description {
+  color: var(--text-tertiary, var(--text-secondary));
   font-size: $font-size-xs;
-  color: var(--text-secondary);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--bg-secondary);
+  }
+
+  span {
+    white-space: nowrap;
+    padding: 0 0.25rem;
+  }
 }
 
+// Botón de solicitar permisos
 .permission-request-button {
   @include button-base;
   width: 100%;
@@ -292,20 +495,9 @@
   transition: all $transition-fast;
 
   svg {
+    width: 1rem;
+    height: 1rem;
     flex-shrink: 0;
-  }
-
-  .spinner {
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
   }
 
   &:hover:not(:disabled) {
@@ -314,9 +506,7 @@
     box-shadow: var(--shadow-sm);
   }
 
-  &:active:not(:disabled) {
-    transform: translateY(0);
-  }
+  &:active:not(:disabled) { transform: translateY(0); }
 
   &:disabled {
     opacity: 0.7;

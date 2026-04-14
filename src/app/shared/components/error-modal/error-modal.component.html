@@ -23,7 +23,9 @@
           <h2 class="modal-title">{{ title }}</h2>
         }
         
-        @if (message) {
+        @if (messageHtml) {
+          <div class="modal-message modal-message--html" [innerHTML]="messageHtml"></div>
+        } @else if (message) {
           <p class="modal-message">{{ message }}</p>
         }
         
