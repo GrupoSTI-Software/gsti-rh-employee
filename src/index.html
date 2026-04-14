@@ -343,13 +343,6 @@
       window.addEventListener('offline', showNoConnection);
       window.addEventListener('online', hideNoConnection);
 
-      // Registrar el Service Worker offline inmediatamente (sin esperar a Angular)
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/offline-sw.js', { scope: '/' }).catch(function () {
-          /* silencioso si falla */
-        });
-      }
-
       // Función global para ocultar el splash screen (llamada desde Angular)
       window.hideSplashScreen = function () {
         var splash = document.getElementById('app-splash-screen');
