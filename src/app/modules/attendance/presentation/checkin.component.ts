@@ -43,6 +43,7 @@ import { GetSystemSettingsUseCase } from '@modules/system-settings/application/g
 import { formatLocalDate } from '@shared/utils/date.utils';
 import { GetAuthorizeAnyZoneUseCase } from '@modules/authorize-any-zone/application/get-authorize-any-zone.use-case';
 import { GetZoneCoordinatesUseCase } from '@modules/zones-authorization/application/get-zone-coordinates.use-case';
+import { PermissionService } from '@core/services/permission.service';
 
 /**
  * Interfaz personalizada para el resultado de detectSingleFace().withFaceLandmarks()
@@ -170,6 +171,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     GetVerificationAttendanceLockUseCase,
   );
   private readonly getSystemSettingsUseCase = inject(GetSystemSettingsUseCase);
+  private readonly permissionService = inject(PermissionService);
 
   // Control de cámara y flash
   private availableCameras: MediaDeviceInfo[] = [];
@@ -188,10 +190,20 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly errorModalMessage = signal('');
   readonly errorModalMessageHtml = signal<SafeHtml | null>(null);
 
-  // Estado de permisos
-  readonly cameraPermissionGranted = signal<boolean | null>(null);
-  readonly locationPermissionGranted = signal<boolean | null>(null);
-  readonly requestingPermissions = signal(false);
+  // Estado de permisos (delegados al PermissionService)
+  readonly cameraPermissionGranted = computed((): boolean | null => {
+    const state = this.permissionService.cameraPermission();
+    if (state === 'granted') return true;
+    if (state === 'denied') return false;
+    return null;
+  });
+  readonly locationPermissionGranted = computed((): boolean | null => {
+    const state = this.permissionService.locationPermission();
+    if (state === 'granted') return true;
+    if (state === 'denied') return false;
+    return null;
+  });
+  readonly requestingPermissions = this.permissionService.checking;
 
   /**
    * URL de instalación de la PWA que se muestra al usuario cuando hay problemas de permisos.
@@ -516,120 +528,33 @@ export class CheckinComponent implements OnInit, OnDestroy {
   readonly selectedPermissionPlatform = signal<'ios' | 'android'>('android');
 
   ngOnInit(): void {
-    // Inicializar la hora inmediatamente
     this.updateCurrentTime();
 
-    // Preseleccionar la plataforma correcta en las instrucciones de permisos
-    if (isPlatformBrowser(this.platformId) && this.isIosPlatform()) {
+    if (isPlatformBrowser(this.platformId) && this.permissionService.isIosPlatform()) {
       this.selectedPermissionPlatform.set('ios');
     }
 
-    // Actualizar hora cada segundo
     this.timeInterval = setInterval(() => {
       this.updateCurrentTime();
     }, 1000);
 
-    // Suscribirse a cambios de idioma
     this.translateService.onLangChange
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((event) => this.currentLang.set(event.lang));
 
-    // Solicitar permisos necesarios
-    void this.requestPermissions();
-
-    void this.loadAttendance();
+    void this.initPermissionsAndLoad();
   }
 
   /**
-   * Solicita los permisos de cámara y ubicación al entrar a la pantalla.
-   * Si alguno está denegado, muestra un modal con instrucciones específicas para Android PWA.
-   * Se ejecuta en cada visita a la pantalla para detectar permisos revocados.
+   * Inicializa permisos vía el servicio y carga la asistencia.
+   * Si detecta permisos denegados, muestra un modal con instrucciones.
    */
-  private async requestPermissions(): Promise<void> {
-    let cameraDenied = false;
-    let locationDenied = false;
+  private async initPermissionsAndLoad(): Promise<void> {
+    await this.permissionService.checkPermissions();
 
-    // ── Verificar y solicitar permiso de cámara ────────────────────────────
-    try {
-      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
-        // Intentar abrir la cámara para forzar el diálogo de permisos si aún no se ha dado
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user' },
-        });
-        stream.getTracks().forEach((track) => track.stop());
-        this.cameraPermissionGranted.set(true);
-      }
-    } catch (error: unknown) {
-      const err = error as { name?: string };
-      if (err.name === 'NotAllowedError') {
-        cameraDenied = true;
-        this.cameraPermissionGranted.set(false);
-        this.logger.warn('Permiso de cámara denegado al entrar a la pantalla');
-      } else if (err.name === 'NotFoundError') {
-        this.cameraPermissionGranted.set(false);
-        this.logger.warn('Cámara no encontrada en el dispositivo');
-      } else {
-        this.cameraPermissionGranted.set(null);
-        this.logger.warn('Error al solicitar permiso de cámara:', error);
-      }
-    }
+    const cameraDenied = this.permissionService.cameraPermission() === 'denied';
+    const locationDenied = this.permissionService.locationPermission() === 'denied';
 
-    // ── Verificar y solicitar permiso de ubicación ────────────────────────
-    try {
-      if (typeof navigator.geolocation !== 'undefined') {
-        if (typeof navigator.permissions?.query !== 'undefined') {
-          try {
-            const geoPermission = await navigator.permissions.query({
-              name: 'geolocation' as PermissionName,
-            });
-
-            if (geoPermission.state === 'denied') {
-              locationDenied = true;
-              this.locationPermissionGranted.set(false);
-              this.logger.warn('Permiso de ubicación denegado al entrar a la pantalla');
-            } else if (geoPermission.state === 'prompt' || geoPermission.state === 'granted') {
-              await new Promise<void>((resolve) => {
-                navigator.geolocation.getCurrentPosition(
-                  () => {
-                    this.locationPermissionGranted.set(true);
-                    resolve();
-                  },
-                  (geoError) => {
-                    if (geoError.code === geoError.PERMISSION_DENIED) {
-                      locationDenied = true;
-                      this.locationPermissionGranted.set(false);
-                      this.logger.warn('Permiso de ubicación denegado en la solicitud directa');
-                    } else {
-                      this.locationPermissionGranted.set(null);
-                    }
-                    resolve();
-                  },
-                  { timeout: 5000, enableHighAccuracy: false },
-                );
-              });
-            }
-          } catch (_permError) {
-            try {
-              await this.requestGeolocationPermission();
-            } catch {
-              // Permiso no disponible aún; se solicitará al intentar registrar asistencia
-            }
-          }
-        } else {
-          try {
-            await this.requestGeolocationPermission();
-          } catch {
-            // Permiso no disponible aún; se solicitará al intentar registrar asistencia
-          }
-        }
-      }
-    } catch (error) {
-      this.logger.warn('Error al verificar permiso de ubicación:', error);
-    }
-
-    // ── Mostrar modal de guía si hay permisos denegados ───────────────────
-    // Se muestra al entrar a la pantalla para que el usuario corrija el problema
-    // antes de intentar registrar asistencia, con instrucciones específicas para Android.
     if (cameraDenied || locationDenied) {
       const permisosFaltantes = [
         ...(cameraDenied ? ['Cámara'] : []),
@@ -646,18 +571,15 @@ export class CheckinComponent implements OnInit, OnDestroy {
         instruccionesHtml,
       );
     }
+
+    await this.loadAttendance();
   }
 
   /**
-   * Detecta si el dispositivo es iOS (iPhone, iPad, iPod Touch).
-   * Necesario para mostrar instrucciones específicas de plataforma en los modales de permisos.
+   * Delegación a PermissionService para detección de plataforma iOS.
    */
   private isIosPlatform(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
-    return (
-      /iphone|ipad|ipod/i.test(navigator.userAgent) ||
-      (navigator.userAgent.includes('Mac') && navigator.maxTouchPoints > 1)
-    );
+    return this.permissionService.isIosPlatform();
   }
 
   /**
@@ -706,71 +628,16 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   /**
    * Solicita permisos de cámara y ubicación manualmente cuando el usuario toca el botón.
-   * Actualiza los signals de estado de permisos y muestra feedback visual.
-   * Si los permisos están denegados, muestra instrucciones para habilitarlos desde Ajustes.
+   * Delega al PermissionService y muestra feedback visual según el resultado.
    */
   async requestPermissionsManually(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
 
-    this.requestingPermissions.set(true);
-    let cameraSuccess = false;
-    let locationSuccess = false;
+    await this.permissionService.requestPermissions();
 
-    // ── Solicitar permiso de cámara ────────────────────────────────────────
-    try {
-      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user' },
-        });
-        stream.getTracks().forEach((track) => track.stop());
-        this.cameraPermissionGranted.set(true);
-        cameraSuccess = true;
-      }
-    } catch (error: unknown) {
-      const err = error as { name?: string };
-      if (err.name === 'NotAllowedError') {
-        this.cameraPermissionGranted.set(false);
-        this.logger.warn('Permiso de cámara denegado por el usuario');
-      } else if (err.name === 'NotFoundError') {
-        this.cameraPermissionGranted.set(false);
-        this.logger.warn('Cámara no encontrada');
-      } else {
-        this.cameraPermissionGranted.set(null);
-        this.logger.warn('Error al solicitar permiso de cámara:', error);
-      }
-    }
+    const cameraSuccess = this.permissionService.cameraPermission() === 'granted';
+    const locationSuccess = this.permissionService.locationPermission() === 'granted';
 
-    // ── Solicitar permiso de ubicación ─────────────────────────────────────
-    try {
-      await new Promise<void>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          () => {
-            this.locationPermissionGranted.set(true);
-            locationSuccess = true;
-            resolve();
-          },
-          (error) => {
-            if (error.code === error.PERMISSION_DENIED) {
-              this.locationPermissionGranted.set(false);
-              this.logger.warn('Permiso de ubicación denegado por el usuario');
-            } else {
-              this.locationPermissionGranted.set(null);
-              this.logger.warn('Error al obtener ubicación:', error);
-            }
-            reject(error);
-          },
-          { timeout: 5000, enableHighAccuracy: false },
-        );
-      });
-    } catch {
-      // Error ya registrado en el callback
-    }
-
-    this.requestingPermissions.set(false);
-
-    // ── Mostrar feedback al usuario ────────────────────────────────────────
     if (cameraSuccess && locationSuccess) {
       this.showErrorModalWithMessage(
         'success',
@@ -813,8 +680,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
    * La única solución real en iOS es eliminar la app y volver a añadirla desde Safari.
    */
   async resetAndRequestPermissions(): Promise<void> {
-    this.cameraPermissionGranted.set(null);
-    this.locationPermissionGranted.set(null);
     await this.requestPermissionsManually();
 
     // En iOS los permisos denegados no se pueden re-solicitar por código.
@@ -863,29 +728,6 @@ export class CheckinComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Solicita permiso de geolocalización directamente
-   */
-  private async requestGeolocationPermission(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          resolve();
-        },
-        (error) => {
-          if (error.code === error.PERMISSION_DENIED) {
-            this.logger.warn('Permiso de ubicación denegado');
-            reject(new Error('Permiso de ubicación denegado'));
-          } else {
-            this.logger.warn('Error al obtener ubicación:', error);
-            reject(error);
-          }
-        },
-        { timeout: 5000, enableHighAccuracy: false },
-      );
-    });
-  }
-
-  /**
    * Limpia los recursos cuando el componente se destruye.
    * Detiene el intervalo del reloj para evitar fugas de memoria.
    */
@@ -893,6 +735,7 @@ export class CheckinComponent implements OnInit, OnDestroy {
     if (this.timeInterval) {
       clearInterval(this.timeInterval);
     }
+    this.permissionService.destroy();
   }
 
   /**
@@ -1104,13 +947,8 @@ export class CheckinComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set(null);
 
-    // Reiniciar el estado de permisos para forzar una nueva solicitud en cada intento,
-    // independientemente de si los permisos fueron aceptados o rechazados previamente.
-    this.cameraPermissionGranted.set(null);
-    this.locationPermissionGranted.set(null);
-
     try {
-      // Verificar y solicitar permisos antes de continuar
+      // Verificar y solicitar permisos antes de continuar (delegado a PermissionService)
       await this.ensurePermissions();
 
       // Cargar modelos de face-api.js si no están cargados
@@ -1296,118 +1134,16 @@ export class CheckinComponent implements OnInit, OnDestroy {
 
   /**
    * Verifica y solicita los permisos necesarios para el registro de asistencia.
-   * Requiere acceso a cámara (reconocimiento facial) y ubicación (validación de zona).
-   *
-   * Nota: En localhost HTTP, algunos navegadores requieren interacción del usuario
-   * antes de otorgar permisos. En producción (HTTPS), los permisos se pueden solicitar
-   * automáticamente.
+   * Delega al PermissionService que maneja Permissions API + fallbacks.
+   * Actualiza los signals de permisos tras la verificación.
    *
    * @throws Error si algún permiso es denegado o no está disponible
    */
   private async ensurePermissions(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
 
-    // Verificar si estamos en localhost HTTP
-    const isLocalhost =
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1' ||
-      window.location.protocol === 'http:';
-
-    // Verificar estado del permiso de geolocalización antes de intentar
-    let geoPermissionDenied = false;
-    if (typeof navigator.permissions?.query !== 'undefined') {
-      try {
-        const geoPermission = await navigator.permissions.query({
-          name: 'geolocation' as PermissionName,
-        });
-        if (geoPermission.state === 'denied') {
-          geoPermissionDenied = true;
-          this.logger.warn(
-            'Permiso de ubicación está denegado. El usuario debe habilitarlo en la configuración del navegador.',
-          );
-        }
-      } catch (_e) {
-        // Si no está disponible la API de permisos, continuamos
-      }
-    }
-
-    // Verificar permiso de cámara
-    try {
-      if (typeof navigator.mediaDevices?.getUserMedia !== 'undefined') {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'user',
-          },
-        });
-        stream.getTracks().forEach((track) => track.stop());
-      } else {
-        throw new Error('Cámara no disponible');
-      }
-    } catch (error: unknown) {
-      const err = error as { name?: string };
-      if (err.name === 'NotAllowedError') {
-        let message = 'Se necesita permiso de cámara para registrar asistencia.';
-        if (isLocalhost) {
-          message += ' Por favor, permite el acceso a la cámara cuando se solicite.';
-        } else {
-          message +=
-            '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
-            'esta app → Permisos → activa Cámara.';
-        }
-        throw new Error(message);
-      } else if (err.name === 'NotFoundError') {
-        throw new Error('No se encontró ninguna cámara disponible');
-      }
-      throw new Error('Error al acceder a la cámara');
-    }
-
-    // Verificar permiso de geolocalización
-    try {
-      await new Promise<void>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          () => {
-            resolve();
-          },
-          (error) => {
-            if (error.code === error.PERMISSION_DENIED) {
-              let message = 'Se necesita permiso de ubicación para registrar asistencia.';
-              if (geoPermissionDenied) {
-                message +=
-                  '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
-                  'esta app → Permisos → activa Ubicación.';
-              } else if (isLocalhost) {
-                message += ' Por favor, permite el acceso a la ubicación cuando se solicite.';
-              } else {
-                message +=
-                  '\n\nEn Android: ve a Ajustes del teléfono → Aplicaciones → ' +
-                  'esta app → Permisos → activa Ubicación.';
-              }
-              reject(new Error(message));
-            } else if (error.code === error.POSITION_UNAVAILABLE) {
-              reject(new Error('No se pudo obtener la ubicación. Verifica tu conexión GPS.'));
-            } else if (error.code === error.TIMEOUT) {
-              reject(new Error('Tiempo de espera agotado al obtener la ubicación'));
-            } else {
-              reject(error);
-            }
-          },
-          {
-            timeout: 10000,
-            enableHighAccuracy: false,
-            maximumAge: 0,
-          },
-        );
-      });
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      const errorMessage = err.message ?? '';
-      if (errorMessage.includes('ubicación')) {
-        throw error;
-      }
-      throw new Error('Se necesita permiso de ubicación para registrar asistencia');
-    }
+    await this.permissionService.ensureCameraPermission();
+    await this.permissionService.ensureLocationPermission();
   }
 
   /**
