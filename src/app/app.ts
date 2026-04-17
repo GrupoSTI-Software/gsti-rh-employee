@@ -22,6 +22,7 @@ const LANGUAGE_STORAGE_KEY = 'app-language';
 declare global {
   interface Window {
     hideSplashScreen?: () => void;
+    cancelWatchdog?: () => void;
   }
 }
 
@@ -155,8 +156,11 @@ export class App implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Ocultar el splash screen una vez que Angular terminó de renderizar la vista
-    setTimeout(() => this.hideSplashScreen(), 300);
+    // Ocultar el splash screen y cancelar el watchdog de arranque
+    setTimeout(() => {
+      this.hideSplashScreen();
+      window.cancelWatchdog?.();
+    }, 300);
   }
 
   /**

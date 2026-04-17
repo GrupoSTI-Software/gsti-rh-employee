@@ -11,20 +11,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
 
 /**
- * Script URL del Service Worker offline que compite con ngsw-worker.js.
- * Se desregistra en el arranque para evitar que revierta la versión activa.
- */
-const OFFLINE_SW_SCRIPT = 'offline-sw.js';
-
-/**
- * Prefijo de los cachés gestionados por el Service Worker offline.
- */
-const OFFLINE_CACHE_PREFIX = 'gsti-';
-
-/**
  * Servicio que gestiona la detección y aplicación de actualizaciones de la PWA.
  * Utiliza el Service Worker de Angular para detectar nuevas versiones disponibles
  * y expone una señal para que los componentes muestren un aviso al usuario.
+ *
+ * Nota: el desregistro del SW legacy 'offline-sw.js' y la limpieza de sus cachés
+ * se hacen desde el script inline en index.html, antes de que Angular arranque.
+ * Esto garantiza cobertura incluso cuando Angular no logra bootear.
  */
 @Injectable({ providedIn: 'root' })
 export class PwaUpdateService {
@@ -36,52 +29,12 @@ export class PwaUpdateService {
   readonly updateAvailable = signal<boolean>(false);
 
   constructor() {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    // Elimina el SW offline heredado para evitar que compita con ngsw-worker.js
-    // y provoque reversiones de versión al reabrir la PWA.
-    this.unregisterOfflineSW();
-
-    if (!this.swUpdate.isEnabled) {
+    if (!isPlatformBrowser(this.platformId) || !this.swUpdate.isEnabled) {
       return;
     }
 
     this.listenForUpdates();
     this.schedulePeriodicCheck();
-  }
-
-  /**
-   * Desregistra el Service Worker offline legacy si aún está registrado.
-   * Esto evita que compita con ngsw-worker.js por el scope raíz, lo que
-   * causaba que la app revirtiera a versiones antiguas al reabrir la PWA.
-   */
-  private unregisterOfflineSW(): void {
-    if (!('serviceWorker' in navigator)) return;
-
-    void navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (const registration of registrations) {
-        const scriptURL = registration.active?.scriptURL ?? '';
-        if (scriptURL.includes(OFFLINE_SW_SCRIPT)) {
-          registration.unregister().catch((error) => {
-            console.error('Error al desregistrar el SW offline:', error);
-          });
-        }
-      }
-    });
-  }
-
-  /**
-   * Elimina todos los cachés del Service Worker offline para evitar
-   * que sirvan contenido obsoleto tras una actualización.
-   */
-  private async clearOfflineCaches(): Promise<void> {
-    if (!('caches' in window)) return;
-    const keys = await caches.keys();
-    await Promise.all(
-      keys.filter((key) => key.startsWith(OFFLINE_CACHE_PREFIX)).map((key) => caches.delete(key)),
-    );
   }
 
   /**
@@ -123,15 +76,12 @@ export class PwaUpdateService {
 
   /**
    * Activa la nueva versión del Service Worker y recarga la aplicación.
-   * Limpia los cachés del SW offline antes de recargar para evitar que
-   * sirvan contenido de una versión anterior al reabrir la PWA.
    * Debe llamarse cuando el usuario acepta la actualización.
    */
   applyUpdate(): void {
     this.swUpdate
       .activateUpdate()
-      .then(async () => {
-        await this.clearOfflineCaches();
+      .then(() => {
         window.location.reload();
       })
       .catch((error) => {

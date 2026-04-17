@@ -2,6 +2,123 @@
 <html lang="es" style="font-size: 14px">
   <head>
     <meta charset="utf-8" />
+    <!-- PWA Boot Watchdog: desregistra SW legacy y vigila el arranque de Angular.
+         Debe ser el PRIMER script del head. No depende de ngsw ni de Angular. -->
+    <script>
+      (function () {
+        try {
+          var RECOVERY_FLAG = 'pwa_boot_recovery_attempted';
+          var FIRST_TIMEOUT_MS = 15000;
+          var SECOND_TIMEOUT_MS = 10000;
+          var isRecoveryAttempt = false;
+
+          try {
+            isRecoveryAttempt = sessionStorage.getItem(RECOVERY_FLAG) === '1';
+          } catch (e) {
+            /* sessionStorage puede fallar en modo privado o iframe; se asume primer intento */
+          }
+
+          // 1. Matar de inmediato cualquier SW legacy con 'offline-sw.js' en su scriptURL.
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker
+              .getRegistrations()
+              .then(function (regs) {
+                regs.forEach(function (r) {
+                  var url = (r.active && r.active.scriptURL) || '';
+                  if (url.indexOf('offline-sw.js') !== -1) {
+                    r.unregister();
+                  }
+                });
+              })
+              .catch(function () {});
+
+            if ('caches' in window) {
+              caches
+                .keys()
+                .then(function (keys) {
+                  keys
+                    .filter(function (k) {
+                      return k.indexOf('gsti-') === 0;
+                    })
+                    .forEach(function (k) {
+                      caches.delete(k);
+                    });
+                })
+                .catch(function () {});
+            }
+          }
+
+          // 2. Watchdog de arranque.
+          var timeoutMs = isRecoveryAttempt ? SECOND_TIMEOUT_MS : FIRST_TIMEOUT_MS;
+          var watchdogId = setTimeout(function () {
+            // Si el usuario está sin conexión, un reload no va a ayudar.
+            // Saltar directo a la pantalla de error con mensaje accionable.
+            var isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+            if (isRecoveryAttempt || isOffline) {
+              showErrorScreen();
+            } else {
+              hardRecovery();
+            }
+          }, timeoutMs);
+
+          // 3. Angular cancela el watchdog en ngAfterViewInit.
+          window.cancelWatchdog = function () {
+            clearTimeout(watchdogId);
+            try {
+              sessionStorage.removeItem(RECOVERY_FLAG);
+            } catch (e) {
+              /* ignorar */
+            }
+          };
+
+          function hardRecovery() {
+            try {
+              sessionStorage.setItem(RECOVERY_FLAG, '1');
+            } catch (e) {
+              /* ignorar */
+            }
+
+            var tasks = [];
+            if ('serviceWorker' in navigator) {
+              tasks.push(
+                navigator.serviceWorker.getRegistrations().then(function (regs) {
+                  return Promise.all(
+                    regs.map(function (r) {
+                      return r.unregister();
+                    }),
+                  );
+                }),
+              );
+            }
+            if ('caches' in window) {
+              tasks.push(
+                caches.keys().then(function (keys) {
+                  return Promise.all(
+                    keys.map(function (k) {
+                      return caches.delete(k);
+                    }),
+                  );
+                }),
+              );
+            }
+            Promise.all(tasks)
+              .catch(function () {})
+              .finally(function () {
+                location.reload();
+              });
+          }
+
+          function showErrorScreen() {
+            var splash = document.getElementById('app-splash-screen');
+            var error = document.getElementById('app-error-splash');
+            if (splash) splash.classList.add('hidden');
+            if (error) error.classList.add('visible');
+          }
+        } catch (e) {
+          /* Si el script inline falla, no romper la carga. Degrada al estado pre-fix. */
+        }
+      })();
+    </script>
     <title>GSTI Empleado</title>
     <base href="/" />
     <meta
@@ -37,15 +154,18 @@
         if (!apiUrl) return;
 
         fetch(apiUrl + '/system-settings-active', { cache: 'no-store' })
-          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            return r.json();
+          })
           .then(function (response) {
             if (!response || !response.data || !response.data.systemSetting) return;
 
             var s = response.data.systemSetting;
             var tradeName = (s.systemSettingTradeName || '').trim() || 'GSTI';
-            var iconUrl = (s.systemSettingEmployeeAplicationIcon || '').trim()
-              || (s.systemSettingFavicon || '').trim()
-              || '/assets/gsti/icon.png';
+            var iconUrl =
+              (s.systemSettingEmployeeAplicationIcon || '').trim() ||
+              (s.systemSettingFavicon || '').trim() ||
+              '/assets/gsti/icon.png';
             var logoUrl = (s.systemSettingLogo || '').trim() || '/assets/gsti/adaptive-icon.png';
             var sidebarColor = (s.systemSettingSidebarColor || '').trim() || '093057';
 
@@ -64,12 +184,12 @@
                 { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'any' },
                 { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'any' },
                 { src: iconUrl, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-                { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'maskable' }
+                { src: iconUrl, sizes: '192x192', type: 'image/png', purpose: 'maskable' },
               ],
               categories: ['business', 'productivity'],
               lang: 'es',
               prefer_related_applications: false,
-              launch_handler: { client_mode: ['navigate-existing', 'auto'] }
+              launch_handler: { client_mode: ['navigate-existing', 'auto'] },
             };
 
             var existing = document.querySelector('link[rel="manifest"]');
@@ -77,7 +197,8 @@
 
             var link = document.createElement('link');
             link.rel = 'manifest';
-            link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
+            link.href =
+              'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
             document.head.appendChild(link);
 
             // Actualizar meta tags con los datos del branding
@@ -252,6 +373,78 @@
           transform: rotate(360deg);
         }
       }
+
+      /* App Error Overlay: mostrado por el watchdog de arranque */
+      #app-error-splash {
+        display: none;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 100dvh;
+        z-index: 99998;
+        background: #ffffff;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #app-error-splash.visible {
+        display: flex;
+      }
+      #app-error-card {
+        max-width: 360px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+      }
+      #app-error-icon-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(239, 158, 68, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #app-error-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        text-align: center;
+      }
+      #app-error-msg {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0;
+        text-align: center;
+        line-height: 1.6;
+      }
+      #app-error-btn {
+        width: 100%;
+        min-height: 44px;
+        padding: 0.875rem;
+        background: #093057;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.2s ease,
+          transform 0.15s ease;
+      }
+      #app-error-btn:active {
+        transform: scale(0.98);
+      }
     </style>
   </head>
   <body>
@@ -289,6 +482,36 @@
         <button id="no-connection-btn" type="button" onclick="retryConnection()">
           <span id="no-connection-spinner"></span>
           <span id="no-connection-btn-text">Reintentar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- App Error Overlay: mostrado por el watchdog cuando Angular no arranca tras recovery -->
+    <div id="app-error-splash">
+      <div id="app-error-card">
+        <div id="app-error-icon-wrap">
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.53 21H20.47A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+              stroke="#ef9e44"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <h2 id="app-error-title">No pudimos abrir la aplicación</h2>
+        <p id="app-error-msg">
+          Cierra la app e intenta de nuevo. Si persiste, revisa tu conexión a internet.
+        </p>
+        <button id="app-error-btn" type="button" onclick="window.location.reload()">
+          Reintentar
         </button>
       </div>
     </div>
